@@ -1,0 +1,27 @@
+# AddPropertiesFunction.js is a Javascript Module File
+
+
+# Using :
+
+
+# Html side :
+
+#   import via a module includes file :
+#   <script type="module" src="MODULE_INCLUDES.js"></script>
+
+
+# Javascript side :
+
+#   MODULE_INCLUDES.js :
+#     import {AddPropertiesFunction} from './AddPropertiesFunction.js';
+#     window.AddPropertiesFunction = AddPropertiesFunction;
+#     document.addEventListener('DOMContentLoaded', function(){
+#       AddPropertiesFunction();
+#     });
+
+
+# In summary :
+
+# Use type="module" attribute in a <script> tag, like an includes file to extract 'AddPropertiesFunction'
+# Extracting by assigning to the global object like 'window'
+# Be sure the document is totally loaded by using 'DOMContentLoaded' event before accessing extracted module
