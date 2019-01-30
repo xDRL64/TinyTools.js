@@ -5,3 +5,15 @@ function AddPropertiesFunction () {
 }
 
 export {AddPropertiesFunction};
+
+
+
+function create_smartVar () {
+
+	var _var = null;
+
+	
+
+
+
+}
