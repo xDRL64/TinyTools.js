@@ -1,1 +1,1 @@
-# miniTools.js
+# TinyTools.js
