@@ -1,0 +1,194 @@
+<script src="SCCM-drl.js"></script>
+
+<body>
+	
+</body>
+
+<script>
+
+	const id=0;
+
+	const customBehavior = {
+		openMenu_method : (menu)=>{
+			menu.style.opacity = 1;
+			menu.style.pointerEvents = 'auto';
+			//[...menu.children].forEach( item=>item[api_key].update_rect() ); // TODO : make menu[api_key].update_itemRects_ /all /submenuOnly
+			menu[api_key].elems.get_items()
+				.filter(item=>item[api_key].elems.get_submenu())
+					.forEach(item=>item[api_key].update_rect());
+		},
+		closeMenu_method : (menu)=>{
+			menu.style.opacity = 0.1;
+			menu.style.pointerEvents = 'none';
+		},
+		setClosedMenu_method : (menu)=>{
+			menu.style.opacity = 0.1;
+			menu.style.pointerEvents = 'none';
+		},
+		hoverItem_method : (item)=>{
+			//item.style.border = '1px solid';
+			//item.style.boxSizing = 'border-box';
+			item.style.backgroundColor = 'crimson';
+			//item[api_key].update_rect();
+		},
+		leaveItem_method : (item)=>{
+			//item.style.border = '';
+			//item.style.boxSizing = '';
+			item.style.backgroundColor = 'lightgrey';
+		},
+		inpathItem_method : (item)=>{
+			item.style.backgroundColor = 'orange';
+		},
+		outpathItem_method : (item)=>{
+			item.style.backgroundColor = 'lightgrey';
+		},
+		disableItem_method : (item)=>{
+			item.style.color = 'green';
+		},
+		enableItem_method : (item)=>{
+			item.style.color = 'black';
+		},
+		/* replaceLayer_method : (hook, root, upMenu, item, layer, menu)=>{
+			let hookRect = hook[api_key].get_rect();
+			let itemRect = item[api_key].get_rect();
+			layer.style.left = itemRect.x - hookRect.x;
+			layer.style.top  = itemRect.y - hookRect.y;
+			layer.style.width  = itemRect.w;
+			layer.style.height = itemRect.h;
+
+		}, */
+		replaceLayer_method : ({hook, root, upMenu, item, layer, menu})=>{
+			// trick : ('item' must be first)
+			// if item then it's submenu case
+			// if menu then it's mainmenu case
+			const elem = item || menu;
+			const hookRect = hook[api_key].get_rect();
+			const elemRect = elem[api_key].get_rect();
+			layer.style.left = elemRect.x - hookRect.x;
+			layer.style.top  = elemRect.y - hookRect.y;
+			layer.style.width  = elemRect.w;
+			layer.style.height = elemRect.h;
+
+		},
+	};
+	let behavior = customBehavior;
+
+	/* let mainMenu_behavior = {
+		replaceLayer_method : ({hook, root, layer, menu})=>{
+			let hookRect = hook[api_key].get_rect();
+			let menuRect = item[api_key].get_rect();
+			layer.style.left = menuRect.x - hookRect.x;
+			layer.style.top  = menuRect.y - hookRect.y;
+			layer.style.width  = menuRect.w;
+			layer.style.height = menuRect.h;
+
+		},
+	}; */
+
+	const initELEM = {
+		root({style:s}){
+			s.position = 'relative';
+			s.backgroundColor = '#88cc2266';
+			s.userSelect = 'none';
+		},
+		layer({style:s}){
+			s.backgroundColor = '#00448866';
+			s.width = 0;
+			s.height = 0;
+			s.position = 'absolute';
+			s.pointerEvents = 'none';
+		},
+		menu({style:s}){
+			//s.pointerEvents = 'none';
+			s.pointerEvents = 'auto'; // debug
+
+			s.position = 'relative';  // \
+			s.width = 'fit-content';  // | together
+			s.height = 'fit-content'; // /
+			s.backgroundColor = 'grey';
+			s.display = 'grid';
+			s.gap = '4px';
+			s.padding = 4;
+		},
+		item({style:s}){
+			s.position = 'relative';
+			s.backgroundColor = 'lightgrey';
+			//s.width = 50;
+			//s.height = 25;
+			s.padding = 4;
+		},
+	};
+
+	const menuA = ({style:s})=>{s.backgroundColor='red';}
+	const menuB = ({style:s})=>{s.left='130%';}
+	const itemB3 = ({style:s})=>{s.opacity=0.4;}
+	const layerInit = menuA;
+
+	const forceDisable = ()=>false;
+	const check = forceDisable;
+	const testUpdate = (...args)=>console.log('process',...args);
+	const update = testUpdate;
+
+	let sccmTemplate = {
+		// root :
+		settings : {css:'', behavior, initELEM},
+		mainMenu : {
+			// menu A :
+			settings : {id:'main', init:menuA, behavior, layerInit},
+			items : [
+				// settings{id, txt, check, update, init, behavior}
+				{ settings:{id,txt:'itemA1',behavior}, content:(data,e)=>console.log(data,e), },
+				{ settings:{id,txt:'itemA2',check,update,behavior}, content:()=>{}, },
+				{ settings:{id:'A3',txt:'itemA3',behavior}, content:{
+					// menu B :
+					settings : {id:'B', init:menuB, behavior},
+					items : [
+						{ settings:{id,txt:'itemB1',behavior}, content:()=>{}, },
+						{ settings:{id,txt:'itemB2',behavior}, content:()=>{}, },
+						{ settings:{id,txt:'itemB3',init:menuA,behavior}, content:()=>{}, },
+					],
+				  },
+				},
+			],
+		},
+	};
+
+
+
+	let api_key = Symbol('dev user key for sccm api');
+
+	let handle = SuperCustomContextMenu.create_menu(sccmTemplate, api_key);
+
+	handle[api_key].set_parent(document.body);
+	
+	let data = {};
+	handle[api_key].set_contextData(data);
+
+
+	//handle[api_key].open();
+
+	let menu = handle[api_key].get_menu('main');
+	
+	document.body[api_key].update_rect();
+	menu[api_key].update_rect();
+	//[...menu.children].forEach(child=>child[api_key].update_rect());
+	[...menu.children].forEach(child=>child[api_key].set_rectWithBorder(true));
+	
+	handle[api_key].open();
+
+
+
+	//
+	let A3 = handle[api_key].get_item('A3');
+	A3[api_key].locking.set_hoveritself(true);
+	A3[api_key].locking.set_opensubmenu(true);
+
+	window.onmousedown = ()=>{
+		A3[api_key].locking.lock_reaction();
+	};
+	window.onmouseup = ()=>{
+		A3[api_key].locking.unlock_reaction();
+	};
+
+
+</script>
