@@ -145,7 +145,16 @@
 					items : [
 						{ settings:{id,txt:'itemB1',behavior}, content:()=>{}, },
 						{ settings:{id,txt:'itemB2',behavior}, content:()=>{}, },
-						{ settings:{id,txt:'itemB3',init:menuA,behavior}, content:()=>{}, },
+						{ settings:{id,txt:'itemB3',init:menuA,behavior}, content:{
+							// menu C :
+							settings : {id:'C', init:menuB, behavior},
+							items : [
+								{ settings:{id,txt:'itemC1',behavior}, content:()=>{}, },
+								{ settings:{id,txt:'itemC2',behavior}, content:()=>{}, },
+								{ settings:{id,txt:'itemC3',behavior}, content:()=>{}, },
+							],
+						  }, 
+						},
 					],
 				  },
 				},
@@ -183,11 +192,22 @@
 	A3[api_key].locking.set_hoveritself(true);
 	A3[api_key].locking.set_opensubmenu(true);
 
-	window.onmousedown = ()=>{
+	/* window.onmousedown = ()=>{
 		A3[api_key].locking.lock_reaction();
 	};
 	window.onmouseup = ()=>{
 		A3[api_key].locking.unlock_reaction();
+	}; */
+
+	window.oncontextmenu = (e)=>{
+		e.preventDefault();
+		handle[api_key].open();
+		//console.log(DEBUG.instance.detainedItemReaction);
+	};
+
+	window.onkeyup = ()=>{
+		//handle[api_key].close();
+		console.log(DEBUG.instance.menuChain);
 	};
 
 

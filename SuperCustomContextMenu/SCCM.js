@@ -2,19 +2,86 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 ((SCCM)=>{ // API Exporter
 
+
 	let core = {};
 
+	core.providing = (()=>{
+
+		let minbase = { // minimal style base
+			root : {
+				position : 'relative',
+				userSelect : 'none',
+			},
+			layer : {
+				width : 0,
+				height : 0,
+				position : 'absolute',
+				pointerEvents : 'none',
+			},
+			menu : {
+				pointerEvents : 'none',
+				position : 'relative',  // \
+				width : 'fit-content',  // | together
+				height : 'fit-content', // /
+				display : 'grid',
+			},
+			item : {
+				position : 'relative',
+			},
+		};
+
+		let original = { // SCCM original default style
+			menu  : {
+				backgroundColor : 'grey',
+				gap : '2px',
+				padding : 2,
+			},
+			item  : {
+				backgroundColor : 'lightgrey',
+				padding : 2,
+			},
+		};
+
+		let apply_style = ({style:dst}/*elem dest*/, src/*new style*/)=>{
+			for(prop in src) dst[prop] = src[prop];
+		};
+
+		let def = {};
+		// arg : {menu:{bg}, item{bg,txt,hover{bg,txt},path{bg,txt},on:{bg,txt},off:{bg,txt}}}
+		def.inits = null;
+		def.set = (usr)=>{ 
+			def.inits = { // style mixing
+				root  : {...(minbase.root||{}),  ...(original?.root||{}),  ...(usr?.root||{}), },
+				layer : {...(minbase.layer||{}), ...(original?.layer||{}), ...(usr?.layer||{}),},
+				menu  : {...(minbase.menu||{}),  ...(original?.menu||{}),  ...(usr?.menu||{}), },
+				item  : {...(minbase.item||{}),  ...(original?.item||{}),  ...(usr?.item||{}), },
+			};
+		};
+		def.get = ()=>{
+			let style = def.inits;
+			return {
+				root(elem){  apply_style(elem,style.root); },
+				layer(elem){ apply_style(elem,style.layer); },
+				menu(elem){  apply_style(elem,style.menu); },
+				item(elem){  apply_style(elem,style.item); },
+			};
+		};
 
 
-	core.highLevelCheck = {
-		DOM_connexion(connectableElem){
-			if(!connectableElem.isConnected)
-				throw new Error('Menu Handle is not connected to the DOM');
-		},
-	};
+		return {defaut:def}
+
+	})();
+
+	// debug export
+	SCCM.providing ??= {};
+	SCCM.providing.set_defaut = (style)=>{ core.providing.defaut.set(style); };
+	SCCM.providing.get_defaut = ()=>{ return core.providing.defaut.get(); };
 
 
 
+
+	// independant Rect System
+	//
 
 	// rename 'width' as 'w' and 'height' as 'h'
 	let get_rect = (elem, boxSizing)=>{
@@ -26,28 +93,33 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		return {x:r.x, y:r.y, w:r.width, h:r.height};
 	};
+
 	let get_borderRect = (elem)=>{
 		return get_rect(elem, 'border-box');
 	};
+
 	let get_elemRect = (elem)=>{
 		return get_rect(elem, 'content-box');
 	};
 
+	let make_itselfRectSys = (elem)=>{
+		return {
+			props : {x:0,y:0,w:0,h:0},
+			get_copy(){
+				return {...this.props};
+			},
+			rect_method : get_borderRect,
+			update(){
+				this.props = this.rect_method(elem);
+			},
+			set_borderRect(bool){
+				this.rect_method = bool ? get_borderRect : get_elemRect;
+			},
+		};
+	};
 
-
-
-
-
-	
-
-	// TODO remove that later
-	// make -> build -> create
-	// behavior priority : elemselfbehavior || rootmainbehavior || sccmdefaultbehavior
-
-
-
-
-
+	// SCCM KEYRING
+	//
 
 	core.key = {
 		PRIV_MEM : Symbol('SCCM_PRIVATE_MEMORY'),
@@ -68,12 +140,25 @@ let SuperCustomContextMenu = {}; // API Receiver
 		BUSYLOCK : Symbol('SCCM_BUSYLOCK'),
 		READYNOW : Symbol('SCCM_READYNOW'),
 
+		/* // UNUSED TODO remove at dev end
 		HOVER    : Symbol('SCCM_HOVER'),
 		LEAVE    : Symbol('SCCM_LEAVE'),
 		OUTOF    : Symbol('SCCM_OUTOF'),
+		*/
 	};
 
-	core.build_menuStructure = function(usrTemplate, usrMemKey){
+
+	// function rank logic : make -> build -> create
+	//
+	// style priority      : style = usr_css || default_css
+	// 
+	// init priotity       : main_init={...default_init,...usr_main_init}; main_init(); usr_elem_init();
+	//
+	// behavior priority   : behavior = {...default_behavior, ...usr_main_behavior, ...usr_elem_behavior}
+
+
+
+	core.create_menuStructure = function(usrTemplate, usrMemKey){
 		
 		if(!usrTemplate.mainMenu) throw new Error('SCCM : menu root missing mainMenu in template menu Object.');
 
@@ -82,24 +167,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		let check_handleConnexion = ()=>{
-			core.highLevelCheck.DOM_connexion(handle);
+			if(!handle.isConnected) throw new Error('Menu Handle is not connected to the DOM');
 		};
 
-		let make_itselfRectSys = (elem)=>{
-			return {
-				props : {x:0,y:0,w:0,h:0},
-				get_copy(){
-					return {...this.props};
-				},
-				rect_method : get_borderRect,
-				update(){
-					this.props = this.rect_method(elem);
-				},
-				set_borderRect(bool){
-					this.rect_method = bool ? get_borderRect : get_elemRect;
-				},
-			};
-		};
+		
 
 		// basic primitive actions
 		//
@@ -171,8 +242,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// close submenus from a depth value
 		let close_menu_process = function(newDepth){
 			// TODO optimize with splice instead slice
-			instance.menuChain.slice(newDepth+1).forEach(menu=>_hide(menu));
-			instance.menuChain = instance.menuChain.slice(0,newDepth+1);
+			/* instance.menuChain.slice(newDepth+1).forEach(menu=>_hide(menu));
+			instance.menuChain = instance.menuChain.slice(0,newDepth+1); */
+			instance.menuChain.splice(newDepth+1).forEach(menu=>_hide(menu));
 		};
 
 
@@ -250,8 +322,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 			if(instance.isOpen){
 				instance.closeSetup();
 				let root = instance.get_root();
+				// items
 				update_itemPath_process(root[APP].itemPath);
+				_leave();
+				// menu
 				close_menu_process(root[APP].depth);
+				instance.hoverMenu = null;
 			}
 		};
 
@@ -285,7 +361,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				if(item !== instance.hoverItem){
 					instance.hoverMenu = item[APP].inMenu;
 					_leave();
-					_show(item);
+					_hover(item);
 				}
 			}
 		};
@@ -314,26 +390,39 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 			instance.hoverMenu = menu;
 
-			update_itemPath_process(menu[APP].itemPath);
-			// close_subMenu(menu[APP].depth); TODO maybe not
+			update_itemPath_process(instance.menuChain.at(-1)[APP].itemPath);
+		};
+
+		let get_contentStatus = (item)=>{
+			let open = false, submenu = false;
+			if(item[APP].contentType === core.key.SUBMENU){
+				submenu = true;
+				if(item[APP].content[APP].state === core.key.OPEN)
+					open = true;
+			}
+			return {alreadyOpen:open, containsMenu:submenu};
 		};
 
 		let item_mouseover = (item)=>{
 			if(instance.hoverItem !== item){
 				
-				menu_mouseover(item[APP].inMenu);
-				close_menu_process(item[APP].depth);
+				_leave(); // leave previous hover item
+				instance.hoverMenu = item[APP].inMenu;
+				update_itemPath_process(item[APP].itemPath);
+
+				let {alreadyOpen, containsMenu} = get_contentStatus(item);
+
+				close_menu_process(item[APP].depth + (alreadyOpen ? 1 : 0));
 
 				// if available
 				if(item[APP].interact === core.key.USABLE){
 	
 					// hover current item
-					
 					let reaction = ()=>_hover(item); // ORIGINALLY : _hover(item);
 					catch_itemReaction(item, reaction, 'hoveritself')?.();
 	
 					// content : submenu case
-					if(item[APP].contentType === core.key.SUBMENU){
+					if(containsMenu && !alreadyOpen){
 						reaction = ()=>open_menu_process({item:item}); // ORIGINALLY : open_menu_process({item:item});
 						catch_itemReaction(item, reaction, 'opensubmenu')?.();
 					}
@@ -371,10 +460,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// mouseleave EVENT
 		let root_mouseleave = (e)=>{
+			console.log('root_leave');
 			if(instance.isOpen){
 				_leave(); // leave current item
 				instance.hoverMenu = null;
-				// close_submenu(depth) TODO maybe not
 			}
 		};
 
@@ -388,7 +477,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// click EVENT
 		let root_click = (e)=>{
 			console.log('root_click', e);
-			
+			if(instance.isOpen)
 			if(instance.sdtClickEnable){
 				let {buttons, shiftKey, ctrlKey, altKey} = e;
 				let allowedEventProps = {buttons, shiftKey, ctrlKey, altKey};
@@ -610,7 +699,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		let set_elemRectSys = (elem)=>{
 			elem[APP].rect = make_itselfRectSys(elem);
 
-			// public features :
+			// PUBLIC FEATURES :
 			// - does check tests
 			// - protects 'this' var
 			// - exports in user access
@@ -631,16 +720,16 @@ let SuperCustomContextMenu = {}; // API Receiver
 		let set_elemBehaviorSys = (elem, ownBehavior)=>{
 			elem[APP].behavior = {...mainBehavior, ...(ownBehavior||{}),};
 			elem[uKey].behavior = {};
-			// public features :
+			// PUBLIC FEATURES :
 			// - does check tests
 			// - protects 'this' var
 			// - exports in user access
 			elem[uKey].behavior.set_method = (name,process)=>{
-				check_coreInitOnly();
+				// NO CHECK
 				elem[APP].behavior[name] = process;
 			};
 			elem[uKey].behavior.inherite_from = (inherited)=>{
-				check_coreInitOnly();
+				// NO CHECK
 				let current = elem[APP].behavior;
 				elem[APP].behavior = {...current, ...inherited}; // 'inherited' gets priority
 			};
@@ -654,11 +743,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//
 
 		let set_menuElemsAccess = (elem)=>{
-			// public features :
-			// ! does check tests TODO
+			// PUBLIC FEATURES :
+			// - does check tests
 			// - protects 'this' var
 			// - exports in user access
 			elem[uKey].elems = {
+				// NO CHECK
+				//
 				get_hook : ()=>instance.get_hook(),
 				get_root : ()=>instance.get_root(),
 				get_upItem : ()=>elem[APP].itemPath.at(-1)||null,
@@ -668,7 +759,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		let set_menuPropSetters = (elem)=>{
+			// PUBLIC FEATURES :
+			// - does check tests
+			// - protects 'this' var
+			// - exports in user access
 			elem[uKey].propSetters = {
+				// NO CHECK
 				set_id(id){ elem[APP].id = id; },
 			};
 		};
@@ -738,11 +834,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 				opensubmenu : false,
 				hoveritself : false,
 			};
-			// public features :
-			// ! does check tests TODO
+			// PUBLIC FEATURES :
+			// - does check tests
 			// - protects 'this' var
 			// - exports in user access
 			elem[uKey].locking = {
+				// NO CHECK
+				//
 				set_opensubmenu(bool){ elem[APP].locking.opensubmenu = bool; },
 				set_hoveritself(bool){ elem[APP].locking.hoveritself = bool; },
 				lock_reaction()      { elem[APP].pointer = core.key.BUSYLOCK; },
@@ -752,11 +850,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		let set_itemElemsAccess = (elem)=>{
-			// public features :
-			// ! does check tests TODO
+			// PUBLIC FEATURES :
+			// - does check tests
 			// - protects 'this' var
 			// - exports in user access
 			elem[uKey].elems = {
+				// NO CHECK
+				//
 				get_hook : ()=>instance.get_hook(),
 				get_root : ()=>instance.get_root(),
 				get_menu : ()=>elem[APP].inMenu,
@@ -765,7 +865,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		let set_itemPropSetters = (elem)=>{
+			// PUBLIC FEATURES :
+			// - does check tests
+			// - protects 'this' var
+			// - exports in user access
 			elem[uKey].propSetters = {
+				// NO CHECK
+				//
 				set_txt(txt)      { elem.textContent = txt; },
 				set_id(id)        { elem[APP].id = id; },
 				set_check(check)  { elem[APP].check = check; },
@@ -932,17 +1038,26 @@ let SuperCustomContextMenu = {}; // API Receiver
 		container.appendChild(usrStyle);
 		container.appendChild(root);
 
+
+		// debug global vars TODO remove it
+		DEBUG = {instance};
+
+
+
 		return handle;
 	};
 
 	// MAKES PUBLIC FEATURE :
 	// - does no check tests
 	// - protects 'this' var
-	let build_menuStructure = (usrTemplate, usrMemKey)=>{
+	let create_menuStructure = (usrTemplate, usrMemKey)=>{
 		// OWN CHECK
-		return core.build_menuStructure(usrTemplate, usrMemKey); // protect 'this'
+		return core.create_menuStructure(usrTemplate, usrMemKey); // protect 'this'
 	};
-	SCCM.create_menu = build_menuStructure; // export feature
+	SCCM.create_menu = create_menuStructure; // export feature
+
+
+	
 
 
 })(SuperCustomContextMenu);
