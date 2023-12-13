@@ -168,6 +168,8 @@
 
 	let handle = SuperCustomContextMenu.create_menu(sccmTemplate, api_key);
 
+	handle[api_key].add_style('.theClass{color:blue;}');
+
 	handle[api_key].set_parent(document.body);
 	
 	let data = {};

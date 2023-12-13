@@ -7,66 +7,201 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 	core.providing = (()=>{
 
-		let minbase = { // minimal style base
+		// MUST HAVE ALL TREE PROPS EVENT IF ARE EMPTY
+		const minbase = { // minimal style base
+			_all : {
+				style : {},
+				class : [],
+				css : '',
+			},
 			root : {
-				position : 'relative',
-				userSelect : 'none',
+				style : {
+					position : 'relative',
+					userSelect : 'none',
+				},
+				class : [/*StringArray*/],
+				css : '',
 			},
 			layer : {
-				width : 0,
-				height : 0,
-				position : 'absolute',
-				pointerEvents : 'none',
+				style : {
+					width : 0,
+					height : 0,
+					position : 'absolute',
+					pointerEvents : 'none',
+				},
+				class : [/*StringArray*/],
+				css : '',
 			},
 			menu : {
-				pointerEvents : 'none',
-				position : 'relative',  // \
-				width : 'fit-content',  // | together
-				height : 'fit-content', // /
-				display : 'grid',
+				style : {
+					pointerEvents : 'none',
+					position : 'relative',  // \
+					width : 'fit-content',  // | together
+					height : 'fit-content', // /
+					display : 'grid',
+				},
+				class : [/*StringArray*/],
+				css : '',
 			},
 			item : {
-				position : 'relative',
+				style : {
+					position : 'relative',
+				},
+				class : [/*StringArray*/],
+				css : '',
 			},
+			behaviors : {},
 		};
 
-		let original = { // SCCM original default style
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item) EVENT IF ARE EMPTY
+		const original = { // SCCM original default style
+			_all : {
+				css : '',
+			},
+			root : {},
+			layer : {},
 			menu  : {
-				backgroundColor : 'grey',
-				gap : '2px',
-				padding : 2,
+				style : {
+					backgroundColor : 'grey',
+					gap : '2px',
+					padding : 2,
+				},
+				class : [/*StringArray*/],
+				css : '',
 			},
 			item  : {
-				backgroundColor : 'lightgrey',
-				padding : 2,
+				style : {
+					backgroundColor : 'lightgrey',
+					padding : 2,
+				},
+				class : [/*StringArray*/],
+				css : '',
+			},
+			behaviors : {
+				// binders
+				//
+				closeMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.style.opacity = 0.1;
+						menu.style.pointerEvents = 'none';
+					};
+				},
 			},
 		};
 
-		let apply_style = ({style:dst}/*elem dest*/, src/*new style*/)=>{
-			for(prop in src) dst[prop] = src[prop];
+
+
+
+
+		const collect_css = (base, sccm, usr)=>{
+			return (
+				base._all.css        + base.root.css        + base.layer.css        + base.menu.css        + base.item.css +
+			    (sccm._all.css||'')  + (sccm.root.css||'')  + (sccm.layer.css||'')  + (sccm.menu.css||'')  + (sccm.item.css||'') +
+			    (usr?._all?.css||'') + (usr?.root?.css||'') + (usr?.layer?.css||'') + (usr?.menu?.css||'') + (usr?.item?.css||'')
+			);
 		};
 
-		let def = {};
-		// arg : {menu:{bg}, item{bg,txt,hover{bg,txt},path{bg,txt},on:{bg,txt},off:{bg,txt}}}
-		def.inits = null;
-		def.set = (usr)=>{ 
-			def.inits = { // style mixing
-				root  : {...(minbase.root||{}),  ...(original?.root||{}),  ...(usr?.root||{}), },
-				layer : {...(minbase.layer||{}), ...(original?.layer||{}), ...(usr?.layer||{}),},
-				menu  : {...(minbase.menu||{}),  ...(original?.menu||{}),  ...(usr?.menu||{}), },
-				item  : {...(minbase.item||{}),  ...(original?.item||{}),  ...(usr?.item||{}), },
-			};
-		};
-		def.get = ()=>{
-			let style = def.inits;
+		const mix_style = (type, base, sccm, usr)=>{
 			return {
-				root(elem){  apply_style(elem,style.root); },
-				layer(elem){ apply_style(elem,style.layer); },
-				menu(elem){  apply_style(elem,style.menu); },
-				item(elem){  apply_style(elem,style.item); },
+				// _all                    // (root/layer/menu/item)
+				...(base._all.style),      ...(base[type].style),       // base
+				...(sccm._all.style||{}),  ...(sccm[type].style||{}),   // sccm
+				...(usr?._all?.style||{}), ...(usr?.[type]?.style||{}), // usr
+			};
+			// priority : { ...base._all, ...base.type, ...sccm._all, ...sccm.type, ...usr._all, ...usr.type }
+		};
+
+		const merge_class = (type, base, sccm, usr)=>{
+			return [...new Set([
+				// _all                    // (root/layer/menu/item)
+				...(base._all.class),      ...(base[type].class),       // base
+				...(sccm._all.class||[]),  ...(sccm[type].class||[]),   // sccm
+				...(usr?._all?.class||[]), ...(usr?.[type]?.class||[]), // usr
+			])].join(' ');
+			// priority : { ...base._all, ...base.type, ...sccm._all, ...sccm.type, ...usr._all, ...usr.type }
+		};
+
+		const compile_init = (base, sccm, usr)=>{
+			return {
+				root  : {
+					style : mix_style('root', base, sccm, usr),
+					class : merge_class('root', base, sccm, usr),
+				},
+				layer : {
+					style : mix_style('layer', base, sccm, usr),
+					class : merge_class('layer', base, sccm, usr),
+				},
+				menu  : {
+					style : mix_style('menu', base, sccm, usr),
+					class : merge_class('menu', base, sccm, usr),
+				},
+				item  : {
+					style : mix_style('item', base, sccm, usr),
+					class : merge_class('item', base, sccm, usr),
+				},
 			};
 		};
 
+		const apply_init = (dst_elem, src_init)=>{
+			// apply style
+			let dst = dst_elem.style;
+			let src = src_init.style;
+			for(prop in src) dst[prop] = src[prop];
+			// apply class
+			dst_elem.className = src_init.class;
+		};
+
+		const build_init = (base, sccm, usr)=>{
+			const inits = compile_init(base, sccm, usr);
+			return {
+				root(elem) { apply_init(elem, inits.root);  },
+				layer(elem){ apply_init(elem, inits.layer); },
+				menu(elem) { apply_init(elem, inits.menu);  },
+				item(elem) { apply_init(elem, inits.item);  },
+			};
+		};
+
+		const bind_behavior = (binders, uKey)=>{
+			const binded = {};
+			for(behavior in binders) binded[behavior] = binders[behavior](uKey);
+			return binded;
+		};
+
+		const mix_behavior = (base, sccm, usr, uKey)=>{
+			return {
+				...bind_behavior(base.behaviors, uKey),
+				...bind_behavior(sccm.behaviors, uKey),
+				...(usr?.behavior||{}),
+			};
+		};
+
+		
+
+		const def = {};
+
+		def.css = null;
+		def.init = null;
+		def.behavior = null;
+		def.uKey = null;
+
+		def.set = (usrKey, usrTheme)=>{
+			if(!usrKey) return;
+			def.uKey = usrKey;
+			// css collecting
+			def.css = collect_css(minbase, original, usrTheme);
+			// style mixing / class merging
+			def.init = build_init(minbase, original, usrTheme);
+			// behavior binding
+			def.behavior = mix_behavior(minbase, original, usrTheme, usrKey);
+		};
+
+		def.get = ()=>{
+			return {
+				css      : def.css,
+				initELEM : def.init,
+				behavior : def.behavior,
+			};
+		};
 
 		return {defaut:def}
 
@@ -80,10 +215,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 
-	// independant Rect System
+	// independant Rect System (external lib)
 	//
 
-	// rename 'width' as 'w' and 'height' as 'h'
+	// renames 'width' as 'w' and 'height' as 'h'
+	// captures rect bounding by according boxSizing
 	let get_rect = (elem, boxSizing)=>{
 		let tmp_boxSizing = elem.style.boxSizing;
 		elem.style.boxSizing = boxSizing;
