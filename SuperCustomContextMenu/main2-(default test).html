@@ -1,0 +1,62 @@
+<script src="SCCM.js"></script>
+
+<body>
+	
+</body>
+
+<script>
+
+	let id = 0;
+
+	let sccmTemplate = {
+		// root :
+		settings : {},
+		mainMenu : {
+			// menu A :
+			settings : {id:'main'},
+			items : [
+				// settings{id, txt, check, update, init, behavior}
+				{ settings:{id,txt:'itemA1'}, content:(data,e)=>console.log(data,e), },
+				{ settings:{id,txt:'itemA2'}, content:()=>{}, },
+				{ settings:{id:'A3',txt:'itemA3'}, content:{
+					// menu B :
+					settings : {id:'B',},
+					items : [
+						{ settings:{id,txt:'itemB1'}, content:()=>{}, },
+						{ settings:{id,txt:'itemB2'}, content:()=>{}, },
+						{ settings:{id,txt:'itemB3',}, content:{
+							// menu C :
+							settings : {id:'C',},
+							items : [
+								{ settings:{id,txt:'itemC1'}, content:()=>{}, },
+								{ settings:{id,txt:'itemC2'}, content:()=>{}, },
+								{ settings:{id,txt:'itemC3'}, content:()=>{}, },
+							],
+						  }, 
+						},
+					],
+				  },
+				},
+			],
+		},
+	};
+
+	
+	let api_key = Symbol('dev user key for sccm api');
+
+	let handle = SuperCustomContextMenu.create_menu(sccmTemplate, api_key);
+
+	handle[api_key].set_parent(document.body);
+	document.body[api_key].update_rect();
+	
+	let data = {};
+	handle[api_key].set_contextData(data);
+
+	let menu = handle[api_key].get_menu('main');
+	menu[api_key].update_rect();
+	menu.style.left = 0;
+	[...menu.children].forEach(child=>child[api_key].set_rectWithBorder(true));
+	
+	handle[api_key].open();
+
+</script>

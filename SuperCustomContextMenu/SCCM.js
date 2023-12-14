@@ -5,93 +5,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 	let core = {};
 
-	core.providing = (()=>{
-
-		// MUST HAVE ALL TREE PROPS EVENT IF ARE EMPTY
-		const minbase = { // minimal style base
-			_all : {
-				style : {},
-				class : [],
-				css : '',
-			},
-			root : {
-				style : {
-					position : 'relative',
-					userSelect : 'none',
-				},
-				class : [/*StringArray*/],
-				css : '',
-			},
-			layer : {
-				style : {
-					width : 0,
-					height : 0,
-					position : 'absolute',
-					pointerEvents : 'none',
-				},
-				class : [/*StringArray*/],
-				css : '',
-			},
-			menu : {
-				style : {
-					pointerEvents : 'none',
-					position : 'relative',  // \
-					width : 'fit-content',  // | together
-					height : 'fit-content', // /
-					display : 'grid',
-				},
-				class : [/*StringArray*/],
-				css : '',
-			},
-			item : {
-				style : {
-					position : 'relative',
-				},
-				class : [/*StringArray*/],
-				css : '',
-			},
-			behaviors : {},
-		};
-
-		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item) EVENT IF ARE EMPTY
-		const original = { // SCCM original default style
-			_all : {
-				css : '',
-			},
-			root : {},
-			layer : {},
-			menu  : {
-				style : {
-					backgroundColor : 'grey',
-					gap : '2px',
-					padding : 2,
-				},
-				class : [/*StringArray*/],
-				css : '',
-			},
-			item  : {
-				style : {
-					backgroundColor : 'lightgrey',
-					padding : 2,
-				},
-				class : [/*StringArray*/],
-				css : '',
-			},
-			behaviors : {
-				// binders
-				//
-				closeMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.style.opacity = 0.1;
-						menu.style.pointerEvents = 'none';
-					};
-				},
-			},
-		};
-
-
-
-
+	core.themeLib = (()=>{
 
 		const collect_css = (base, sccm, usr)=>{
 			return (
@@ -175,33 +89,193 @@ let SuperCustomContextMenu = {}; // API Receiver
 			};
 		};
 
+		return {collect_css, build_init, mix_behavior};
+	})();
+
+	core.providing = (()=>{
+
+		const {collect_css, build_init, mix_behavior} = core.themeLib;
+
+		// MUST HAVE ALL TREE PROPS EVENT IF ARE EMPTY
+		const minbase = { // minimal style base
+			_all : {
+				style : {},
+				class : [],
+				css : '',
+			},
+			root : {
+				style : {
+					position : 'relative',
+					userSelect : 'none',
+				},
+				class : [/*StringArray*/],
+				css : '',
+			},
+			layer : {
+				style : {
+					width : 0,
+					height : 0,
+					position : 'absolute',
+					pointerEvents : 'none',
+				},
+				class : [/*StringArray*/],
+				css : '',
+			},
+			menu : {
+				style : {
+					pointerEvents : 'none',
+					position : 'relative',  // \
+					width : 'fit-content',  // | together
+					height : 'fit-content', // /
+					display : 'grid',
+					left : '100%',
+				},
+				class : [/*StringArray*/],
+				css : '',
+			},
+			item : {
+				style : {
+					position : 'relative',
+				},
+				class : [/*StringArray*/],
+				css : '',
+			},
+			behaviors : {
+				// binders
+				//
+				openMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.style.opacity = 1;
+						menu.style.pointerEvents = 'auto';
+						menu[uKey].elems.get_items()
+							.filter(item=>item[uKey].elems.get_submenu())
+								.forEach(item=>item[uKey].update_rect());
+					};
+				},
+				closeMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.style.opacity = 0.1;
+						menu.style.pointerEvents = 'none';
+					};
+				},
+				setClosedMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.style.opacity = 0.1;
+						menu.style.pointerEvents = 'none';
+					};
+				},
+				hoverItem_method : (uKey)=>{
+					return (item)=>{
+						item.style.backgroundColor = 'crimson';
+					};
+				},
+				leaveItem_method : (uKey)=>{
+					return (item)=>{
+						item.style.backgroundColor = 'lightgrey';
+					};
+				},
+				inpathItem_method : (uKey)=>{
+					return (item)=>{
+						item.style.backgroundColor = 'orange';
+					};
+				},
+				outpathItem_method : (uKey)=>{
+					return (item)=>{
+						item.style.backgroundColor = 'lightgrey';
+					};
+				},
+				disableItem_method : (uKey)=>{
+					return (item)=>{
+						item.style.color = 'green';
+					};
+				},
+				enableItem_method : (uKey)=>{
+					return (item)=>{
+						item.style.color = 'black';
+					};
+				},
+				replaceLayer_method : (uKey)=>{
+					return ({hook, root, upMenu, item, layer, menu})=>{
+						// trick : ('item' must be first)
+						// if item then it's submenu case
+						// if menu then it's mainmenu case
+						const elem = item || menu;
+						const hookRect = hook[uKey].get_rect();
+						const elemRect = elem[uKey].get_rect();
+						layer.style.left = elemRect.x - hookRect.x;
+						layer.style.top  = elemRect.y - hookRect.y;
+						layer.style.width  = elemRect.w;
+						layer.style.height = elemRect.h;
+			
+					};
+				},
+				
+			},
+		};
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item) EVENT IF ARE EMPTY
+		const original = { // SCCM original default style
+			_all : {
+				css : '\n'
+				    + '.original-general{'
+				    + '  padding : 2px;'
+				    + '}\n',
+			},
+			root : {},
+			layer : {},
+			menu  : {
+				class : ['original-general', 'original-menu'],
+				css : '\n'
+				    + '.original-menu{'
+				    + '  background-color : grey;'
+				    + '  gap : 2px;'
+				    + '  top : -2px;'
+				    + '}\n',
+			},
+			item  : {
+				class : ['original-general', 'original-item'],
+				css : '\n'
+				    + '.original-item{'
+				    + '  background-color : lightgrey;'
+				    + '}\n',
+			},
+			behaviors : {
+				
+			},
+		};
+
 		
 
-		const def = {};
+		const def = (()=>{
+			const def = {};
 
-		def.css = null;
-		def.init = null;
-		def.behavior = null;
-		def.uKey = null;
-
-		def.set = (usrKey, usrTheme)=>{
-			if(!usrKey) return;
-			def.uKey = usrKey;
-			// css collecting
-			def.css = collect_css(minbase, original, usrTheme);
-			// style mixing / class merging
-			def.init = build_init(minbase, original, usrTheme);
-			// behavior binding
-			def.behavior = mix_behavior(minbase, original, usrTheme, usrKey);
-		};
-
-		def.get = ()=>{
-			return {
-				css      : def.css,
-				initELEM : def.init,
-				behavior : def.behavior,
+			def.css = null;
+			def.init = null;
+			def.behavior = null;
+			def.uKey = null;
+	
+			def.set = (usrKey, usrTheme)=>{
+				if(!usrKey) return;
+				def.uKey = usrKey;
+				// css collecting
+				def.css = collect_css(minbase, original, usrTheme);
+				// style mixing / class merging
+				def.init = build_init(minbase, original, usrTheme);
+				// behavior binding
+				def.behavior = mix_behavior(minbase, original, usrTheme, usrKey);
 			};
-		};
+	
+			def.get = ()=>{
+				return {
+					css      : def.css,
+					initELEM : def.init,
+					behavior : def.behavior,
+				};
+			};
+
+			return def;
+		})();
+
 
 		return {defaut:def}
 
@@ -209,7 +283,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 	// debug export
 	SCCM.providing ??= {};
-	SCCM.providing.set_defaut = (style)=>{ core.providing.defaut.set(style); };
+	SCCM.providing.set_defaut = (user_key, theme)=>{ core.providing.defaut.set(user_key, theme); };
 	SCCM.providing.get_defaut = ()=>{ return core.providing.defaut.get(); };
 
 
@@ -284,7 +358,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 	};
 
 
-	// function rank logic : make -> build -> create
+	// function rank logic : set -> make -> build -> create
 	//
 	// style priority      : style = usr_css || default_css
 	// 
@@ -1123,9 +1197,22 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const APP = core.key.PRIV_MEM;
 		const uKey = usrMemKey;
 
-		const mainBehavior = {/*...defaultBehavior,*/ ...(usrTemplate.settings?.behavior||{})}; // TODO defaultBehavior
 
-		const mainInit = {/*...defaultInit,*/ ...(usrTemplate.settings?.initELEM||{})}; // TODO defaultInit
+		// default theme
+		core.providing.defaut.set(uKey);
+		const { 
+			css      : default_css,
+			initELEM : defaultInit,
+			behavior : defaultBehavior,
+		} = core.providing.defaut.get();
+
+		// final theme
+
+		const mainInit = {...defaultInit, ...(usrTemplate.settings?.initELEM||{})};
+
+		const mainBehavior = {...defaultBehavior, ...(usrTemplate.settings?.behavior||{})};
+
+		// sccm instance
 
 		let instance = {
 			isOpen : false,
@@ -1169,7 +1256,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		builder(usrTemplate.mainMenu, true, root);
 
 		let usrStyle = document.createElement('STYLE');
-		usrStyle.textContent = usrTemplate.settings?.css || ''; // TODO || defaultStyle
+		usrStyle.textContent = usrTemplate.settings?.css || default_css;
 
 		container.appendChild(usrStyle);
 		container.appendChild(root);
