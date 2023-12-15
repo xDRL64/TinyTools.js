@@ -4,13 +4,20 @@
 	
 </body>
 
-<script>
+<script> (()=>{
 
+	
 	let id = 0;
+
+	const SCCM = SuperCustomContextMenu;
+	let api_key = Symbol('dev user key for sccm api');
+
+	SCCM.providing.set_empty(api_key);
+	//const {css, initELEM, behavior} = SCCM.providing.get_empty();
 
 	let sccmTemplate = {
 		// root :
-		settings : {},
+		settings : SCCM.providing.get_empty(),
 		mainMenu : {
 			// menu A :
 			settings : {id:'main'},
@@ -41,8 +48,8 @@
 		},
 	};
 
+
 	
-	let api_key = Symbol('dev user key for sccm api');
 
 	let handle = SuperCustomContextMenu.create_menu(sccmTemplate, api_key);
 
@@ -59,4 +66,4 @@
 	
 	handle[api_key].open();
 
-</script>
+})(); </script>

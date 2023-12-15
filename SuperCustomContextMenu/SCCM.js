@@ -7,6 +7,44 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 	core.themeLib = (()=>{
 
+		const mix_base2 = (full_base, part_base)=>{
+			// inject part_base in a copy of full_base
+			// (mix subprops at depth : style/class/css/behaviors)
+			B_to_A = (A, B)=>{
+				for(const b in B)
+					if(b==='behaviors' || b==='style' || b==='class' || b==='css'){
+						if(b === 'behaviors') A[b] = {...A[b], ...B[b]};
+						if(b === 'style') A[b] = {...A[b], ...B[b]};
+						if(b === 'class') A[b] = [...A[b], ...B[b]];
+						if(b === 'css') A[b] += B[b];
+					}else
+						B_to_A(A[b], B[b]);
+			}
+			// structuredClone cannot copy object containing function as props
+			const {behaviors} = full_base; delete full_base.behaviors;
+			const clone_base = structuredClone(full_base);
+			full_base.behaviors = behaviors;
+			clone_base.behaviors = behaviors;
+			// recursive process
+			B_to_A(clone_base, part_base);
+			return clone_base;
+		};
+
+		const mix_base = (full_base, part_base)=>{
+			const new_base = {};
+			['_all', 'root', 'layer', 'menu', 'item',].forEach(prop=>{
+				new_base[prop] = {
+					style : {...full_base[prop].style, ...(part_base[prop]?.style||{})},
+					class : [...full_base[prop].class, ...(part_base[prop]?.class||[])],
+					css   : full_base[prop].css + (part_base[prop]?.css||''),
+				};
+			});
+			
+			new_base.behaviors = {...full_base.behaviors, ...(part_base.behaviors||{})};
+
+			return new_base;
+		};
+
 		const collect_css = (base, sccm, usr)=>{
 			return (
 				base._all.css        + base.root.css        + base.layer.css        + base.menu.css        + base.item.css +
@@ -36,6 +74,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const compile_init = (base, sccm, usr)=>{
+			const init = {root:null, layer:null, menu:null, item:null};
+			for(const type in init) init[type] = {
+				style : mix_style(type, base, sccm, usr),
+				class : merge_class(type, base, sccm, usr),
+			}
+			return init;
+
 			return {
 				root  : {
 					style : mix_style('root', base, sccm, usr),
@@ -58,9 +103,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const apply_init = (dst_elem, src_init)=>{
 			// apply style
-			let dst = dst_elem.style;
-			let src = src_init.style;
-			for(prop in src) dst[prop] = src[prop];
+			const dst = dst_elem.style;
+			const src = src_init.style;
+			for(const prop in src) dst[prop] = src[prop];
 			// apply class
 			dst_elem.className = src_init.class;
 		};
@@ -77,7 +122,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const bind_behavior = (binders, uKey)=>{
 			const binded = {};
-			for(behavior in binders) binded[behavior] = binders[behavior](uKey);
+			for(const behavior in binders)
+				binded[behavior] = binders[behavior](uKey);
+
 			return binded;
 		};
 
@@ -89,15 +136,45 @@ let SuperCustomContextMenu = {}; // API Receiver
 			};
 		};
 
-		return {collect_css, build_init, mix_behavior};
+		const make_themeGenerator = (base, sccm)=>{
+			const theme = {};
+
+			theme.css = null;
+			theme.init = null;
+			theme.behavior = null;
+			theme.uKey = null;
+	
+			theme.set = (usrKey, usrTheme)=>{
+				if(!usrKey) return;
+				theme.uKey = usrKey;
+				// css collecting
+				theme.css = collect_css(base, sccm, usrTheme);
+				// style mixing / class merging
+				theme.init = build_init(base, sccm, usrTheme);
+				// behavior binding and mixing
+				theme.behavior = mix_behavior(base, sccm, usrTheme, usrKey);
+			};
+	
+			theme.get = ()=>{
+				return {
+					css      : theme.css,
+					initELEM : theme.init,
+					behavior : theme.behavior,
+				};
+			};
+
+			return theme;
+		};
+
+		return {mix_base, make_themeGenerator};
 	})();
 
 	core.providing = (()=>{
 
-		const {collect_css, build_init, mix_behavior} = core.themeLib;
+		const {mix_base, make_themeGenerator} = core.themeLib;
 
 		// MUST HAVE ALL TREE PROPS EVENT IF ARE EMPTY
-		const minbase = { // minimal style base
+		const _base = { // minimal style base
 			_all : {
 				style : {},
 				class : [],
@@ -128,7 +205,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 					width : 'fit-content',  // | together
 					height : 'fit-content', // /
 					display : 'grid',
-					left : '100%',
 				},
 				class : [/*StringArray*/],
 				css : '',
@@ -213,8 +289,98 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item) EVENT IF ARE EMPTY
-		const original = { // SCCM original default style
+		// EMPTY THEME
+		//
+
+		// contains only differences from its base
+		const empty_base = mix_base(_base, { // empty style base
+			menu : {
+				style : {
+					left : '100%',
+				},
+			},
+		});
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_empty = { // SCCM empty style
+			_all : {},
+			root : {},
+			layer : {},
+			menu : {},
+			item : {},
+			behaviors : {},
+		};
+
+		// DEFAULT THEME
+		//
+
+		// MUST HAVE ALL TREE PROPS EVENT IF ARE EMPTY
+		const default_base = { // minimal style base
+			_all : {
+				style : {
+					..._base._all.style,
+				},
+				class : [
+					..._base._all.class,
+				],
+				css : (
+					_base._all.css + ''
+				),
+			},
+			root : {
+				style : {
+					..._base.root.style,
+				},
+				class : [
+					..._base.root.class,
+				],
+				css : (
+					_base.root.css + ''
+				),
+			},
+			layer : {
+				style : {
+					..._base.layer.style,
+				},
+				class : [
+					..._base.layer.class,
+				],
+				css : (
+					_base.layer.css + ''
+				),
+			},
+			menu : {
+				style : {
+					..._base.menu.style,
+					left : '100%',
+				},
+				class : [
+					..._base.menu.class,
+				],
+				css : (
+					_base.menu.css + ''
+				),
+			},
+			item : {
+				style : {
+					..._base.item.style,
+				},
+				class : [
+					..._base.item.class,
+				],
+				css : (
+					_base.item.css + ''
+				),
+			},
+			behaviors : {
+				// binders
+				//
+				..._base.behaviors,
+			},
+		};
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_default = { // SCCM original default style
 			_all : {
 				css : '\n'
 				    + '.original-general{'
@@ -246,45 +412,22 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		
 
-		const def = (()=>{
-			const def = {};
+		const empty = make_themeGenerator(empty_base, sccm_empty);
+		const def = make_themeGenerator(default_base, sccm_default);
 
-			def.css = null;
-			def.init = null;
-			def.behavior = null;
-			def.uKey = null;
-	
-			def.set = (usrKey, usrTheme)=>{
-				if(!usrKey) return;
-				def.uKey = usrKey;
-				// css collecting
-				def.css = collect_css(minbase, original, usrTheme);
-				// style mixing / class merging
-				def.init = build_init(minbase, original, usrTheme);
-				// behavior binding
-				def.behavior = mix_behavior(minbase, original, usrTheme, usrKey);
-			};
-	
-			def.get = ()=>{
-				return {
-					css      : def.css,
-					initELEM : def.init,
-					behavior : def.behavior,
-				};
-			};
-
-			return def;
-		})();
-
-
-		return {defaut:def}
+		return {empty, defaut:def, };
 
 	})();
 
 	// debug export
 	SCCM.providing ??= {};
-	SCCM.providing.set_defaut = (user_key, theme)=>{ core.providing.defaut.set(user_key, theme); };
-	SCCM.providing.get_defaut = ()=>{ return core.providing.defaut.get(); };
+
+	SCCM.providing.set_empty = (user_key, theme)=>{ core.providing.empty.set(user_key, theme); };
+	SCCM.providing.get_empty = ()=>{ return core.providing.empty.get(); };
+
+	SCCM.providing.set_default = (user_key, theme)=>{ core.providing.defaut.set(user_key, theme); };
+	SCCM.providing.get_default = ()=>{ return core.providing.defaut.get(); };
+
 
 
 
