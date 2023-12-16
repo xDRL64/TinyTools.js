@@ -7,32 +7,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 	core.themeLib = (()=>{
 
-		const mix_base2 = (full_base, part_base)=>{
-			// inject part_base in a copy of full_base
-			// (mix subprops at depth : style/class/css/behaviors)
-			B_to_A = (A, B)=>{
-				for(const b in B)
-					if(b==='behaviors' || b==='style' || b==='class' || b==='css'){
-						if(b === 'behaviors') A[b] = {...A[b], ...B[b]};
-						if(b === 'style') A[b] = {...A[b], ...B[b]};
-						if(b === 'class') A[b] = [...A[b], ...B[b]];
-						if(b === 'css') A[b] += B[b];
-					}else
-						B_to_A(A[b], B[b]);
-			}
-			// structuredClone cannot copy object containing function as props
-			const {behaviors} = full_base; delete full_base.behaviors;
-			const clone_base = structuredClone(full_base);
-			full_base.behaviors = behaviors;
-			clone_base.behaviors = behaviors;
-			// recursive process
-			B_to_A(clone_base, part_base);
-			return clone_base;
-		};
-
 		const mix_base = (full_base, part_base)=>{
 			const new_base = {};
-			['_all', 'root', 'layer', 'menu', 'item',].forEach(prop=>{
+			['_all', 'root', 'layer', 'menu', 'item'].forEach(prop=>{
 				new_base[prop] = {
 					style : {...full_base[prop].style, ...(part_base[prop]?.style||{})},
 					class : [...full_base[prop].class, ...(part_base[prop]?.class||[])],
@@ -80,25 +57,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 				class : merge_class(type, base, sccm, usr),
 			}
 			return init;
-
-			return {
-				root  : {
-					style : mix_style('root', base, sccm, usr),
-					class : merge_class('root', base, sccm, usr),
-				},
-				layer : {
-					style : mix_style('layer', base, sccm, usr),
-					class : merge_class('layer', base, sccm, usr),
-				},
-				menu  : {
-					style : mix_style('menu', base, sccm, usr),
-					class : merge_class('menu', base, sccm, usr),
-				},
-				item  : {
-					style : mix_style('item', base, sccm, usr),
-					class : merge_class('item', base, sccm, usr),
-				},
-			};
 		};
 
 		const apply_init = (dst_elem, src_init)=>{
@@ -169,9 +127,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 		return {mix_base, make_themeGenerator};
 	})();
 
-	core.providing = (()=>{
+	core.theme = (()=>{
 
 		const {mix_base, make_themeGenerator} = core.themeLib;
+
+		// THEME TEMPLATE BASES
+		//
 
 		// MUST HAVE ALL TREE PROPS EVENT IF ARE EMPTY
 		const _base = { // minimal style base
@@ -221,7 +182,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				//
 				openMenu_method : (uKey)=>{
 					return (menu)=>{
-						menu.style.opacity = 1;
+						menu.style.display = '';
 						menu.style.pointerEvents = 'auto';
 						menu[uKey].elems.get_items()
 							.filter(item=>item[uKey].elems.get_submenu())
@@ -230,44 +191,44 @@ let SuperCustomContextMenu = {}; // API Receiver
 				},
 				closeMenu_method : (uKey)=>{
 					return (menu)=>{
-						menu.style.opacity = 0.1;
+						menu.style.display = 'none';
 						menu.style.pointerEvents = 'none';
 					};
 				},
 				setClosedMenu_method : (uKey)=>{
 					return (menu)=>{
-						menu.style.opacity = 0.1;
+						menu.style.display = 'none';
 						menu.style.pointerEvents = 'none';
 					};
 				},
 				hoverItem_method : (uKey)=>{
 					return (item)=>{
-						item.style.backgroundColor = 'crimson';
+						//item.style.backgroundColor = 'crimson';
 					};
 				},
 				leaveItem_method : (uKey)=>{
 					return (item)=>{
-						item.style.backgroundColor = 'lightgrey';
+						//item.style.backgroundColor = 'lightgrey';
 					};
 				},
 				inpathItem_method : (uKey)=>{
 					return (item)=>{
-						item.style.backgroundColor = 'orange';
+						//item.style.backgroundColor = 'orange';
 					};
 				},
 				outpathItem_method : (uKey)=>{
 					return (item)=>{
-						item.style.backgroundColor = 'lightgrey';
+						//item.style.backgroundColor = 'lightgrey';
 					};
 				},
 				disableItem_method : (uKey)=>{
 					return (item)=>{
-						item.style.color = 'green';
+						//item.style.color = 'green';
 					};
 				},
 				enableItem_method : (uKey)=>{
 					return (item)=>{
-						item.style.color = 'black';
+						//item.style.color = 'black';
 					};
 				},
 				replaceLayer_method : (uKey)=>{
@@ -289,17 +250,88 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		// EMPTY THEME
-		//
+		// contains only differences from its base
+		const withClass_part = {
+			menu : {
+				class : ['menu'],
+			},
+			item : {
+				class : ['item'],
+			},
+			behaviors : {
+				// binders
+				//
+				openMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.remove('closed');
+						menu.style.pointerEvents = 'auto';
+						menu[uKey].elems.get_items()
+							.filter(item=>item[uKey].elems.get_submenu())
+								.forEach(item=>item[uKey].update_rect());
+					};
+				},
+				closeMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.add('closed');
+						menu.style.pointerEvents = 'none';
+					};
+				},
+				setClosedMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.add('closed');
+						menu.style.pointerEvents = 'none';
+					};
+				},
+				hoverItem_method : (uKey)=>{
+					return (item)=>{
+						item.classList.add('hovered');
+					};
+				},
+				leaveItem_method : (uKey)=>{
+					return (item)=>{
+						item.classList.remove('hovered');
+					};
+				},
+				inpathItem_method : (uKey)=>{
+					return (item)=>{
+						item.classList.add('inPath');
+					};
+				},
+				outpathItem_method : (uKey)=>{
+					return (item)=>{
+						item.classList.remove('inPath');
+					};
+				},
+				disableItem_method : (uKey)=>{
+					return (item)=>{
+						item.classList.add('notAvailable');
+					};
+				},
+				enableItem_method : (uKey)=>{
+					return (item)=>{
+						item.classList.remove('notAvailable');
+					};
+				},
+			},
+		};
+
+		const class_base = mix_base(_base, withClass_part);
 
 		// contains only differences from its base
-		const empty_base = mix_base(_base, { // empty style base
+		const left100_part = {
 			menu : {
 				style : {
 					left : '100%',
 				},
 			},
-		});
+		}
+
+
+		// EMPTY THEME
+		//
+		
+		const empty_base = mix_base(_base, left100_part);
+		const emptyClass_base = mix_base(class_base, left100_part);
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const sccm_empty = { // SCCM empty style
@@ -311,98 +343,127 @@ let SuperCustomContextMenu = {}; // API Receiver
 			behaviors : {},
 		};
 
+
+
+
+
+		
+
+
+
+
+
+
+
 		// DEFAULT THEME
 		//
 
-		// MUST HAVE ALL TREE PROPS EVENT IF ARE EMPTY
-		const default_base = { // minimal style base
-			_all : {
-				style : {
-					..._base._all.style,
-				},
-				class : [
-					..._base._all.class,
-				],
-				css : (
-					_base._all.css + ''
-				),
-			},
-			root : {
-				style : {
-					..._base.root.style,
-				},
-				class : [
-					..._base.root.class,
-				],
-				css : (
-					_base.root.css + ''
-				),
-			},
-			layer : {
-				style : {
-					..._base.layer.style,
-				},
-				class : [
-					..._base.layer.class,
-				],
-				css : (
-					_base.layer.css + ''
-				),
-			},
+		// contains only differences from its base
+		const default_base = mix_base(class_base, { // default style base
 			menu : {
 				style : {
-					..._base.menu.style,
 					left : '100%',
 				},
-				class : [
-					..._base.menu.class,
-				],
-				css : (
-					_base.menu.css + ''
-				),
 			},
-			item : {
-				style : {
-					..._base.item.style,
-				},
-				class : [
-					..._base.item.class,
-				],
-				css : (
-					_base.item.css + ''
-				),
-			},
-			behaviors : {
-				// binders
-				//
-				..._base.behaviors,
-			},
-		};
+		});
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const sccm_default = { // SCCM original default style
 			_all : {
 				css : '\n'
-				    + '.original-general{'
+				    + '.general{'
 				    + '  padding : 2px;'
 				    + '}\n',
 			},
 			root : {},
 			layer : {},
 			menu  : {
-				class : ['original-general', 'original-menu'],
+				class : ['general'],
 				css : '\n'
-				    + '.original-menu{'
+				    + '.menu{'
 				    + '  background-color : grey;'
 				    + '  gap : 2px;'
 				    + '  top : -2px;'
+				    + '}\n'
+				    + '.closed{'
+				    + '  opacity : 0;'
 				    + '}\n',
 			},
 			item  : {
-				class : ['original-general', 'original-item'],
+				class : ['general', 'item'],
 				css : '\n'
-				    + '.original-item{'
+				    + '.item{'
 				    + '  background-color : lightgrey;'
+				    + '}\n'
+				    + '.inPath{'
+				    + '  background-color : orange;'
+				    + '}\n'
+				    + '.hovered{'
+				    + '  background-color : crimson;'
+				    + '}\n'
+				    + '.notAvailable{'
+				    + '  color : green;'
+				    + '}\n',
+			},
+			behaviors : {
+				
+			},
+		};
+
+
+		// WIN10 THEME
+		//
+
+		// contains only differences from its base
+		const win10_base = mix_base(class_base, { // win10 style base
+			menu : {
+				style : {
+					left : '100%',
+					top : '-3px', // border 1 + padding 2
+				},
+			},
+		});
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_win10 = { // win10 style
+			_all : {
+				css : '\n'
+				    + '.general{'
+				    + '  font-size : 12;'
+				    + '  font-family: "Segoe UI", Arial, sans-serif;'
+				    + '}\n',
+			},
+			root : {},
+			layer : {},
+			menu  : {
+				class : ['general'],
+				css : '\n'
+				    + '.menu{'
+				    + '  background-color : #EEEEEE;'
+					+ '  padding : 2px;'
+					+ '  border : 1px solid #A0A0A0;'
+					+ '  box-sizing : border-box'
+				    + '}\n'
+				    + '.closed{'
+				    + '  opacity : 0;'
+				    + '}\n',
+			},
+			item  : {
+				class : ['general', 'item'],
+				css : '\n'
+				    + '.item{'
+				    + '  background-color : #EEEEEE;'
+					+ '  padding : 4 128 4 32;'
+					//+ '  mix-blend-mode: darken;'
+				    + '}\n'
+				    + '.inPath{'
+				    + '  background-color : white;'
+				    + '}\n'
+				    + '.hovered{'
+				    + '  background-color : white;'
+				    + '}\n'
+				    + '.notAvailable{'
+				    + '  color : #6D6D6D;'
 				    + '}\n',
 			},
 			behaviors : {
@@ -413,22 +474,26 @@ let SuperCustomContextMenu = {}; // API Receiver
 		
 
 		const empty = make_themeGenerator(empty_base, sccm_empty);
+		const withclass = make_themeGenerator(emptyClass_base, sccm_empty);
 		const def = make_themeGenerator(default_base, sccm_default);
+		const win10 = make_themeGenerator(win10_base, sccm_win10);
 
-		return {empty, defaut:def, };
+		return {empty, withclass, defaut:def, win10};
 
 	})();
 
 	// debug export
 	SCCM.providing ??= {};
+	SCCM.providing.theme ??= {};
 
-	SCCM.providing.set_empty = (user_key, theme)=>{ core.providing.empty.set(user_key, theme); };
-	SCCM.providing.get_empty = ()=>{ return core.providing.empty.get(); };
-
-	SCCM.providing.set_default = (user_key, theme)=>{ core.providing.defaut.set(user_key, theme); };
-	SCCM.providing.get_default = ()=>{ return core.providing.defaut.get(); };
-
-
+	// AUTO MAKES PUBLIC FEATURES
+	// - does no check
+	// - protects 'this' var
+	// - export to main api
+	Object.keys(core.theme).forEach(tname=>{
+		SCCM.providing.theme['set_'+tname] = (user_key, usr_theme)=>{ core.theme[tname].set(user_key, usr_theme); };
+		SCCM.providing.theme['get_'+tname] = ()=>{ return core.theme[tname].get(); };
+	});
 
 
 
@@ -542,6 +607,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			instance.hoverItem?.[APP].behavior.leaveItem_method(instance.hoverItem);
 			instance.hoverItem = null;
 			instance.detainedItemReaction = null; // cancel detained item reactions
+			check_delaySys_onLeaveItem();
 		};
 		let _hover = (item)=>{
 			item[APP].behavior.hoverItem_method(item);
@@ -784,6 +850,56 @@ let SuperCustomContextMenu = {}; // API Receiver
 			console.log('item_mouseover');
 		};
 
+		let check_delaySys_onLeaveItem = ()=>{
+			if(instance.clear_lateProcessOnLeaveItem) clearTimeout(instance.lastLateProcessID);
+		};
+
+		let item_mouseover_foldableOnDelay = (item)=>{
+			if(instance.hoverItem !== item){
+				
+				// normal process
+				//
+
+				_leave(); // leave previous hover item
+				instance.hoverMenu = item[APP].inMenu;
+				update_itemPath_process(item[APP].itemPath);
+
+				let reaction = null;
+				if(item[APP].interact === core.key.USABLE){
+					// hover current item
+					reaction = ()=>_hover(item); // ORIGINALLY : _hover(item);
+					catch_itemReaction(item, reaction, 'hoveritself')?.();
+				}
+
+				reaction = ()=>{
+					let {alreadyOpen, containsMenu} = get_contentStatus(item);
+	
+					close_menu_process(item[APP].depth + (alreadyOpen ? 1 : 0));
+	
+					// if available
+					if(item[APP].interact === core.key.USABLE){
+						// content : submenu case
+						if(containsMenu && !alreadyOpen){
+							reaction = ()=>open_menu_process({item:item}); // ORIGINALLY : open_menu_process({item:item});
+							catch_itemReaction(item, reaction, 'opensubmenu')?.();
+						}
+					}
+				};
+
+				// delay system
+				//
+				const delay = instance.foldableDelay;
+				if(instance.merge_delaySysWithItemReaction){ // mix delaySys witn itemReaction (expert mode)
+					catch_itemReaction(item, reaction, 'delaysystem');//?.(); // cannot be refused
+					instance.lastLateProcessID = setTimeout(()=>release_itemReactions(item), delay);
+				}else{ // delaySys works as independant (normal mode)
+					instance.lastLateProcessID = setTimeout(()=>reaction(), delay);
+				}
+
+			}
+			console.log('item_mouseover_delay');
+		};
+
 		// parse ancestor and return the first parent having sccm prop as MAINELEM value.
 		// if doesn't find, stop to 'root' elem and return it.
 		let get_menuAncestorElem = function(elem){
@@ -807,7 +923,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 				let fromElem = e.toElement || e.target;
 				let elem = get_menuAncestorElem(fromElem);
 				if(elem[APP].type === core.key.MENU) menu_mouseover(elem);
-				if(elem[APP].type === core.key.ITEM) item_mouseover(elem);
+				if(elem[APP].type === core.key.ITEM){
+					if(instance.foldableDelay)
+						item_mouseover_foldableOnDelay(elem);
+					else
+						item_mouseover(elem);
+				}
 			}
 		};
 
@@ -895,6 +1016,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 			handle[uKey].get_chainLength = ()=>{
 				// NO CHECK
 				return instance.menuChain.length;
+			};
+
+			handle[uKey].set_itemFoldableReactionDelay = (milliseconds)=>{
+				// NO CHECK
+				instance.foldableDelay = milliseconds;
 			};
 
 			handle[uKey].set_clickEnable = (bool)=>{
@@ -1160,8 +1286,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		let catch_itemReaction = (item, scopedReaction, reactionType)=>{
 
+			let willCatch = (reactionType === 'delaysystem');
+
 			if(item[APP].pointer === core.key.BUSYLOCK)
-			if(item[APP].locking[reactionType]){ // 'opensubmenu' || 'hoveritself'
+			if(item[APP].locking[reactionType]) // 'opensubmenu' || 'hoveritself'
+				willCatch = true;
+			
+			if(willCatch){ 
 				// if no previous item already catched
 				// or if previous catched item is not current item
 				if(instance.detainedItemReaction?.item !== item)
@@ -1266,7 +1397,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 		
-		// returns : a menu for recursive process
+		// returns : a menu for recursive process. (return has no importance)
+		// it will mainly affect vars in parent scope : instance and root.
 		// arg menuRef : is the user template (full or subpart)
 		// arg isMain : must be true on first recursive loop
 		// arg chainElem : first elem owning {depth, itemPath}
@@ -1342,12 +1474,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 		// default theme
-		core.providing.defaut.set(uKey);
+		core.theme.defaut.set(uKey);
 		const { 
 			css      : default_css,
 			initELEM : defaultInit,
 			behavior : defaultBehavior,
-		} = core.providing.defaut.get();
+		} = core.theme.defaut.get();
 
 		// final theme
 
@@ -1387,6 +1519,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		instance.detainedItemReaction = null; // format : {item,reactionStack[function,...]}
+
+		instance.foldableDelay = 100; // also considerated as flag : false if === 0 , true if > 0
+		instance.merge_delaySysWithItemReaction = false; // usr can release delaySys but delaySys will release itemReaction at every delaySys' release
+		instance.lastLateProcessID = null;
+		instance.clear_lateProcessOnLeaveItem = true;
+
 		instance.sdtClickEnable = true;
 
 		let contextData = null;
@@ -1416,6 +1554,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 	// MAKES PUBLIC FEATURE :
 	// - does no check tests
 	// - protects 'this' var
+	// - export to main api
 	let create_menuStructure = (usrTemplate, usrMemKey)=>{
 		// OWN CHECK
 		return core.create_menuStructure(usrTemplate, usrMemKey); // protect 'this'

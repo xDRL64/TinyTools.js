@@ -8,34 +8,40 @@
 
 	
 	let id = 0;
+	const forceDisable = ()=>false;
+	const check = forceDisable;
 
 	const SCCM = SuperCustomContextMenu;
 	let api_key = Symbol('dev user key for sccm api');
 
-	SCCM.providing.set_empty(api_key);
-	//const {css, initELEM, behavior} = SCCM.providing.get_empty();
+	SCCM.providing.theme.set_win10(api_key);
+	//const {css, initELEM, behavior} = SCCM.providing.theme.get_empty();
 
 	let sccmTemplate = {
 		// root :
-		settings : SCCM.providing.get_empty(),
+		settings : /* {} || */ SCCM.providing.theme.get_win10(),
 		mainMenu : {
 			// menu A :
 			settings : {id:'main'},
 			items : [
 				// settings{id, txt, check, update, init, behavior}
 				{ settings:{id,txt:'itemA1'}, content:(data,e)=>console.log(data,e), },
-				{ settings:{id,txt:'itemA2'}, content:()=>{}, },
+				{ settings:{id,txt:'Affichage'}, content:()=>{}, },
+				{ settings:{id,txt:'Affichage'}, content:()=>{}, },
+				{ settings:{id,txt:'Affichage'}, content:()=>{}, },
+				{ settings:{id,txt:'Affichage'}, content:()=>{}, },
+				{ settings:{id,txt:'Affichage'}, content:()=>{}, },
 				{ settings:{id:'A3',txt:'itemA3'}, content:{
 					// menu B :
 					settings : {id:'B',},
 					items : [
 						{ settings:{id,txt:'itemB1'}, content:()=>{}, },
-						{ settings:{id,txt:'itemB2'}, content:()=>{}, },
+						{ settings:{id,txt:'itemB2',check}, content:()=>{}, },
 						{ settings:{id,txt:'itemB3',}, content:{
 							// menu C :
 							settings : {id:'C',},
 							items : [
-								{ settings:{id,txt:'itemC1'}, content:()=>{}, },
+								{ settings:{id,txt:'itemC1'}, content:{settings:{},items:[{ settings:{id,txt:'itemD1'}, content:()=>{}, },]}, },
 								{ settings:{id,txt:'itemC2'}, content:()=>{}, },
 								{ settings:{id,txt:'itemC3'}, content:()=>{}, },
 							],
