@@ -14,12 +14,12 @@
 	const SCCM = SuperCustomContextMenu;
 	let api_key = Symbol('dev user key for sccm api');
 
-	SCCM.providing.theme.set_win10(api_key);
+	SCCM.providing.theme.set_macosx(api_key);
 	//const {css, initELEM, behavior} = SCCM.providing.theme.get_empty();
 
 	let sccmTemplate = {
 		// root :
-		settings : /* {} || */ SCCM.providing.theme.get_win10(),
+		settings : /* {} || */ SCCM.providing.theme.get_macosx(),
 		mainMenu : {
 			// menu A :
 			settings : {id:'main'},
@@ -61,6 +61,12 @@
 
 	handle[api_key].set_parent(document.body);
 	document.body[api_key].update_rect();
+
+	const bodyTestBG = 'url("https://i.pinimg.com/736x/cb/c0/37/cbc0370bc576eef14f1d6bca0585221c.jpg")';
+	const bs = document.body.style;
+	bs.backgroundImage = bodyTestBG;
+	document.body.onclick = ()=>(bs.backgroundImage = (bs.backgroundImage ? '' : bodyTestBG));
+	//document.body.onclick = ()=>console.log('sdfsfdfs');
 	
 	let data = {};
 	handle[api_key].set_contextData(data);

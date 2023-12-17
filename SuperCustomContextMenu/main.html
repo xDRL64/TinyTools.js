@@ -12,10 +12,11 @@
 		openMenu_method : (menu)=>{
 			menu.style.opacity = 1;
 			menu.style.pointerEvents = 'auto';
-			//[...menu.children].forEach( item=>item[api_key].update_rect() ); // TODO : make menu[api_key].update_itemRects_ /all /submenuOnly
-			menu[api_key].elems.get_items()
+			//[...menu.children].forEach( item=>item[api_key].update_rect() );
+			/* menu[api_key].elems.get_items()
 				.filter(item=>item[api_key].elems.get_submenu())
-					.forEach(item=>item[api_key].update_rect());
+					.forEach(item=>item[api_key].update_rect()); */
+			menu[api_key].elems.update_itemRects();
 		},
 		closeMenu_method : (menu)=>{
 			menu.style.opacity = 0.1;

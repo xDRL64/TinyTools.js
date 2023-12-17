@@ -184,9 +184,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 					return (menu)=>{
 						menu.style.display = '';
 						menu.style.pointerEvents = 'auto';
-						menu[uKey].elems.get_items()
+						/* menu[uKey].elems.get_items()
 							.filter(item=>item[uKey].elems.get_submenu())
-								.forEach(item=>item[uKey].update_rect());
+								.forEach(item=>item[uKey].update_rect()); */ // TODO remove on next save
+						menu[uKey].elems.update_itemRects();
 					};
 				},
 				closeMenu_method : (uKey)=>{
@@ -265,9 +266,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 					return (menu)=>{
 						menu.classList.remove('closed');
 						menu.style.pointerEvents = 'auto';
-						menu[uKey].elems.get_items()
-							.filter(item=>item[uKey].elems.get_submenu())
-								.forEach(item=>item[uKey].update_rect());
+						menu[uKey].elems.update_itemRects();
 					};
 				},
 				closeMenu_method : (uKey)=>{
@@ -312,6 +311,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 						item.classList.remove('notAvailable');
 					};
 				},
+
+				// replaceLayer_method // not overwrote
 			},
 		};
 
@@ -418,7 +419,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const win10_base = mix_base(class_base, { // win10 style base
 			menu : {
 				style : {
-					left : '100%',
+					left : 'calc(100% - 3px)',
 					top : '-3px', // border 1 + padding 2
 				},
 			},
@@ -442,7 +443,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '  background-color : #EEEEEE;'
 					+ '  padding : 2px;'
 					+ '  border : 1px solid #A0A0A0;'
-					+ '  box-sizing : border-box'
+					+ '  box-sizing : border-box;'
+					+ '  box-shadow: 5px 5px 5px -5px black;'     // respects outside corners shadow pixel offset \ Use a pseudo elem ::before
+					+ '  box-shadow: 5px 5px 4px -3px #00000080;' // respects inside corners shadow pixel offset  / using shadow to get perfect result
 				    + '}\n'
 				    + '.closed{'
 				    + '  opacity : 0;'
@@ -463,7 +466,79 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '  background-color : white;'
 				    + '}\n'
 				    + '.notAvailable{'
-				    + '  color : #6D6D6D;'
+				    //+ '  color : #6D6D6D;'
+				    + '  color : #6A6A6A;'
+				    + '}\n',
+			},
+			behaviors : {
+				
+			},
+		};
+
+
+
+
+
+
+
+		// MACOSX THEME
+		//
+
+		// contains only differences from its base
+		const macosx_base = mix_base(class_base, { // macosx style base
+			menu : {
+				style : {
+					left : 'calc(100% - 1px)',
+					top : '-5px', // border 1 + padding 2
+				},
+			},
+		});
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_macosx = { // macosx style
+			_all : {
+				css : '\n'
+				    + '.general{'
+				    + '  font-size : 15;'
+				    + '  font-family: "SF Pro", Arial, sans-serif;'
+				    + '}\n',
+			},
+			root : {},
+			layer : {},
+			menu  : {
+				class : ['general'],
+				css : '\n'
+				    + '.menu{'
+				    + '  background-color: rgba(230, 230, 230, 0.6);'
+				    + '  backdrop-filter: blur(50px);'
+					+ '  padding : 4px 0px;'
+					+ '  border : 1px solid rgba(150, 150, 150, 0.5);'
+					+ '  border-radius : 4px;'
+					+ '  box-sizing : border-box;'
+					+ '  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.35);' // web ref
+					+ '  box-shadow: 4px 6px 12px -4px rgba(0, 0, 0, 0.35);' // my ajustement
+				    + '}\n'
+				    + '.closed{'
+				    + '  opacity : 0;'
+				    + '}\n',
+			},
+			item  : {
+				class : ['general', 'item'],
+				css : '\n'
+				    + '.item{'
+				    //+ '  background-color: rgba(230, 230, 230, 0.9);'
+					+ '  padding : 4 128 4 32;'
+				    + '}\n'
+				    + '.inPath{'
+				    + '  background-color : rgba(73, 154, 251, 1);'
+				    + '  color : white;'
+				    + '}\n'
+				    + '.hovered{'
+				    + '  background-color : rgba(73, 154, 251, 1);'
+				    + '  color : white;'
+				    + '}\n'
+				    + '.notAvailable{'
+				    + '  color : #6A6A6A;'
 				    + '}\n',
 			},
 			behaviors : {
@@ -477,8 +552,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const withclass = make_themeGenerator(emptyClass_base, sccm_empty);
 		const def = make_themeGenerator(default_base, sccm_default);
 		const win10 = make_themeGenerator(win10_base, sccm_win10);
+		const macosx = make_themeGenerator(macosx_base, sccm_macosx);
 
-		return {empty, withclass, defaut:def, win10};
+		return {empty, withclass, defaut:def, win10, macosx};
 
 	})();
 
@@ -1221,6 +1297,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// menu
 		//
 
+		let update_subRects = (menu, submenuOnly/*bool*/)=>{
+			if(submenuOnly)
+				menu[APP].items.forEach(item=>item[APP].contentType===core.key.SUBMENU?item[APP].rect.update():null);
+			else
+				menu[APP].items.forEach(item=>item[APP].rect.update());
+		};
+
 		let set_menuElemsAccess = (elem)=>{
 			// PUBLIC FEATURES :
 			// - does check tests
@@ -1234,6 +1317,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				get_upItem : ()=>elem[APP].itemPath.at(-1)||null,
 				get_layer : ()=>elem[APP].layer,
 				get_items : ()=>[...elem[APP].items],
+				update_itemRects : (submenuOnly=true)=>update_subRects(elem, submenuOnly),
 			};
 		};
 
