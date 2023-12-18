@@ -642,6 +642,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '}\n'
 				    + '.notAvailable{'
 				    + '  color : #6A6A6A;'
+				    + '}\n'
+				    + '.asSeparator{'
+				    + '  margin : 4px 0px;'
+				    + '  padding : 0px;'
+				    + '  height : 2px;'
+				    + '  background-color : rgba(150, 150, 150, 0.3);'
 				    + '}\n',
 			},
 		});
@@ -985,20 +991,27 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// handle public features :
 		//
 
-		let connect_handle = (hook)=>{
+		let connect_handle = (hook)=>{ // TODO do tests
 			hook.appendChild(handle);
-			hook[APP] = {};
-			init_elemUsrAccess(hook);
-			set_elemRectSys(hook);
 			usrHookElem = hook;
+			if(!hook[APP]){
+				hook[APP] = {};
+				hook[APP].connectedCount = 0;
+				init_elemUsrAccess(hook);
+				set_elemRectSys(hook);
+			}
+			hook[APP].connectedCount++;
 		};
-		let disconnect_handle = ()=>{
+		let disconnect_handle = ()=>{ // TODO do tests
 			close_instance();
 			let hook = usrHookElem;
 			hook.removeChild(handle);
-			delete hook[APP];
-			delete hook[uKey];
+			hook[APP].connectedCount--;
 			usrHookElem = null;
+			if(hook[APP].connectedCount === 0){
+				delete hook[APP];
+				delete hook[uKey];
+			}
 		};
 
 
