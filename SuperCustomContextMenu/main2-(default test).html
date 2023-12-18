@@ -14,26 +14,39 @@
 	const SCCM = SuperCustomContextMenu;
 	let api_key = Symbol('dev user key for sccm api');
 
-	SCCM.providing.theme.set_macosx(api_key);
-	//const {css, initELEM, behavior} = SCCM.providing.theme.get_empty();
+	const theme = SCCM.providing.theme;
+	theme.macosx.set_horizontal(api_key);
+	theme.macosx.set_horizontal2nd(api_key);
+	theme.macosx.set_horizontalMain(api_key);
+
+	const osxHrzMain = theme.macosx.get_horizontalMain();
+	const osxHrzMain_inits = osxHrzMain.initELEM;
+	const osxHrzMainBehavior = osxHrzMain.behavior;
+	const {menu:osxHrzMainMenu, item:osxHrzMainItem} = osxHrzMain_inits;
+	const appleLogo = '<img width=20 height=20 src="https://icons.iconarchive.com/icons/pictogrammers/material/256/apple-icon.png"/>';
+
+	const mainItem = osxHrzMainItem;
+	const mainBehavior = osxHrzMainBehavior;
+
+	//const {css, initELEM, behavior} = theme.empty.get_minimal();
 
 	let sccmTemplate = {
 		// root :
-		settings : /* {} || */ SCCM.providing.theme.get_macosx(),
+		settings : /* {} || */ theme.macosx.get_horizontal(),
 		mainMenu : {
 			// menu A :
-			settings : {id:'main'},
+			settings : {id:'main', init:osxHrzMainMenu, behavior:mainBehavior},
 			items : [
 				// settings{id, txt, check, update, init, behavior}
-				{ settings:{id,txt:'itemA1'}, content:(data,e)=>console.log(data,e), },
-				{ settings:{id,txt:'Affichage'}, content:()=>{}, },
-				{ settings:{id,txt:'Affichage'}, content:()=>{}, },
-				{ settings:{id,txt:'Affichage'}, content:()=>{}, },
-				{ settings:{id,txt:'Affichage'}, content:()=>{}, },
-				{ settings:{id,txt:'Affichage'}, content:()=>{}, },
-				{ settings:{id:'A3',txt:'itemA3'}, content:{
+				{ settings:{id,txt:appleLogo, init:mainItem}, content:(data,e)=>console.log(data,e), },
+				{ settings:{id,txt:'<b>Finder</b>', init:mainItem}, content:()=>{}, },
+				{ settings:{id,txt:'Edition', init:mainItem}, content:()=>{}, },
+				{ settings:{id,txt:'Affichage', init:mainItem}, content:()=>{}, },
+				{ settings:{id,txt:'itemA4', init:mainItem}, content:()=>{}, },
+				{ settings:{id,txt:'itemA5', init:mainItem}, content:()=>{}, },
+				{ settings:{id:'A3',txt:'submenu', init:mainItem}, content:{
 					// menu B :
-					settings : {id:'B',},
+					settings : {id:'B', init:theme.macosx.get_horizontal2nd().initELEM.menu},
 					items : [
 						{ settings:{id,txt:'itemB1'}, content:()=>{}, },
 						{ settings:{id,txt:'itemB2',check}, content:()=>{}, },
@@ -76,6 +89,13 @@
 	menu.style.left = 0;
 	[...menu.children].forEach(child=>child[api_key].set_rectWithBorder(true));
 	
+	handle.style.width = '100%';
+	handle[api_key].get_root().style.width = '100%';
+	menu[api_key].elems.get_layer().style.width = '100%';
+	menu.style.width = '100%';
+
 	handle[api_key].open();
+
+
 
 })(); </script>

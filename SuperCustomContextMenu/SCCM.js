@@ -8,6 +8,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 	core.themeLib = (()=>{
 
 		const mix_base = (full_base, part_base)=>{
+			// accepts : _all/root/layer/menu/item/behaviors
 			const new_base = {};
 			['_all', 'root', 'layer', 'menu', 'item'].forEach(prop=>{
 				new_base[prop] = {
@@ -68,13 +69,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 			dst_elem.className = src_init.class;
 		};
 
-		const build_init = (base, sccm, usr)=>{
+		const build_init = (base, sccm, usr, {addon_init, usrKey})=>{
 			const inits = compile_init(base, sccm, usr);
 			return {
-				root(elem) { apply_init(elem, inits.root);  },
-				layer(elem){ apply_init(elem, inits.layer); },
-				menu(elem) { apply_init(elem, inits.menu);  },
-				item(elem) { apply_init(elem, inits.item);  },
+				root(elem) { apply_init(elem, inits.root);  addon_init?.root?.(elem, usrKey); },
+				layer(elem){ apply_init(elem, inits.layer); addon_init?.layer?.(elem, usrKey); },
+				menu(elem) { apply_init(elem, inits.menu);  addon_init?.menu?.(elem, usrKey); },
+				item(elem) { apply_init(elem, inits.item);  addon_init?.item?.(elem, usrKey); },
 			};
 		};
 
@@ -94,7 +95,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			};
 		};
 
-		const make_themeGenerator = (base, sccm)=>{
+		const make_themeGenerator = (base, sccm, addon_init)=>{
 			const theme = {};
 
 			theme.css = null;
@@ -108,7 +109,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				// css collecting
 				theme.css = collect_css(base, sccm, usrTheme);
 				// style mixing / class merging
-				theme.init = build_init(base, sccm, usrTheme);
+				theme.init = build_init(base, sccm, usrTheme, {addon_init, usrKey});
 				// behavior binding and mixing
 				theme.behavior = mix_behavior(base, sccm, usrTheme, usrKey);
 			};
@@ -412,6 +413,120 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 
+
+
+		// SLIDING (DEFAULT) THEME
+		//
+
+		// contains only differences from its base
+		const sliding_base = mix_base(class_base, { // sliding style base
+			menu : {
+				style : {
+					left : '0%',
+				},
+				css : '\n'
+				    + '@keyframes opening{'
+				    + '  000% {pointer-events : none;}'
+				    + '  100% {pointer-events : auto;}'
+				    + '}\n',
+			},
+		});
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_sliding = { // SCCM sliding style
+			_all : {
+				css : '\n'
+				    + '.general{'
+				    + '  padding : 2px;'
+				    + '}\n',
+			},
+			root : {},
+			layer : {},
+			menu  : {
+				class : ['general'],
+				css : '\n'
+				    + '.menu{'
+				    + '  background-color : grey;'
+				    + '  gap : 2px;'
+				    + '  top : -2px;'
+				    + '  transition : left 1s, opacity 1s;'
+				    //+ '  animation : opening 1s forwards;'
+				    + '}\n'
+				    + '.closed{'
+				    + '  opacity : 0;'
+				    + '}\n',
+			},
+			item  : {
+				class : ['general', 'item'],
+				css : '\n'
+				    + '.item{'
+				    + '  background-color : lightgrey;'
+				    + '}\n'
+				    + '.inPath{'
+				    + '  background-color : orange;'
+				    + '}\n'
+				    + '.hovered{'
+				    + '  background-color : crimson;'
+				    + '}\n'
+				    + '.notAvailable{'
+				    + '  color : green;'
+				    + '}\n',
+			},
+			behaviors : {
+				// binders
+				//
+				openMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.add('open');
+						menu.classList.remove('closed');
+						menu.style.left = '100%';
+						menu[uKey].elems.update_itemRects();
+					};
+				},
+				closeMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.add('closed');
+						menu.classList.remove('open');
+						menu.style.left = '0%';
+						menu.style.pointerEvents = 'none';
+					};
+				},
+				setClosedMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.add('closed');
+						menu.classList.remove('open');
+						menu.style.left = '0%';
+						menu.style.pointerEvents = 'none';
+					};
+				},
+			},
+		};
+
+		// everything optional (root/layer/menu/item)
+		const sliding_additional_inits = {
+			menu : (menu, uKey)=>{
+				menu.addEventListener('transitionstart',e=>{
+					console.log(e);
+					if(menu.classList.contains('open')){
+						menu.style.zIndex = -1;
+						menu.style.pointerEvents = 'none';
+					}
+				});
+				menu.addEventListener('transitionend',e=>{
+					console.log(e);
+					if(menu.classList.contains('open')){
+						menu[uKey].elems.update_itemRects();
+						menu.style.zIndex = menu[uKey].elems.get_chainLength()+1;
+						menu.style.pointerEvents = 'auto';
+					}
+				});
+			},
+		};
+
+
+
+
+
 		// WIN10 THEME
 		//
 
@@ -486,16 +601,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// contains only differences from its base
 		const macosx_base = mix_base(class_base, { // macosx style base
-			menu : {
-				style : {
-					left : 'calc(100% - 1px)',
-					top : '-5px', // border 1 + padding 2
-				},
-			},
-		});
-
-		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		const sccm_macosx = { // macosx style
 			_all : {
 				css : '\n'
 				    + '.general{'
@@ -503,8 +608,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '  font-family: "SF Pro", Arial, sans-serif;'
 				    + '}\n',
 			},
-			root : {},
-			layer : {},
 			menu  : {
 				class : ['general'],
 				css : '\n'
@@ -527,7 +630,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				css : '\n'
 				    + '.item{'
 				    //+ '  background-color: rgba(230, 230, 230, 0.9);'
-					+ '  padding : 4 128 4 32;'
+					+ '  padding : 4 128 4 24;'
 				    + '}\n'
 				    + '.inPath{'
 				    + '  background-color : rgba(73, 154, 251, 1);'
@@ -541,34 +644,154 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '  color : #6A6A6A;'
 				    + '}\n',
 			},
+		});
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_macosx_defaultMain = { // macosx default main menu style
+			_all : {},
+			root : {},
+			layer : {},
+			menu  : {
+				style : {
+					left : '0px',
+					top : '0px',
+				},
+			},
+			item  : {},
+			behaviors : {},
+		};
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_macosx_default = { // macosx default style
+			_all : {},
+			root : {},
+			layer : {},
+			menu  : {
+				style : {
+					left : 'calc(100% - 1px)',
+					top : '-5px', // border 1 + padding 4
+				},
+			},
+			item  : {},
+			behaviors : {},
+		};
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_macosx_horizontalMain = { // macosx horizontal main menu style
+			_all : {},
+			root : {},
+			layer : {},
+			menu  : {
+				style : {
+					left : '0px',
+					top : '0px',
+					gridAutoFlow : 'column',
+					justifyContent : 'start',
+					padding : '0px 16px',
+					borderRadius : '0px',
+				},
+			},
+			item  : {
+				style : {
+					padding : '4px 12px',
+				},
+			},
 			behaviors : {
-				
+				replaceLayer_method : (uKey)=>{
+					return ({hook, root, upMenu, item, layer, menu})=>{
+						const hookRect = hook[uKey].get_rect();
+						if(item){
+							const elem = item;
+							const elemRect = elem[uKey].get_rect();
+							layer.style.left = elemRect.x - hookRect.x;
+							layer.style.top  = elemRect.y - hookRect.y;
+							layer.style.width  = elemRect.w;
+							layer.style.height = elemRect.h;
+						}else{ // main menu case
+							layer.style.left = 0 - hookRect.x;
+							layer.style.top  = 0 - hookRect.y;
+							layer.style.width  = '100%';
+							layer.style.height = '100%';
+						}
+					};
+				},
 			},
 		};
 
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_macosx_horizontal2nd = { // macosx horizontal submenu of main menu style
+			_all : {},
+			root : {},
+			layer : {},
+			menu  : {
+				style : {
+					left : '0px',
+					top : '100%',
+				},
+			},
+			item  : {},
+			behaviors : {},
+		};
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_macosx_horizontal = { // macosx horizontal submenu style
+			// _all : {},
+			// root : {},
+			// layer : {},
+			// menu  : {},
+			// item  : {},
+			// behaviors : {},
+			...sccm_macosx_default,
+		};
+
+
+
+
 		
 
-		const empty = make_themeGenerator(empty_base, sccm_empty);
-		const withclass = make_themeGenerator(emptyClass_base, sccm_empty);
-		const def = make_themeGenerator(default_base, sccm_default);
-		const win10 = make_themeGenerator(win10_base, sccm_win10);
-		const macosx = make_themeGenerator(macosx_base, sccm_macosx);
-
-		return {empty, withclass, defaut:def, win10, macosx};
-
+		return { // object depth 2 : groups <- themes
+			empty : {
+				minimal : make_themeGenerator(empty_base, sccm_empty),
+				withClass : make_themeGenerator(emptyClass_base, sccm_empty),
+			},
+			sccmOriginal : {
+				default : make_themeGenerator(default_base, sccm_default),
+				fading : null,
+				sliding : make_themeGenerator(sliding_base, sccm_sliding, sliding_additional_inits),
+				slidingMain : null,
+				growing : null,
+				growingMain : null,
+			},
+			windows10 : {
+				default : make_themeGenerator(win10_base, sccm_win10),
+				noFading : null,
+			},
+			macosx : {
+				defaultMain : make_themeGenerator(macosx_base, sccm_macosx_defaultMain),
+				default     : make_themeGenerator(macosx_base, sccm_macosx_default),
+				horizontalMain : make_themeGenerator(macosx_base, sccm_macosx_horizontalMain),
+				horizontal2nd  : make_themeGenerator(macosx_base, sccm_macosx_horizontal2nd),
+				horizontal     : make_themeGenerator(macosx_base, sccm_macosx_horizontal),
+			},
+		}
 	})();
 
 	// debug export
 	SCCM.providing ??= {};
 	SCCM.providing.theme ??= {};
+	
 
 	// AUTO MAKES PUBLIC FEATURES
 	// - does no check
 	// - protects 'this' var
 	// - export to main api
-	Object.keys(core.theme).forEach(tname=>{
-		SCCM.providing.theme['set_'+tname] = (user_key, usr_theme)=>{ core.theme[tname].set(user_key, usr_theme); };
-		SCCM.providing.theme['get_'+tname] = ()=>{ return core.theme[tname].get(); };
+	Object.keys(core.theme).forEach(gname=>{ //groupname
+		const group = core.theme[gname];
+		Object.keys(group).forEach(tname=>{ // themename
+			SCCM.providing.theme[gname] ??= {};
+			SCCM.providing.theme[gname]['set_'+tname] = (user_key, usr_theme)=>{ group[tname].set(user_key, usr_theme); };
+			SCCM.providing.theme[gname]['get_'+tname] = ()=>{ return group[tname].get(); };
+		});
 	});
 
 
@@ -1314,6 +1537,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				//
 				get_hook : ()=>instance.get_hook(),
 				get_root : ()=>instance.get_root(),
+				get_chainLength : ()=>instance.menuChain.length,
 				get_upItem : ()=>elem[APP].itemPath.at(-1)||null,
 				get_layer : ()=>elem[APP].layer,
 				get_items : ()=>[...elem[APP].items],
@@ -1440,7 +1664,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			elem[uKey].propSetters = {
 				// NO CHECK
 				//
-				set_txt(txt)      { elem.textContent = txt; },
+				set_txt(txt)      { elem.innerHTML = txt; },
 				set_id(id)        { elem[APP].id = id; },
 				set_check(check)  { elem[APP].check = check; },
 				set_update(update){ elem[APP].update = update; },
@@ -1517,7 +1741,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 				let item = make_sccm_item(init ,behavior);
 
-				item.textContent = txt;
+				item.innerHTML = txt;
 				item[APP].id = id;
 				item[APP].check = check;
 				item[APP].update = update;
@@ -1558,12 +1782,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 		// default theme
-		core.theme.defaut.set(uKey);
+		core.theme.sccmOriginal.default.set(uKey);
 		const { 
 			css      : default_css,
 			initELEM : defaultInit,
 			behavior : defaultBehavior,
-		} = core.theme.defaut.get();
+		} = core.theme.sccmOriginal.default.get();
 
 		// final theme
 
