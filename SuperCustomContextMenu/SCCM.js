@@ -319,6 +319,43 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const class_base = mix_base(_base, withClass_part);
 
+
+		const expendClass_part = {
+			menu : {
+				style : {
+					pointerEvents : '',
+				},
+			},
+			behaviors : {
+				
+				// binders
+				//
+				openMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.add('open');
+						menu.classList.remove('closed');
+						menu[uKey].elems.update_itemRects();
+					};
+				},
+				closeMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.add('closed');
+						menu.classList.remove('open');
+					};
+				},
+				setClosedMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.add('closed');
+						menu.classList.remove('open');
+					};
+				},
+
+			},
+		};
+
+		const expClass_base = mix_base(class_base, expendClass_part);
+
+
 		// contains only differences from its base
 		const left100_part = {
 			menu : {
@@ -392,7 +429,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '}\n',
 			},
 			item  : {
-				class : ['general', 'item'],
+				class : ['general'],
 				css : '\n'
 				    + '.item{'
 				    + '  background-color : lightgrey;'
@@ -402,6 +439,85 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '}\n'
 				    + '.hovered{'
 				    + '  background-color : crimson;'
+				    + '}\n'
+				    + '.notAvailable{'
+				    + '  color : green;'
+				    + '}\n',
+			},
+			behaviors : {
+				
+			},
+		};
+
+
+
+		// ORIGINAL GLASS THEME
+		//
+
+		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+		const sccm_glass = { // SCCM original glass style
+			_all : {
+				css : '\n'
+				    + '.general{'
+				    + '  padding : 2px;'
+				    + '}\n'
+
+					/* +`.item::before {
+						content: '';
+						position: absolute;
+						inset: 0;
+						background-color: transparent;
+					}`, */
+			},
+			root : {},
+			layer : {},
+			menu  : {
+				class : ['general'],
+				css : '\n'
+				    + '.menu{'
+				    //+ '  background-color : grey;'
+				    + '  gap : 2px;'
+				    + '  top : -2px;'
+				    + '  left : 100%;'
+				    + '}\n'
+				    + '.main{'
+				    + '  left : 0%;'
+				    + '}\n'
+				    + '.closed{'
+				    + '  opacity : 0;'
+				    + '  pointer-events : none;'
+				    + '}\n'
+				    + '.open{'
+				    + '  pointer-events : auto;'
+				    + '}\n',
+			},
+			item  : {
+				class : ['general', 'item'],
+				css : '\n'
+				    + '.item{'
+				    //+ '  background-color : lightgrey;'
+				    + '  padding : 4 128 4 24;'
+				    + '  border-radius: 2px;'
+				    + '  box-shadow: inset -3px -2px 9px 0px white;'
+				    + '  background: linear-gradient(to top, #00000000 0%, #FFFFFF88 100%);'
+					+ '  backdrop-filter: blur(25px);'
+					// to avoid disfunctioning with blur de merde of css de merde add "text-shadow" ending by "1px 1px 25px transparent;"
+					// in absolute use a "text-shadow : x y blur color" with blur value big enough
+					+ '  text-shadow: -1px 0px 0px white, 1px 1px 2px white, 1px 1px 25px transparent;'
+					//+ '  text-shadow: -1px 0px 0px white, 1px 1px 2px white;'
+					+ '  font-family: Poppins, sans-serif;'
+				    + '}\n'
+				    + '.inPath{'
+				    + '  background-color : orange;'
+				    + '}\n'
+				    + '.hovered{'
+				    //+ '  content: "";'
+				    //+ '  position: absolute;'
+				    //+ '  inset: 0;'
+
+				    + '  background-color : crimson;'
+				    //+ '  text-shadow : none;'
+					//+ '  backdrop-filter: none;'
 				    + '}\n'
 				    + '.notAvailable{'
 				    + '  color : green;'
@@ -630,7 +746,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				css : '\n'
 				    + '.item{'
 				    //+ '  background-color: rgba(230, 230, 230, 0.9);'
-					+ '  padding : 4 128 4 24;'
+				    + '  padding : 4 128 4 24;'
 				    + '}\n'
 				    + '.inPath{'
 				    + '  background-color : rgba(73, 154, 251, 1);'
@@ -762,6 +878,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 			sccmOriginal : {
 				default : make_themeGenerator(default_base, sccm_default),
+				glass : make_themeGenerator(expClass_base, sccm_glass),
 				fading : null,
 				sliding : make_themeGenerator(sliding_base, sccm_sliding, sliding_additional_inits),
 				slidingMain : null,
@@ -1333,6 +1450,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 			handle[uKey].set_itemFoldableReactionDelay = (milliseconds)=>{
 				// NO CHECK
 				instance.foldableDelay = milliseconds;
+			};
+			handle[uKey].cancel_parallelDelayedReactions = (bool)=>{
+				// NO CHECK
+				instance.clear_lateProcessOnLeaveItem = bool;
+			};
+			handle[uKey].fusion_delaysThroughItemReactSys = (bool)=>{
+				// NO CHECK
+				instance.merge_delaySysWithItemReaction = bool;
 			};
 
 			handle[uKey].set_clickEnable = (bool)=>{
