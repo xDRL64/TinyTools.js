@@ -43,7 +43,7 @@
 			settings:{id:'main', init:e=>e.classList.add('main')},
 			items : [
 				// settings{id, txt, check, update, init, behavior}
-				{ settings:{id,txt:'New Folder'}, content:()=>{}, },
+				{ settings:{id:'a1',txt:'New Folder'}, content:()=>{}, },
 				separator,
 				{ settings:{id,txt:'Read Information'}, content:()=>{}, },
 				separator,
@@ -54,6 +54,23 @@
 				{ settings:{id,txt:'Display presention options'}, content:()=>{}, },
 			],
 		},
+	};
+	sccmTemplate.mainMenu.items[5].content = {
+		settings : {},
+		items : [
+			{ settings:{id,txt:'Change wallpaper'}, content:()=>{}, },
+			{ settings:{id,txt:'Align'}, content:()=>{}, },
+			{ settings:{id,txt:'Align by'}, content:()=>{}, },
+			{ settings:{id,txt:'Sort by'}, content:()=>{}, },
+		],
+	};
+	sccmTemplate.mainMenu.items[5].content.items[1].content = {
+		settings : {},
+		items : [
+			{ settings:{id,txt:'Change wallpaper'}, content:()=>{}, },
+			{ settings:{id,txt:'Align'}, content:()=>{}, },
+			{ settings:{id,txt:'Align by'}, content:()=>{}, },
+		],
 	};
 	
 	// document.body settings
@@ -81,13 +98,68 @@
 			
 			menu[api_key].update_rect();
 
-			handle.style.left = e.clientX;
+			handle.style.left = e.clientX + window.scrollX;
 			handle.style.top = e.clientY;
-			handle[api_key].open();
+
+			document.body[api_key].update_rect();
+			handle[api_key].get_root()[api_key].update_rect();
+
+			if(handle[api_key].isOpen()) handle[api_key].close();
+			else handle[api_key].open();
 			console.log(e);
 		};
 	
+		window.onkeyup = ()=>{
+			handle[api_key].get_item('a1').classList.toggle('hovered');
+		};
+
+		window.onscroll = ()=>{
+			handle[api_key].get_root()[api_key].update_rect();
+			handle[api_key].update_chainItemRects();
+		};
+
 	})();
+
+	const do_overflow = document.createElement('div');
+	do_overflow.style.width = '200%';
+	do_overflow.style.height = '1';
+	//document.body.appendChild(do_overflow);
+	
+	document.body.style.width = '200%';
+	document.body.style.border = '3px solid red';
+	document.body[api_key].update_rect();
+
+
+	// test
+	SCCM.preventOverflowLib.__test({
+		elem : {[api_key]:{get_rect(){return{x:1,y:2,w:0,h:0,l:1,r:2,t:0,b:0}},update_rect(){}}},
+		sides : {
+			right : {
+				setOpen(elem){},
+				cancel(elem){},
+				checkBorderList : ['r','b'],
+			},
+			left : {
+				setOpen(elem){},
+				cancel(elem){},
+				checkBorderList : ['l','b'],
+			},
+			top : {
+				setOpen(elem){},
+				cancel(elem){},
+				checkBorderList : ['t'],
+			},
+			bottom : {
+				setOpen(elem){},
+				cancel(elem){},
+				checkBorderList : ['b'],
+			},
+		},
+		frameRect : {x:1,y:2,w:0,h:0},
+	},api_key);
+
+
+	
 
 
 

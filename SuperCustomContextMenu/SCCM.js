@@ -460,6 +460,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				css : '\n'
 				    + '.general{'
 				    + '  padding : 2px;'
+					+ '  font-size : 20;'
 				    + '}\n'
 
 					/* +`.item::before {
@@ -470,7 +471,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 					}`, */
 			},
 			root : {},
-			layer : {},
+			layer : {style:{boxShadow:'inset 0px 0px 0px 6px rgba(34, 136, 255, 0.533)'}}, // debug
 			menu  : {
 				class : ['general'],
 				css : '\n'
@@ -481,10 +482,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '  left : 100%;'
 				    + '}\n'
 				    + '.main{'
+				    + '  top : 0px;'
 				    + '  left : 0%;'
 				    + '}\n'
 				    + '.closed{'
-				    + '  opacity : 0;'
+				    + '  opacity : 0.2;'
 				    + '  pointer-events : none;'
 				    + '}\n'
 				    + '.open{'
@@ -495,7 +497,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				class : ['general', 'item'],
 				css : '\n'
 				    + '.item{'
-				    //+ '  background-color : lightgrey;'
+				    + '  background-color : lightgrey;'
 				    + '  padding : 4 128 4 24;'
 				    + '  border-radius: 2px;'
 				    + '  box-shadow: inset -3px -2px 9px 0px white;'
@@ -503,28 +505,88 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ '  backdrop-filter: blur(25px);'
 					// to avoid disfunctioning with blur de merde of css de merde add "text-shadow" ending by "1px 1px 25px transparent;"
 					// in absolute use a "text-shadow : x y blur color" with blur value big enough
-					+ '  text-shadow: -1px 0px 0px white, 1px 1px 2px white, 1px 1px 25px transparent;'
-					//+ '  text-shadow: -1px 0px 0px white, 1px 1px 2px white;'
+					// context : dev in vmware (pause/play not machine shutdown)
+					// bug is there when chrome inspector is open
+					//+ '  text-shadow: -1px 0px 0px white, 1px 1px 2px white, 1px 1px 25px transparent;'
+
+					+ '  text-shadow: -1px 0px 0px white, 1px 1px 1px black, 1px 1px 5px white;'
+					+ '  text-shadow: 1px 1px 0px white, 2px 2px 1px black;'
+					+ '  color : #00817540;'
+
 					+ '  font-family: Poppins, sans-serif;'
 				    + '}\n'
 				    + '.inPath{'
 				    + '  background-color : orange;'
 				    + '}\n'
 				    + '.hovered{'
-				    //+ '  content: "";'
-				    //+ '  position: absolute;'
-				    //+ '  inset: 0;'
-
-				    + '  background-color : crimson;'
-				    //+ '  text-shadow : none;'
-					//+ '  backdrop-filter: none;'
+				    + '  background-color : #006dfd69;'
 				    + '}\n'
 				    + '.notAvailable{'
 				    + '  color : green;'
 				    + '}\n',
 			},
 			behaviors : {
-				
+				openMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.add('open');
+						menu.classList.remove('closed');
+						menu[uKey].update_rect();
+						const mrect = menu[uKey].get_rect();
+						const lrect = menu[uKey].elems.get_layer().getBoundingClientRect(); // TODO provide a way to get it
+
+						// main menu
+						if(menu[uKey].elems.get_chainLength() === 0){
+							if(lrect.x+mrect.w > window.innerWidth) menu.style.left = `-${mrect.w}px`;
+							else menu.style.left = '';
+						// submenu
+						}else{
+
+							const sides = { // declares by priotity order
+								right : {
+									setOpen({style:s}){s.left='100%'},
+									cancel({style:s}){s.left=''},
+									checkBorderList : ['r','b'],
+								},
+								left : {
+									setOpen({style:s}){s.left=`-${mrect.w}px`},
+									cancel({style:s}){s.left=''},
+									checkBorderList : ['l','b'],
+								},
+							};
+								
+							const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
+							const settings = {elem:menu, sides, frameRect};
+
+							let res = core.preventOverflowLib.__test(settings,uKey);
+							console.log(res);
+						}
+
+
+
+						menu[uKey].elems.update_itemRects();
+					};
+				},
+				replaceLayer_method : (uKey)=>{ // TODO update this model for all
+					return ({hook, root, upMenu, item, layer, menu})=>{
+
+						const elem = item || menu;
+						const hookRect = hook[uKey].get_rect();
+						const rootRect = root[uKey].get_rect();
+						if(item){
+							const elemRect = elem[uKey].get_rect();
+							layer.style.left = -rootRect.x + elemRect.x //- hookRect.x - window.scrollX;
+							layer.style.top  = -rootRect.y + elemRect.y //- hookRect.y - window.scrollY;
+							layer.style.width  = elemRect.w;
+							layer.style.height = elemRect.h;
+						}else{ // menu
+							const elemRect = elem[uKey].get_rect();
+							layer.style.width  = elemRect.w;
+							layer.style.height = elemRect.h;
+						}
+
+			
+					};
+				},
 			},
 		};
 
@@ -918,6 +980,69 @@ let SuperCustomContextMenu = {}; // API Receiver
 	});
 
 
+	core.preventOverflowLib = (()=>{
+		// simple 2D point test in rect area
+		//
+
+		// 6 args version
+		const isPoint_onRect6 = function(xp,yp, xr,yr, wr,hr){
+			// args : xpoint, ypoint, xrect, yrect, wrect, hrect
+			return !(xr>xp) && (xp<xr+wr) && !(yr>yp) && (yp<yr+hr); // new (alt 2)
+		};
+
+		// 2 args version
+		const isPoint_onRect2 = function({x:xp,y:yp}, {x:xr,y:yr, w:wr,h:hr}){
+			// args : point{x,y}, rect{x,y,w,h}
+			// vars : xpoint, ypoint, xrect, yrect, wrect, hrect
+			return !(xr>xp) && (xp<xr+wr) && !(yr>yp) && (yp<yr+hr); // new (alt 2)
+		};
+
+		const rect_to_box = (rect, R=rect)=>{
+			// convert {x,y, w,h} to {l, r, t, b}
+			return {l:R.x, r:R.x+R.w, t:R.y, b:R.y+R.h};
+		};
+
+		const inBoundRule = { // all methods return 'in bound test result' (bool)
+			l : (elemL,frameL)=>elemL>frameL,
+			r : (elemR,frameR)=>elemR<frameR,
+			t : (elemT,frameT)=>elemT>frameT,
+			b : (elemB,frameB)=>elemB<frameB,
+		};
+
+		const __test = ({elem, sides, frameRect}, user_key)=>{
+			const uKey = user_key;
+			const frameBox = rect_to_box(frameRect);
+			
+			for(let sideName in sides){
+
+				// get side object
+				const side = sides[sideName];
+
+				// get elem rect
+				side.setOpen(elem);
+				elem[uKey].update_rect();
+				const elemRect = elem[uKey].get_rect();
+				side.cancel(elem);
+
+				// tests open side conditions
+				let inBound = true;
+				for(const brd of side.checkBorderList){
+					inBound = inBoundRule[brd]( elemRect[brd], frameBox[brd] );
+					if( !inBound ) break;
+				}
+				
+				if(inBound) return sideName;
+			}
+
+			return null;
+		};
+
+		return {__test};
+	})();
+	SCCM.preventOverflowLib = {};
+	SCCM.preventOverflowLib.__test = (settings, user_key)=>core.preventOverflowLib.__test(settings, user_key);
+
+
 
 	// independant Rect System (external lib)
 	//
@@ -928,10 +1053,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 		let tmp_boxSizing = elem.style.boxSizing;
 		elem.style.boxSizing = boxSizing;
 
-		let r = elem.getBoundingClientRect();
+		let R = elem.getBoundingClientRect();
 		elem.style.boxSizing = tmp_boxSizing;
 
-		return {x:r.x, y:r.y, w:r.width, h:r.height};
+		return {x:R.x, y:R.y, w:R.width, h:R.height, l:R.left, r:R.right, t:R.top, b:R.bottom};
 	};
 
 	let get_borderRect = (elem)=>{
@@ -944,7 +1069,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 	let make_itselfRectSys = (elem)=>{
 		return {
-			props : {x:0,y:0,w:0,h:0},
+			props : {x:0,y:0,w:0,h:0, l:0,r:0,t:0,b:0},
 			get_copy(){
 				return {...this.props};
 			},
@@ -1060,7 +1185,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// actions
 		//
 
-		let open_menu_process = ({menu, item})=>{
+		let position_menu_process = ({menu, item}/*invocFrom*/)=>{
 			let root = instance.get_root();
 			let hook = instance.get_hook();
 			// set position (main menu opening)
@@ -1075,6 +1200,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 				let upMenu = item[APP].inMenu;
 				menu[APP].behavior.replaceLayer_method({hook, root, upMenu, item, layer, menu});
 			}
+			return menu;
+		};
+
+		let open_menu_process = (invocFrom)=>{
+			
+			const menu = position_menu_process(invocFrom);
 
 			// show menu
 			_show(menu);
@@ -1176,6 +1307,22 @@ let SuperCustomContextMenu = {}; // API Receiver
 				// menu
 				close_menu_process(root[APP].depth);
 				instance.hoverMenu = null;
+			}
+		};
+
+		let update_subRects = (menu, submenuOnly/*bool*/)=>{
+			if(submenuOnly)
+				menu[APP].items.forEach(item=>item[APP].contentType===core.key.SUBMENU?item[APP].rect.update():null);
+			else
+				menu[APP].items.forEach(item=>item[APP].rect.update());
+		};
+
+		let update_layerPosition = (menu)=>{
+			if(menu === instance.get_mainMenu())
+				position_menu_process({menu:menu});
+			else{
+				const item = menu[APP].itemPath.at(-1);
+				position_menu_process({item:item});
 			}
 		};
 
@@ -1523,6 +1670,18 @@ let SuperCustomContextMenu = {}; // API Receiver
 				check_handleConnexion();
 				close_instance();
 			};
+			handle[uKey].isOpen = ()=>{
+				check_handleConnexion();
+				return instance.isOpen;
+			};
+			handle[uKey].update_chainItemRects = ()=>{
+				// OWN CHECK
+				instance.menuChain.forEach( menu=>update_subRects(menu, true) );
+			};
+			handle[uKey].update_chainLayers = ()=>{
+				// OWN CHECK
+				instance.menuChain.forEach( menu=>update_layerPosition(menu) );
+			};
 
 			handle[uKey].set_contextData = (data)=>{
 				// NO CHECK
@@ -1540,7 +1699,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 
-		// base all elems
+		// base of all sccm elems (root/layer/menu/item)
 		//
 
 		let make_sccmElem = ()=>{
@@ -1550,6 +1709,28 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return elem;
 		};
 		
+		let set_elemRectSys = (elem)=>{
+			elem[APP].rect = make_itselfRectSys(elem);
+
+			// PUBLIC FEATURES :
+			// - does check tests
+			// - protects 'this' var
+			// - exports in user access
+			elem[uKey].update_rect = ()=>{
+				check_handleConnexion();
+				elem[APP].rect.update();
+			};
+			elem[uKey].get_rect = ()=>{
+				check_handleConnexion();
+				return elem[APP].rect.get_copy();
+			};
+			elem[uKey].set_rectWithBorder = (bool)=>{
+				check_handleConnexion();
+				elem[APP].rect.set_borderRect(bool);
+			};
+		};
+
+
 
 
 
@@ -1569,9 +1750,22 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// core setup
 			reset_rootCoreProps(elem);
 
+			// [public accesses] export (before [public inits] exec)
+			//
+
+			// core (rect)
+			init_elemUsrAccess(elem);
+			set_elemRectSys(elem);
+
+			// [public inits] exec (now)
+			//
+
 			// elem init (css/html usr process)
 			mainInit.root(elem);
 			
+			// [last step for root] process
+			//
+
 			elem.addEventListener('mouseover',root_mouseover);
 			elem.addEventListener('mouseleave',root_mouseleave);
 			elem.addEventListener('click',root_click);
@@ -1596,9 +1790,22 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// core setup
 			reset_layerCoreProps(elem);
 
+			// [public accesses] export (before [public inits] exec)
+			//
+
+			// core (rect)
+			init_elemUsrAccess(elem);
+			set_elemRectSys(elem);
+
+			// [public inits] exec (now)
+			//
+			
 			// elem init (css/html usr process)
 			mainInit.layer(elem);
 			init?.(elem);
+
+			// [last step for layer] process
+			//
 
 			elem.appendChild(menu);
 
@@ -1611,27 +1818,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// main elem (menu/item) settings
 		//
-
-		let set_elemRectSys = (elem)=>{
-			elem[APP].rect = make_itselfRectSys(elem);
-
-			// PUBLIC FEATURES :
-			// - does check tests
-			// - protects 'this' var
-			// - exports in user access
-			elem[uKey].update_rect = ()=>{
-				check_handleConnexion();
-				elem[APP].rect.update();
-			};
-			elem[uKey].get_rect = ()=>{
-				check_handleConnexion();
-				return elem[APP].rect.get_copy();
-			};
-			elem[uKey].set_rectWithBorder = (bool)=>{
-				check_handleConnexion();
-				elem[APP].rect.set_borderRect(bool);
-			};
-		};
 
 		let set_elemBehaviorSys = (elem, ownBehavior)=>{
 			elem[APP].behavior = {...mainBehavior, ...(ownBehavior||{}),};
@@ -1657,13 +1843,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// menu
 		//
-
-		let update_subRects = (menu, submenuOnly/*bool*/)=>{
-			if(submenuOnly)
-				menu[APP].items.forEach(item=>item[APP].contentType===core.key.SUBMENU?item[APP].rect.update():null);
-			else
-				menu[APP].items.forEach(item=>item[APP].rect.update());
-		};
 
 		let set_menuElemsAccess = (elem)=>{
 			// PUBLIC FEATURES :
@@ -1705,6 +1884,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// core setup
 			reset_menuCoreProps(elem);
 			
+			// [public accesses] export (before [public inits] exec)
+			//
+
 			// core (behavior and rect)
 			init_elemUsrAccess(elem);
 			set_elemRectSys(elem);
@@ -1714,11 +1896,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// user linked elem access (getters/updaters)
 			set_menuElemsAccess(elem);
 
+			// [public inits] exec (now)
+			//
+
 			// elem init (css/html usr process)
 			mainInit.menu(elem);
 			init?.(elem);
 
-			// layer
+			// [last step for menu] process
+			//
+
+			// add layer
 			elem[APP].layer = make_sccm_layer(elem, layerInit);
 
 			return elem;
@@ -1822,6 +2010,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// core setup
 			reset_itemCoreProps(elem);
 
+			// [public accesses] export (before [public inits] exec)
+			//
+
 			// core (behavior and rect)
 			init_elemUsrAccess(elem);
 			set_elemRectSys(elem);
@@ -1833,9 +2024,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// user lock reation setters
 			set_itemLockingSetters(elem);
 
+			// [public inits] exec (now)
+			//
+
 			// elem init (css/html usr process)
 			mainInit.item(elem);
 			init?.(elem);
+
+			// [last step for item] process
+			//
+
+			// nothing special
 
 			return elem;
 		};
