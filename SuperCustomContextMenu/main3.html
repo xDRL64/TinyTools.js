@@ -45,7 +45,7 @@
 				// settings{id, txt, check, update, init, behavior}
 				{ settings:{id:'a1',txt:'New Folder'}, content:()=>{}, },
 				separator,
-				{ settings:{id,txt:'Read Information'}, content:()=>{}, },
+				{ settings:{id:'itest',txt:'Read Information'}, content:()=>{}, },
 				separator,
 				{ settings:{id,txt:'Change wallpaper'}, content:()=>{}, },
 				{ settings:{id,txt:'Align'}, content:()=>{}, },
@@ -118,6 +118,7 @@
 			handle[api_key].update_chainItemRects();
 		};
 
+		itest = handle[api_key].get_item('itest');
 	})();
 
 	const do_overflow = document.createElement('div');
@@ -159,8 +160,36 @@
 	},api_key);
 
 
+
+
+
+
+})();
+
+	// itest as global
+
+	// test 2
+	const testElem = {
+		style : {
+			color : 'red',
+		}
+	};
+	itest.rrr = {ttt:{zzz:'zzz'}}
+	const setModel = {
+		style : {
+			color : 'blue',
+		},
+		class : {
+			addset : ['inPath', 'theClass'],
+			remset : ['item', 'theClass2'],
+		},
+		otherProp : {
+			textContent : 'test',
+			"rrr.ttt.zzz" : 'iii',
+		},
+	};
+
 	
 
 
-
-})(); </script>
+</script>

@@ -541,6 +541,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 						// submenu
 						}else{
 
+							const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
+
 							const sides = { // declares by priotity order
 								right : {
 									setOpen({style:s}){s.left='100%'},
@@ -553,11 +555,26 @@ let SuperCustomContextMenu = {}; // API Receiver
 									checkBorderList : ['l','b'],
 								},
 							};
-								
-							const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
 							const settings = {elem:menu, sides, frameRect};
+							
 
-							let res = core.preventOverflowLib.__test(settings,uKey);
+							let sides2 = {
+								right : {
+									style : {left:'100%'},
+									checkBorderList : ['r','b'],
+								},
+								left : {
+									style : {left:`-${mrect.w}px`},
+									checkBorderList : ['l','b'],
+								},
+							};
+							sides2 = core.preventOverflowLib.build_sideRules(sides2);
+							const settings2 = {elem:menu, sides:sides2, frameRect};
+								
+							
+							
+
+							let res = core.preventOverflowLib.__test(settings2,uKey);
 							console.log(res);
 						}
 
@@ -1039,6 +1056,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// in bad using case : writes and reads to/from void
 		// but does not warn about to
+		// can create path end property, but cannot create ancestor chain if some are missing
 		const resolve_propPath = (str_propPath='', obj_root={})=>{
 			const path = str_propPath.split('.');
 			const propertyName = path.pop();
@@ -1051,21 +1069,25 @@ let SuperCustomContextMenu = {}; // API Receiver
 			};
 		};
 
-		const make_sideMethods = ({style, classRef, otherProp})=>{
-			// style = {prop:value,...}
-			// classRef = {addset:[name,...], remset:[name,...]}
-			// otherProp = {'prop.prop....':value}
-			const mem = { style:{}, otherProp:{} }; // backups affected prop's current value
+
+
+		const make_sideMethods = ({style, class:classRef, otherProp})=>{ // ('class' is a reserved word)
+			// style = {prop:value, ...}
+			// classRef = { addset:[name, ...], remset:[name, ...], mode:'smart'||'warning' }
+			// otherProp = {'prop.prop....':value, ...}
+			let mem = null; // backups affected prop's current value
 			return {
 				setOpen(elem){
+					mem = { style:{}, classRef:'', otherProp:{} };
 					// style : setup
 					for(const sName in style){
 						mem.style[sName] = elem.style[sName]; // save prop's current value
 						elem.style[sName] = style[sName]; // overwrite prop's mem
 					}
 					// class : setup
-					classRef.addset.forEach( cname=>elem.classList.add(cname) );
-					classRef.remset.forEach( cname=>elem.classList.remove(cname) );
+					mem.classRef = elem.className;
+					classRef?.addset.forEach( cname=>elem.classList.add(cname) );
+					classRef?.remset.forEach( cname=>elem.classList.remove(cname) );
 					// other : setup
 					for(const propPath in otherProp){
 						const access = resolve_propPath(propPath, elem);
@@ -1073,23 +1095,37 @@ let SuperCustomContextMenu = {}; // API Receiver
 						access.set(otherProp[propPath]);
 					}
 				},
-				cancel(){ // restor original value
-					// style : setback
-					for(const sName in style)
-						elem.style[sName] = mem.style[sName];
-					// class : setback
-					classRef.addset.forEach( cname=>elem.classList.remove(cname) );
-					classRef.remset.forEach( cname=>elem.classList.add(cname) );
-					// other : setback
-					for(const propPath in otherProp) mem.otherProp[propPath].restor();
+				cancel(elem){ // restor original value
+					if(mem){
+						// style : setback
+						for(const sName in style)
+							elem.style[sName] = mem.style[sName];
+						// class : setback
+						if(classRef) elem.className = mem.classRef;
+						// other : setback
+						for(const propPath in otherProp) mem.otherProp[propPath].restor();
+						// (resets to 'undefined' instead deleting for missing end chain props that were set in setOpen)
+					}
+					mem = null;
 				},
 			};
 		};
 
-		return {__test, make_sideMethods};
+
+		const build_sideRules = (sides)=>{
+			const output = {};
+			for(const sName in sides){
+				const {checkBorderList} = sides[sName];
+				output[sName] = { ...make_sideMethods(sides[sName]), checkBorderList };
+			}
+			return output;
+		};
+
+		return {__test, make_sideMethods, build_sideRules};
 	})();
 	SCCM.preventOverflowLib = {};
 	SCCM.preventOverflowLib.__test = (settings, user_key)=>core.preventOverflowLib.__test(settings, user_key);
+	SCCM.preventOverflowLib.make_sideMethods = (settings)=>core.preventOverflowLib.make_sideMethods(settings);
 
 
 
