@@ -1037,7 +1037,56 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return null;
 		};
 
-		return {__test};
+		// in bad using case : writes and reads to/from void
+		// but does not warn about to
+		const resolve_propPath = (str_propPath='', obj_root={})=>{
+			const path = str_propPath.split('.');
+			const propertyName = path.pop();
+			const objectRef = path.reduce( (acc,cur)=>acc[cur], obj_root );
+			return {
+				set : (val)=>objectRef[propertyName]=val,
+				get : ()=>objectRef[propertyName],
+				obj : objectRef,
+				prop : propertyName,
+			};
+		};
+
+		const make_sideMethods = ({style, classRef, otherProp})=>{
+			// style = {prop:value,...}
+			// classRef = {addset:[name,...], remset:[name,...]}
+			// otherProp = {'prop.prop....':value}
+			const mem = { style:{}, otherProp:{} }; // backups affected prop's current value
+			return {
+				setOpen(elem){
+					// style : setup
+					for(const sName in style){
+						mem.style[sName] = elem.style[sName]; // save prop's current value
+						elem.style[sName] = style[sName]; // overwrite prop's mem
+					}
+					// class : setup
+					classRef.addset.forEach( cname=>elem.classList.add(cname) );
+					classRef.remset.forEach( cname=>elem.classList.remove(cname) );
+					// other : setup
+					for(const propPath in otherProp){
+						const access = resolve_propPath(propPath, elem);
+						mem.otherProp[propPath] = {value:access.get(), restor(){access.set(this.value)}};
+						access.set(otherProp[propPath]);
+					}
+				},
+				cancel(){ // restor original value
+					// style : setback
+					for(const sName in style)
+						elem.style[sName] = mem.style[sName];
+					// class : setback
+					classRef.addset.forEach( cname=>elem.classList.remove(cname) );
+					classRef.remset.forEach( cname=>elem.classList.add(cname) );
+					// other : setback
+					for(const propPath in otherProp) mem.otherProp[propPath].restor();
+				},
+			};
+		};
+
+		return {__test, make_sideMethods};
 	})();
 	SCCM.preventOverflowLib = {};
 	SCCM.preventOverflowLib.__test = (settings, user_key)=>core.preventOverflowLib.__test(settings, user_key);
