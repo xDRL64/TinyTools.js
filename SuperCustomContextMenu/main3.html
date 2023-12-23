@@ -27,7 +27,10 @@
 
 
 	// 
-	
+	const tellItsChain = ({item, [api_key]:user})=>{
+		let t = item[api_key].elems.get_menu()[api_key].elems.get_itsMenuChain();
+		console.log(t);
+	};
 
 
 	//const {css, initELEM, behavior} = theme.empty.get_minimal();
@@ -43,7 +46,7 @@
 			settings:{id:'main', init:e=>e.classList.add('main')},
 			items : [
 				// settings{id, txt, check, update, init, behavior}
-				{ settings:{id:'a1',txt:'New Folder'}, content:()=>{}, },
+				{ settings:{id:'a1',txt:'tellItsChain'}, content:tellItsChain, },
 				separator,
 				{ settings:{id:'itest',txt:'Read Information'}, content:()=>{}, },
 				separator,
@@ -65,6 +68,14 @@
 		],
 	};
 	sccmTemplate.mainMenu.items[5].content.items[1].content = {
+		settings : {},
+		items : [
+			{ settings:{id,txt:'tellItsChain'}, content:tellItsChain, },
+			{ settings:{id,txt:'Align'}, content:()=>{}, },
+			{ settings:{id,txt:'Align by'}, content:()=>{}, },
+		],
+	};
+	sccmTemplate.mainMenu.items[5].content.items[0].content = {
 		settings : {},
 		items : [
 			{ settings:{id,txt:'Change wallpaper'}, content:()=>{}, },

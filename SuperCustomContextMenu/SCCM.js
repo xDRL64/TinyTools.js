@@ -476,7 +476,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				class : ['general'],
 				css : '\n'
 				    + '.menu{'
-				    //+ '  background-color : grey;'
+				    + '  background-color : #00000060;'
 				    + '  gap : 2px;'
 				    + '  top : -2px;'
 				    + '  left : 100%;'
@@ -543,22 +543,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 							const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
 
-							const sides = { // declares by priotity order
-								right : {
-									setOpen({style:s}){s.left='100%'},
-									cancel({style:s}){s.left=''},
-									checkBorderList : ['r','b'],
-								},
-								left : {
-									setOpen({style:s}){s.left=`-${mrect.w}px`},
-									cancel({style:s}){s.left=''},
-									checkBorderList : ['l','b'],
-								},
-							};
-							const settings = {elem:menu, sides, frameRect};
-							
-
-							let sides2 = {
+							let sides = { // declares by priotity order
 								right : {
 									style : {left:'100%'},
 									checkBorderList : ['r','b'],
@@ -568,8 +553,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 									checkBorderList : ['l','b'],
 								},
 							};
-							sides2 = core.preventOverflowLib.build_sideRules(sides2);
-							const settings2 = {elem:menu, sides:sides2, frameRect};
+							sides = core.preventOverflowLib.build_sideRules(sides);
+							const settings2 = {elem:menu, sides, frameRect};
 								
 							
 							
@@ -1054,9 +1039,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return null;
 		};
 
-		// in bad using case : writes and reads to/from void
-		// but does not warn about to
-		// can create path end property, but cannot create ancestor chain if some are missing
+		// In bad using case (undef args) : writes and reads to/from void,
+		// (but does not warn about to).
+		// can create path end property, but cannot create ancestor chain if some are missing,
+		// (and besides, that should crash execution).
 		const resolve_propPath = (str_propPath='', obj_root={})=>{
 			const path = str_propPath.split('.');
 			const propertyName = path.pop();
@@ -1603,10 +1589,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		let run_itemFeatureProcess = (item, args, forced)=>{
+			// in all case, args contains : contextData
+			// in sdt click case, args contains : + allowedEventProps (alt 1)
+			// in user handle call case, args contains : + [uKey]     (alt 2)
 			if(item)
 			if(item[APP].interact === core.key.USABLE || forced)
 			if(item[APP].contentType === core.key.FEATURE)
-				item[APP].content(...args);
+				item[APP].content({...args, item, forced});
 		};
 
 		// click EVENT
@@ -1616,7 +1605,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			if(instance.sdtClickEnable){
 				let {buttons, shiftKey, ctrlKey, altKey} = e;
 				let allowedEventProps = {buttons, shiftKey, ctrlKey, altKey};
-				run_itemFeatureProcess(instance.hoverItem, [contextData, allowedEventProps], false);
+				run_itemFeatureProcess(instance.hoverItem, {contextData, allowedEventProps}, false);
 			}
 		};
 
@@ -1678,6 +1667,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 				// NO CHECK
 				return instance.menuChain.length;
 			};
+			handle[uKey].get_menuChain = ()=>{
+				// NO CHECK
+				return [...instance.menuChain];
+			};
+			handle[uKey].get_itemPath = ()=>{
+				// NO CHECK
+				return [...instance.itemPath];
+			};
 
 			handle[uKey].set_itemFoldableReactionDelay = (milliseconds)=>{
 				// NO CHECK
@@ -1702,11 +1699,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 			};
 			handle[uKey].run_hoverItemFeature = (args)=>{
 				check_handleOpen();
-				run_itemFeatureProcess(instance.hoverItem, [contextData, args], false);
+				run_itemFeatureProcess(instance.hoverItem, {contextData, [uKey]:args}, false);
 			};
 			handle[uKey].run_itemFeature = (item, args, forced)=>{
 				// NO CHECK
-				run_itemFeatureProcess(item, [contextData, args], forced);
+				run_itemFeatureProcess(item, {contextData, [uKey]:args}, forced);
 			};
 			handle[uKey].unfold_untilMenu = (menu)=>{
 				// OWN CHECK
@@ -1940,6 +1937,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 				get_hook : ()=>instance.get_hook(),
 				get_root : ()=>instance.get_root(),
 				get_chainLength : ()=>instance.menuChain.length,
+				get_menuChain : ()=>[...instance.menuChain],
+				get_itemPath : ()=>[...instance.itemPath],
+				get_depth : ()=>elem[APP].depth,
+				get_itsItemPath : ()=>[...elem[APP].itemPath],
+				get_itsMenuChain : ()=>instance.menuChain.slice(0, elem[APP].depth+1),
 				get_upItem : ()=>elem[APP].itemPath.at(-1)||null,
 				get_layer : ()=>elem[APP].layer,
 				get_items : ()=>[...elem[APP].items],
