@@ -5,6 +5,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 	let core = {};
 
+	core.theme_key = Symbol("THEME PRIVATE MEMORY");
+
+	// MAKES PUBLIC PROPERTY (via public getter)
+	SCCM.providing ??= {};
+	SCCM.providing.get_theme_key = ()=>core.theme_key; 
+
 	core.themeLib = (()=>{
 
 		const mix_base = (full_base, part_base)=>{
@@ -21,6 +27,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 			new_base.behaviors = {...full_base.behaviors, ...(part_base.behaviors||{})};
 
 			return new_base;
+		};
+
+		const stack_addonInit = (...inits)=>{
+			const stack = {};
+			['root', 'layer', 'menu', 'item'].forEach(prop=>{
+				stack[prop] = (elem, uKey)=>inits.forEach( init=>init[prop]?.(elem, uKey) );
+			});
+			return stack; // new addon init
 		};
 
 		const collect_css = (base, sccm, usr)=>{
@@ -125,12 +139,16 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return theme;
 		};
 
-		return {mix_base, make_themeGenerator};
+		return {mix_base, stack_addonInit, make_themeGenerator};
 	})();
+
+	
 
 	core.theme = (()=>{
 
-		const {mix_base, make_themeGenerator} = core.themeLib;
+		const TMEM = core.theme_key;
+
+		const {mix_base, stack_addonInit, make_themeGenerator} = core.themeLib;
 
 		// THEME TEMPLATE BASES
 		//
@@ -320,6 +338,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const class_base = mix_base(_base, withClass_part);
 
 
+		// contains only differences from its base
 		const expendClass_part = {
 			menu : {
 				style : {
@@ -363,7 +382,27 @@ let SuperCustomContextMenu = {}; // API Receiver
 					left : '100%',
 				},
 			},
-		}
+		};
+
+		// everything optional (root/layer/menu/item)
+		const sdtFold_rightLeft_additional_inits = {
+			root : (root, uKey)=>{
+				const sidesTemplate = { // declares by priotity order
+					RIGHT : {
+						style : {left:'100%'},
+						checkBorderList : ['r','b'],
+					},
+					LEFT : {
+						style : {left:"___variable___"},
+						checkBorderList : ['l','b'],
+					},
+				};
+				const sides = core.preventOverflowLib.build_sideRules(sidesTemplate);
+				const update = (menuWidth)=>sidesTemplate.LEFT.style.left=`-${menuWidth}px`;
+				root[TMEM] ||= {};
+				root[TMEM].get_rightLeftFold = (...args)=>{ update(...args); return sides };
+			},
+		};
 
 
 		// EMPTY THEME
@@ -543,7 +582,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 							const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
 
-							let sides = { // declares by priotity order
+							/* const sidesTemplate = { // declares by priotity order
 								right : {
 									style : {left:'100%'},
 									checkBorderList : ['r','b'],
@@ -553,13 +592,16 @@ let SuperCustomContextMenu = {}; // API Receiver
 									checkBorderList : ['l','b'],
 								},
 							};
-							sides = core.preventOverflowLib.build_sideRules(sides);
-							const settings2 = {elem:menu, sides, frameRect};
+							const sides = core.preventOverflowLib.build_sideRules(sidesTemplate); */
+
+							const sides = menu[uKey].elems.get_root()[TMEM].get_rightLeftFold(mrect.w);
+
+							const settings = {elem:menu, sides, frameRect};
 								
 							
 							
 
-							let res = core.preventOverflowLib.__test(settings2,uKey);
+							let res = core.preventOverflowLib.__test(settings,uKey);
 							console.log(res);
 						}
 
@@ -942,7 +984,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 			sccmOriginal : {
 				default : make_themeGenerator(default_base, sccm_default),
-				glass : make_themeGenerator(expClass_base, sccm_glass),
+				glass : make_themeGenerator(expClass_base, sccm_glass, sdtFold_rightLeft_additional_inits),
 				fading : null,
 				sliding : make_themeGenerator(sliding_base, sccm_sliding, sliding_additional_inits),
 				slidingMain : null,
