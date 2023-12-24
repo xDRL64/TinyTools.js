@@ -12,7 +12,7 @@
 	const check = forceDisable;
 
 	const SCCM = SuperCustomContextMenu;
-	let api_key = Symbol('dev user key for sccm api');
+	const api_key = Symbol('dev user key for sccm api');
 
 	// osx theme
 	//
@@ -35,7 +35,7 @@
 	const osxHrzMain = theme.macosx.get_horizontalMain();
 	const osxHrzMain_inits = osxHrzMain.initELEM;
 	const osxHrzMainBehavior = osxHrzMain.behavior;
-	const {menu:osxHrzMainMenu, item:osxHrzMainItem} = osxHrzMain_inits;
+	const {menu:osxHrzMainMenu, item:osxHrzMainItem, layer:osxHrzMainLayer} = osxHrzMain_inits;
 	const appleLogo = '<img width=20 height=20 src="https://icons.iconarchive.com/icons/pictogrammers/material/256/apple-icon.png"/>';
 
 	const mainItem = osxHrzMainItem;
@@ -48,7 +48,7 @@
 		settings : /* {} || */ theme.macosx.get_horizontal(),
 		mainMenu : {
 			// menu A :
-			settings : {id:'main', init:osxHrzMainMenu, behavior:mainBehavior},
+			settings : {id:'main', init:osxHrzMainMenu, behavior:mainBehavior, layerInit:osxHrzMainLayer},
 			items : [
 				// settings{id, txt, check, update, init, behavior}
 				{ settings:{id,txt:appleLogo, init:mainItem}, content:(data,e)=>console.log(data,e), },
@@ -115,7 +115,7 @@
 
 		handle[api_key].set_parent(document.body);
 		document.body.style.margin = 0;
-		document.body[api_key].update_rect();
+		//document.body[api_key].update_rect();
 	
 		let data = {};
 		handle[api_key].set_contextData(data);
@@ -123,10 +123,11 @@
 		let menu = handle[api_key].get_menu('main');
 		[...menu.children].forEach(child=>child[api_key].set_rectWithBorder(true));
 		
+		handle.style.position = 'fixed';
 		handle.style.width = '100%';
-		handle[api_key].get_root().style.width = '100%';
-		menu[api_key].elems.get_layer().style.width = '100%';
-		menu.style.width = '100%';
+		//handle[api_key].get_root().style.width = '100%';
+		//menu[api_key].elems.get_layer().style.width = '100%';
+		//menu.style.width = '100%';
 	
 		handle[api_key].open();
 	})();
@@ -138,7 +139,7 @@
 	
 		handle[api_key].set_parent(document.body);
 		document.body.style.margin = 0;
-		document.body[api_key].update_rect();
+		//document.body[api_key].update_rect();
 	
 		let menu = handle[api_key].get_menu('main');
 		[...menu.children].forEach(child=>child[api_key].set_rectWithBorder(true));
@@ -148,10 +149,11 @@
 			e.preventDefault();
 			handle[api_key].set_contextData(data);
 			
+			handle.style.left = e.clientX + window.scrollX + 'px';
+			handle.style.top = e.clientY + window.scrollY + 'px';
+			handle[api_key].get_root()[api_key].update_rect();
 			menu[api_key].update_rect();
 
-			handle.style.left = e.clientX;
-			handle.style.top = e.clientY;
 			handle[api_key].open();
 		};
 	

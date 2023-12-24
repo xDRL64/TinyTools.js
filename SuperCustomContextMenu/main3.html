@@ -118,8 +118,8 @@
 		handle.style.position = 'absolute';
 	
 		handle[api_key].set_parent(document.body);
-		//document.body.style.margin = 0;
-		document.body[api_key].update_rect();
+
+		//document.body[api_key].update_rect();
 	
 		let menu = handle[api_key].get_menu('main');
 		[...menu.children].forEach(child=>child[api_key].set_rectWithBorder(true));
@@ -129,12 +129,12 @@
 			e.preventDefault();
 			handle[api_key].set_contextData(data);
 			
-			menu[api_key].update_rect();
-
+			
 			handle.style.left = e.clientX + window.scrollX + 'px';
 			handle.style.top = e.clientY + window.scrollY + 'px';
-
-			document.body[api_key].update_rect();
+			
+			menu[api_key].update_rect();
+			//document.body[api_key].update_rect();
 			handle[api_key].get_root()[api_key].update_rect();
 
 			if(handle[api_key].isOpen()) handle[api_key].close();
@@ -151,77 +151,12 @@
 			handle[api_key].update_chainItemRects();
 		};
 
-		itest = handle[api_key].get_item('itest');
+		//itest = handle[api_key].get_item('itest');
 	})();
 
 
-	/* document.body.style.width = '200%';
-	document.body.style.border = '3px solid red'; */
-	//document.body[api_key].update_rect();
 
-
-	// test
-	/* SCCM.providing.preventOverflowLib.check_sides({
-		elem : {[api_key]:{get_rect(){return{x:1,y:2,w:0,h:0,l:1,r:2,t:0,b:0}},update_rect(){}}},
-		sides : {
-			right : {
-				setOpen(elem){},
-				cancel(elem){},
-				checkBorderList : ['r','b'],
-			},
-			left : {
-				setOpen(elem){},
-				cancel(elem){},
-				checkBorderList : ['l','b'],
-			},
-			top : {
-				setOpen(elem){},
-				cancel(elem){},
-				checkBorderList : ['t'],
-			},
-			bottom : {
-				setOpen(elem){},
-				cancel(elem){},
-				checkBorderList : ['b'],
-			},
-		},
-		frameRect : {x:1,y:2,w:0,h:0},
-	},api_key); */
-
-
-
-
-
-
-})();
-
-	// itest as global
-
-	// test 2
-	/* const testElem = {
-		style : {
-			color : 'red',
-		}
-	};
-	itest.rrr = {ttt:{zzz:'zzz'}}
-	const setModel = {
-		style : {
-			color : 'blue',
-		},
-		class : {
-			addset : ['inPath', 'theClass'],
-			remset : ['item', 'theClass2'],
-		},
-		otherProp : {
-			textContent : 'test',
-			"rrr.ttt.zzz" : 'iii',
-		},
-	}; */
-
-	
-
-
-</script>
+})();</script>
 
 </body>
 </html>

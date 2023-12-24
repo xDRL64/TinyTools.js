@@ -248,7 +248,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						//item.style.color = 'black';
 					};
 				},
-				replaceLayer_method : (uKey)=>{
+				/* replaceLayer_method_OLD : (uKey)=>{
 					return ({hook, root, upMenu, item, layer, menu})=>{
 						// trick : ('item' must be first)
 						// if item then it's submenu case
@@ -260,6 +260,22 @@ let SuperCustomContextMenu = {}; // API Receiver
 						layer.style.top  = elemRect.y - hookRect.y;
 						layer.style.width  = elemRect.w;
 						layer.style.height = elemRect.h;
+			
+					};
+				}, */
+				replaceLayer_method : (uKey)=>{
+					return ({hook, root, upMenu, item, layer, menu})=>{
+						// trick : ('item' must be first)
+						// if item then it's submenu case
+						// if menu then it's mainmenu case
+						const elem = item || menu;
+						//const hookRect = hook[uKey].get_rect();
+						const rootRect = root[uKey].get_rect();
+						const elemRect = elem[uKey].get_rect();
+						layer.style.left = elemRect.x - rootRect.x + 'px'; //- hookRect.x - window.scrollX + 'px';
+						layer.style.top  = elemRect.y - rootRect.y + 'px'; //- hookRect.y - window.scrollY + 'px';
+						layer.style.width  = elemRect.w + 'px';
+						layer.style.height = elemRect.h + 'px';
 			
 					};
 				},
@@ -587,27 +603,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						menu[uKey].elems.update_itemRects();
 					};
 				},
-				replaceLayer_method : (uKey)=>{ // TODO update this model for all
-					return ({hook, root, upMenu, item, layer, menu})=>{
-
-						const elem = item || menu;
-						const hookRect = hook[uKey].get_rect();
-						const rootRect = root[uKey].get_rect();
-						if(item){
-							const elemRect = elem[uKey].get_rect();
-							layer.style.left = -rootRect.x + elemRect.x + 'px' //- hookRect.x - window.scrollX + 'px';
-							layer.style.top  = -rootRect.y + elemRect.y + 'px' //- hookRect.y - window.scrollY + 'px';
-							layer.style.width  = elemRect.w + 'px';
-							layer.style.height = elemRect.h + 'px';
-						}else{ // menu
-							const elemRect = elem[uKey].get_rect();
-							layer.style.width  = elemRect.w + 'px';
-							layer.style.height = elemRect.h + 'px';
-						}
-
-			
-					};
-				},
+				
 			},
 		};
 
@@ -885,9 +881,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const sccm_macosx_horizontalMain = { // macosx horizontal main menu style
 			_all : {},
 			root : {},
-			layer : {},
+			layer : {
+				style : {
+					minWidth : '100%',
+				},
+			},
 			menu  : {
 				style : {
+					width : '100%',
 					left : '0px',
 					top : '0px',
 					gridAutoFlow : 'column',
@@ -902,7 +903,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				},
 			},
 			behaviors : {
-				replaceLayer_method : (uKey)=>{
+				/* replaceLayer_method_OLD : (uKey)=>{
 					return ({hook, root, upMenu, item, layer, menu})=>{
 						const hookRect = hook[uKey].get_rect();
 						if(item){
@@ -919,7 +920,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 							layer.style.height = '100%';
 						}
 					};
-				},
+				}, */
 			},
 		};
 
@@ -940,13 +941,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const sccm_macosx_horizontal = { // macosx horizontal submenu style
+			...sccm_macosx_default,
 			// _all : {},
-			// root : {},
+			root : {
+				style : {
+					position : '',
+				},
+			},
 			// layer : {},
 			// menu  : {},
 			// item  : {},
 			// behaviors : {},
-			...sccm_macosx_default,
 		};
 
 
