@@ -1,9 +1,31 @@
-<script src="SCCM.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<script src="SCCM.js"></script>
+	<style>
+		html{
+			/* box-sizing: border-box; */
+			/* margin: 0; */
+			height: calc(100%);
+			/* position: relative; */
+		}
+		body{
+			box-sizing: border-box;
+			border : 3px solid red;
+			/* margin: 0; */
+			height: calc(100% - 2*8px);
+			width: 200%;
+			/* position: relative; */
+		}
+	</style>
+</head>
+
 
 <body>
 	
-</body>
-
 <script> (()=>{
 
 	
@@ -96,7 +118,7 @@
 		handle.style.position = 'absolute';
 	
 		handle[api_key].set_parent(document.body);
-		document.body.style.margin = 0;
+		//document.body.style.margin = 0;
 		document.body[api_key].update_rect();
 	
 		let menu = handle[api_key].get_menu('main');
@@ -109,8 +131,8 @@
 			
 			menu[api_key].update_rect();
 
-			handle.style.left = e.clientX + window.scrollX;
-			handle.style.top = e.clientY;
+			handle.style.left = e.clientX + window.scrollX + 'px';
+			handle.style.top = e.clientY + window.scrollY + 'px';
 
 			document.body[api_key].update_rect();
 			handle[api_key].get_root()[api_key].update_rect();
@@ -132,18 +154,14 @@
 		itest = handle[api_key].get_item('itest');
 	})();
 
-	const do_overflow = document.createElement('div');
-	do_overflow.style.width = '200%';
-	do_overflow.style.height = '1';
-	//document.body.appendChild(do_overflow);
-	
-	document.body.style.width = '200%';
-	document.body.style.border = '3px solid red';
-	document.body[api_key].update_rect();
+
+	/* document.body.style.width = '200%';
+	document.body.style.border = '3px solid red'; */
+	//document.body[api_key].update_rect();
 
 
 	// test
-	SCCM.preventOverflowLib.__test({
+	/* SCCM.providing.preventOverflowLib.check_sides({
 		elem : {[api_key]:{get_rect(){return{x:1,y:2,w:0,h:0,l:1,r:2,t:0,b:0}},update_rect(){}}},
 		sides : {
 			right : {
@@ -168,7 +186,7 @@
 			},
 		},
 		frameRect : {x:1,y:2,w:0,h:0},
-	},api_key);
+	},api_key); */
 
 
 
@@ -180,7 +198,7 @@
 	// itest as global
 
 	// test 2
-	const testElem = {
+	/* const testElem = {
 		style : {
 			color : 'red',
 		}
@@ -198,9 +216,12 @@
 			textContent : 'test',
 			"rrr.ttt.zzz" : 'iii',
 		},
-	};
+	}; */
 
 	
 
 
 </script>
+
+</body>
+</html>

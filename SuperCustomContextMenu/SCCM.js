@@ -203,9 +203,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 					return (menu)=>{
 						menu.style.display = '';
 						menu.style.pointerEvents = 'auto';
-						/* menu[uKey].elems.get_items()
-							.filter(item=>item[uKey].elems.get_submenu())
-								.forEach(item=>item[uKey].update_rect()); */ // TODO remove on next save
 						menu[uKey].elems.update_itemRects();
 					};
 				},
@@ -501,13 +498,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '  padding : 2px;'
 					+ '  font-size : 20;'
 				    + '}\n'
-
-					/* +`.item::before {
-						content: '';
-						position: absolute;
-						inset: 0;
-						background-color: transparent;
-					}`, */
 			},
 			root : {},
 			layer : {style:{boxShadow:'inset 0px 0px 0px 6px rgba(34, 136, 255, 0.533)'}}, // debug
@@ -582,26 +572,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 							const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
 
-							/* const sidesTemplate = { // declares by priotity order
-								right : {
-									style : {left:'100%'},
-									checkBorderList : ['r','b'],
-								},
-								left : {
-									style : {left:`-${mrect.w}px`},
-									checkBorderList : ['l','b'],
-								},
-							};
-							const sides = core.preventOverflowLib.build_sideRules(sidesTemplate); */
-
 							const sides = menu[uKey].elems.get_root()[TMEM].get_rightLeftFold(mrect.w);
 
 							const settings = {elem:menu, sides, frameRect};
-								
 							
-							
+							// TODO correct side opening ....
 
-							let res = core.preventOverflowLib.__test(settings,uKey);
+							let res = core.preventOverflowLib.check_sides(settings,uKey);
 							console.log(res);
 						}
 
@@ -618,14 +595,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 						const rootRect = root[uKey].get_rect();
 						if(item){
 							const elemRect = elem[uKey].get_rect();
-							layer.style.left = -rootRect.x + elemRect.x //- hookRect.x - window.scrollX;
-							layer.style.top  = -rootRect.y + elemRect.y //- hookRect.y - window.scrollY;
-							layer.style.width  = elemRect.w;
-							layer.style.height = elemRect.h;
+							layer.style.left = -rootRect.x + elemRect.x + 'px' //- hookRect.x - window.scrollX + 'px';
+							layer.style.top  = -rootRect.y + elemRect.y + 'px' //- hookRect.y - window.scrollY + 'px';
+							layer.style.width  = elemRect.w + 'px';
+							layer.style.height = elemRect.h + 'px';
 						}else{ // menu
 							const elemRect = elem[uKey].get_rect();
-							layer.style.width  = elemRect.w;
-							layer.style.height = elemRect.h;
+							layer.style.width  = elemRect.w + 'px';
+							layer.style.height = elemRect.h + 'px';
 						}
 
 			
@@ -1011,6 +988,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 	
 
 	// AUTO MAKES PUBLIC FEATURES
+	// - add prefix (set_ / get_)
 	// - does no check
 	// - protects 'this' var
 	// - export to main api
@@ -1053,7 +1031,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			b : (elemB,frameB)=>elemB<frameB,
 		};
 
-		const __test = ({elem, sides, frameRect}, user_key)=>{
+		const check_sides = ({elem, sides, frameRect}, user_key)=>{
 			const uKey = user_key;
 			const frameBox = rect_to_box(frameRect);
 			
@@ -1149,11 +1127,21 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return output;
 		};
 
-		return {__test, make_sideMethods, build_sideRules};
+		return {check_sides, make_sideMethods, build_sideRules};
 	})();
-	SCCM.preventOverflowLib = {};
-	SCCM.preventOverflowLib.__test = (settings, user_key)=>core.preventOverflowLib.__test(settings, user_key);
-	SCCM.preventOverflowLib.make_sideMethods = (settings)=>core.preventOverflowLib.make_sideMethods(settings);
+
+	// MAKES PUBLIC FEATURES
+	// - does no check
+	// - protects 'this' var
+	// - export to main api
+	SCCM.providing ??= {};
+	SCCM.providing.preventOverflowLib = {};
+	SCCM.providing.preventOverflowLib.check_sides = (settings, user_key)=>{
+		core.preventOverflowLib.check_sides(settings, user_key);
+	};
+	SCCM.providing.preventOverflowLib.make_sideMethods = (settings)=>{
+		core.preventOverflowLib.make_sideMethods(settings);
+	};
 
 
 
