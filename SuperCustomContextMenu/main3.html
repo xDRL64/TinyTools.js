@@ -3,22 +3,18 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Document</title>
+	<title>main 3</title>
 	<script src="SCCM.js"></script>
 	<style>
 		html{
-			/* box-sizing: border-box; */
-			/* margin: 0; */
-			height: calc(100%);
-			/* position: relative; */
+			height: 100%;
 		}
 		body{
 			box-sizing: border-box;
 			border : 3px solid red;
-			/* margin: 0; */
-			height: calc(100% - 2*8px);
+			margin: 0;
+			height: 100%;
 			width: 200%;
-			/* position: relative; */
 		}
 	</style>
 </head>
@@ -108,11 +104,7 @@
 		],
 	};
 	
-	// document.body settings
-	const bodyTestBG = 'url("https://i.pinimg.com/736x/cb/c0/37/cbc0370bc576eef14f1d6bca0585221c.jpg")';
-	const bs = document.body.style;
-	bs.backgroundImage = bodyTestBG;
-	document.body.onclick = ()=>(bs.backgroundImage = (bs.backgroundImage ? '' : bodyTestBG));
+	
 
 
 	(()=>{
@@ -124,7 +116,7 @@
 		//document.body[api_key].update_rect();
 	
 		let menu = handle[api_key].get_menu('main');
-		[...menu.children].forEach(child=>child[api_key].set_rectWithBorder(true));
+		handle[api_key].get_items().forEach(item=>item[api_key].set_rectWithBorder(true));
 
 		let data = {};
 		document.body.oncontextmenu = e=>{
@@ -156,6 +148,11 @@
 		//itest = handle[api_key].get_item('itest');
 	})();
 
+	// document.body settings
+	const bodyTestBG = 'url("https://i.pinimg.com/736x/cb/c0/37/cbc0370bc576eef14f1d6bca0585221c.jpg")';
+	const bs = document.body.style;
+	bs.backgroundImage = bodyTestBG;
+	document.body.onclick = ()=>(bs.backgroundImage = (bs.backgroundImage ? '' : bodyTestBG));
 
 
 })();</script>

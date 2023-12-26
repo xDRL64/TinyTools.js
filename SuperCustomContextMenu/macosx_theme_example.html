@@ -1,9 +1,26 @@
-<script src="SCCM.js"></script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>macosx theme example</title>
+	<script src="SCCM.js"></script>
+	<style>
+		html{
+			height: 100%;
+		}
+		body{
+			box-sizing: border-box;
+			border : 3px solid red;
+			margin: 0;
+			height: 100%;
+			width: 200%;
+		}
+	</style>
+</head>
 
 <body>
-	
-</body>
-
 <script> (()=>{
 
 	
@@ -13,6 +30,18 @@
 
 	const SCCM = SuperCustomContextMenu;
 	const api_key = Symbol('dev user key for sccm api');
+
+	// theme debug as layer highlighting
+	//
+
+	let debugStyle = {
+		layer : {
+			style : {
+				//boxShadow:'inset 0px 0px 0px 6px rgba(34, 136, 255, 0.533)', // debug blue color
+				boxShadow:'inset 0px 0px 0px 6px #ff884488', // debug orange color
+			},
+		},
+	};
 
 	// osx theme
 	//
@@ -31,7 +60,7 @@
 	// osx horizontal menu theme
 	//
 	
-	theme.macosx.set_horizontal(api_key);
+	theme.macosx.set_horizontal(api_key, debugStyle);
 	theme.macosx.set_horizontalMain(api_key);
 	theme.macosx.set_horizontalSubmain(api_key);
 	theme.macosx.set_horizontalSetHandleConfig(api_key);
@@ -45,7 +74,7 @@
 	const appleLogo = '<img width=20 height=20 src="https://icons.iconarchive.com/icons/pictogrammers/material/256/apple-icon.png"/>';
 
 	
-	let sccmTemplate = {
+	const osxHrzMenuTemplate = {
 		// root :
 		settings : osxHrz,
 		mainMenu : {
@@ -83,16 +112,28 @@
 		},
 	};
 
+	// osx horizontal menu building
+	(()=>{
+		let handle = SuperCustomContextMenu.create_menu(osxHrzMenuTemplate, api_key);
+		osxHrzSetHandleConfig.init(handle);
 
+		handle[api_key].set_parent(document.body);
 
-
-
+		let data = {};
+		handle[api_key].set_contextData(data);
 	
+		handle[api_key].get_items().forEach(item=>item[api_key].set_rectWithBorder(true));
+		
+		handle[api_key].open();
+	})();
+
 
 
 
 
 	// osx context menu theme
+	//
+
 	theme.macosx.set_defaultMain(api_key);
 	theme.macosx.set_default(api_key);
 
@@ -117,31 +158,7 @@
 		},
 	};
 	
-
-
-
-	// document.body settings
-	const bodyTestBG = 'url("https://i.pinimg.com/736x/cb/c0/37/cbc0370bc576eef14f1d6bca0585221c.jpg")';
-	const bs = document.body.style;
-	bs.backgroundImage = bodyTestBG;
-	document.body.onclick = ()=>(bs.backgroundImage = (bs.backgroundImage ? '' : bodyTestBG));
-
-	// osx horizontal menu building
-	(()=>{
-		let handle = SuperCustomContextMenu.create_menu(sccmTemplate, api_key);
-		osxHrzSetHandleConfig.init(handle);
-
-		handle[api_key].set_parent(document.body);
-		document.body.style.margin = 0;
-
-		let data = {};
-		handle[api_key].set_contextData(data);
 	
-		let menu = handle[api_key].get_menu('main');
-		[...menu.children].forEach(child=>child[api_key].set_rectWithBorder(true));
-		
-		handle[api_key].open();
-	})();
 
 	// osx context menu building
 	(()=>{
@@ -149,11 +166,9 @@
 		handle.style.position = 'absolute';
 	
 		handle[api_key].set_parent(document.body);
-		document.body.style.margin = 0;
-		//document.body[api_key].update_rect();
-	
+
 		let menu = handle[api_key].get_menu('main');
-		[...menu.children].forEach(child=>child[api_key].set_rectWithBorder(true));
+		handle[api_key].get_items().forEach(item=>item[api_key].set_rectWithBorder(true));
 
 		let data = {};
 		document.body.oncontextmenu = e=>{
@@ -168,9 +183,20 @@
 			if(handle[api_key].isOpen()) handle[api_key].close();
 			else handle[api_key].open();
 		};
+
+		window.onscroll = ()=>{
+			handle[api_key].get_root()[api_key].update_rect();
+			handle[api_key].update_chainItemRects();
+		};
 	
 	})();
 
-
+	// document.body settings
+	const bodyTestBG = 'url("https://i.pinimg.com/736x/cb/c0/37/cbc0370bc576eef14f1d6bca0585221c.jpg")';
+	const bs = document.body.style;
+	bs.backgroundImage = bodyTestBG;
+	document.body.onclick = ()=>(bs.backgroundImage = (bs.backgroundImage ? '' : bodyTestBG));
 
 })(); </script>
+</body>
+</html>

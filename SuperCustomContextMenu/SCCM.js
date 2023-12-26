@@ -963,6 +963,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '  width : 100%;'
 				    + '  grid-auto-flow : column;'
 				    + '  justify-content : start;'
+				    + '  align-items : center;'
 				    + '  padding : 0px 16px;'
 				    + '  border-radius : 0px;'
 				    + '}\n'
@@ -1031,14 +1032,20 @@ let SuperCustomContextMenu = {}; // API Receiver
 		/*
 		    HANDLE ADDITIONAL MANUAL SETTINGS :
 		    -----------------------------------
-		    handle.style.position = 'fixed';
-		    handle.style.width    = '100%' ;
+		    handle.style.position = 'fixed' ;
+		    handle.style.width    =  '100%' ;
+		    handle.style.left     =   '0px' ;
+		    handle.style.top      =   '0px' ;
 		*/
 		const macosxHrz_setHandleConfig_part = {
-			root : { // use on handle
+			// use on handle, like that :
+			//   providing.theme.macosx.get_horizontalSetHandleConfig('handle').init(handle)
+			root : {
 				style : {
 					position : 'fixed',
 					width    : '100%',
+					left     : '0px',
+					top      : '0px',
 				},
 			},
 		};
@@ -1794,9 +1801,21 @@ let SuperCustomContextMenu = {}; // API Receiver
 				// NO CHECK
 				return instance.all_menus.find(menu=>menu[APP].id===id);
 			};
+			handle[uKey].get_menus = ()=>{
+				// NO CHECK
+				return [...instance.all_menus];
+			};
 			handle[uKey].get_item = (id)=>{
 				// NO CHECK
 				return instance.all_items.find(item=>item[APP].id===id);
+			};
+			handle[uKey].get_items = ()=>{
+				// NO CHECK
+				return [...instance.all_items];
+			};
+			handle[uKey].get_layers = ()=>{
+				// NO CHECK
+				return instance.all_menus.map(menu=>menu[APP].layer);
 			};
 			handle[uKey].get_root = ()=>{
 				// NO CHECK
