@@ -42,22 +42,17 @@
 	const theme = SCCM.providing.theme;
 
 	// context menu theme
-	theme.sccmOriginal.set_glass(api_key);
-	theme.sccmOriginal.set_glassMain(api_key);
+	theme.sccmOriginal.set_default(api_key);
+	theme.sccmOriginal.set_defaultMain(api_key);
 
 
-	const glass = theme.sccmOriginal.get_glass();
-	const glassMain = theme.sccmOriginal.get_glassMain('menu');
+	const _default = theme.sccmOriginal.get_default();
+	const _defaultMain = theme.sccmOriginal.get_defaultMain('menu');
 
-
-	// 
-	const tellItsChain = ({item, [api_key]:user})=>{
-		let t = item[api_key].elems.get_menu()[api_key].elems.get_itsMenuChain();
-		console.log(t);
-	};
-
-
-
+	//const {css,  initELEM, behavior      } = theme.group.get_[themeName]();
+	//const {init, behavior, layerInit:null} = theme.group.get_[themeName](specifyElem);
+	//const {init, behavior, layerInit     } = theme.group.get_[themeName]('menu');
+	//const {init,                         } = theme.group.get_[themeName]('handle');
 
 
 	const separator = {
@@ -65,12 +60,12 @@
 	};
 
 	const sccmTemplate = {
-		settings : glass,
+		settings : _default,
 		mainMenu : {
-			settings:{id:'main', ...glassMain},
+			settings:{id:'main', ..._defaultMain},
 			items : [
 				// settings{id, txt, check, update, init, behavior}
-				{ settings:{id:'a1',txt:'tellItsChain'}, content:tellItsChain, },
+				{ settings:{id:'a1',txt:'item'}, content:()=>{}, },
 				separator,
 				{ settings:{id:'itest',txt:'Read Information'}, content:()=>{}, },
 				separator,
@@ -94,7 +89,7 @@
 	sccmTemplate.mainMenu.items[5].content.items[1].content = {
 		settings : {},
 		items : [
-			{ settings:{id,txt:'tellItsChain'}, content:tellItsChain, },
+			{ settings:{id,txt:'item'}, content:()=>{}, },
 			{ settings:{id,txt:'Align'}, content:()=>{}, },
 			{ settings:{id,txt:'Align by'}, content:()=>{}, },
 		],
@@ -111,7 +106,7 @@
 	// document.body settings
 	const bodyTestBG = 'url("https://i.pinimg.com/736x/cb/c0/37/cbc0370bc576eef14f1d6bca0585221c.jpg")';
 	const bs = document.body.style;
-	bs.backgroundImage = bodyTestBG;
+	//bs.backgroundImage = bodyTestBG;
 	document.body.onclick = ()=>(bs.backgroundImage = (bs.backgroundImage ? '' : bodyTestBG));
 
 
