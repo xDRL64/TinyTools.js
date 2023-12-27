@@ -179,6 +179,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const {sccm_NULL, mix_base, stack_addonInit, make_themeGenerator} = core.themeLib;
 
+		const sdtCheckOverflow__ = ()=>core.preventOverflowLib.presets.standard; // later lib available
+		// AAA
+
 		// THEME TEMPLATE BASES
 		//
 
@@ -421,16 +424,16 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		// contains only differences from its base
-		const foldAtRight_part = { // submenu cases
+		const foldRight_part = (offset='0px')=>({ // submenu cases
 			menu : {
 				style : {
-					left : '100%',
+					left : `calc(100% + ${offset})`,
 				},
 			},
-		};
+		});
 		
 		// contains only differences from its base
-		const openAtRight_part = { // main menu case
+		const openRight_part = { // main menu case
 			menu : {
 				style : {
 					left : '',
@@ -441,22 +444,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// everything optional (root/layer/menu/item)
 		const sdtFold_rightLeft_additional_inits = {
 			root : (root, uKey)=>{
-				const sidesTemplate = { // declares by priotity order
-					RIGHT : {
-						style : {left:'100%'},
-						checkBorderList : ['r','b'],
-					},
-					LEFT : {
-						style : {left:"___variable___"},
-						checkBorderList : ['l','b'],
-					},
-				};
-				const sides = core.preventOverflowLib.build_sideRules(sidesTemplate);
-				const update = (menuWidth)=>sidesTemplate.LEFT.style.left=`-${menuWidth}px`;
-				root[TMEM] ||= {};
-				root[TMEM].get_rightLeftFold = (...args)=>{ update(...args); return sides; };
+				sdtCheckOverflow__().RIGHTLEFT.init(root);
+				sdtCheckOverflow__().DOWNTOP.init(root);
 			},
 		};
+		// AAA
 
 
 		//const _baseMain = mix_base(_base, _baseMain_part);
@@ -482,9 +474,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// EMPTY THEME
 		//
 		
-		const empty_base = mix_base(_base, foldAtRight_part);
+		const empty_base = mix_base(_base, foldRight_part());
 
-		const emptyClass_base = mix_base(class_base, foldAtRight_part);
+		const emptyClass_base = mix_base(class_base, foldRight_part());
 
 		
 
@@ -513,7 +505,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		*/
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		//const default_base = mix_base(classLogic_base, foldAtRight_part); // default style base
+		//const default_base = mix_base(classLogic_base, foldRight_part); // default style base
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		//const default_baseMain = mix_base(classLogic_base, _baseMain_part); // default style base main menu
@@ -565,10 +557,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const default_base = mix_base(
-			_base, withClass_part, classLogic_part, foldAtRight_part, sccm_default_cosmetic
+			_base, withClass_part, classLogic_part, foldRight_part('2px'), sccm_default_cosmetic
 		);
 		const default_baseMain = mix_base(
-			sccm_NULL, _baseMain_part, mainMenuClass_part, openAtRight_part
+			sccm_NULL, _baseMain_part, mainMenuClass_part, openRight_part
 		);
 
 
@@ -640,34 +632,25 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '}\n',
 			},
 			behaviors : {
+				
+				// AAA
 				openMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('open');
 						menu.classList.remove('closed');
-						menu[uKey].update_rect();
-						const mrect = menu[uKey].get_rect();
-						const lrect = menu[uKey].elems.get_layer().getBoundingClientRect(); // TODO provide a way to get it
 
-						// main menu
-						if(menu[uKey].elems.get_chainLength() === 0){
-							if(lrect.x+mrect.w > window.innerWidth) menu.style.left = `-${mrect.w}px`;
-							else menu.style.left = '';
-						// submenu
-						}else{
-
-							const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
-
-							const sides = menu[uKey].elems.get_root()[TMEM].get_rightLeftFold(mrect.w);
-
-							const settings = {elem:menu, sides, frameRect};
-							
-							// TODO correct side opening ....
-
-							let res = core.preventOverflowLib.check_sides(settings,uKey);
-							console.log(res);
+						const hrzOfst = {
+							mainMenu:{RIGHT:'0%',LEFT:'0%'},
+							subMenu:{RIGHT:'2px',LEFT:'-2px'} // equal to padding
 						}
-
-
+						const RL_response = sdtCheckOverflow__().RIGHTLEFT.process(menu, uKey, hrzOfst);
+						if(RL_response.status) RL_response._apply();
+						
+						const vrtOfst = {
+							subMenu:{TOP:'+100%'}
+						};
+						const DT_response = sdtCheckOverflow__().DOWNTOP.process(menu, uKey, vrtOfst);
+						if(DT_response.status) DT_response._apply();
 
 						menu[uKey].elems.update_itemRects();
 					};
@@ -677,7 +660,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const glass_base = mix_base(
-			_base, withClass_part, expendClass_part, classLogic_part, foldAtRight_part, sccm_glass_cosmetic
+			_base, withClass_part, expendClass_part, classLogic_part, foldRight_part('2px'), sccm_glass_cosmetic
 		);
 		const glass_baseMain = mix_base(
 
@@ -1119,6 +1102,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 	core.preventOverflowLib = (()=>{
+
+		const TMEM = core.theme_key;
+
 		// simple 2D point test in rect area
 		//
 
@@ -1195,7 +1181,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const make_sideMethods = ({style, class:classRef, otherProp})=>{ // ('class' is a reserved word)
 			// style = {prop:value, ...}
-			// classRef = { addset:[name, ...], remset:[name, ...], mode:'smart'||'warning' }
+			// classRef = { addset:[name, ...], remset:[name, ...] }
 			// otherProp = {'prop.prop....':value, ...}
 			let mem = null; // backups affected prop's current value
 			return {
@@ -1243,7 +1229,111 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return output;
 		};
 
-		return {check_sides, make_sideMethods, build_sideRules};
+		// AAA
+		const presets = {
+			standard : {
+				RIGHTLEFT : {
+					init : (root)=>{ // init mem space (on menu root)
+						const sidesTemplate = {
+							// declares by priotity order
+							RIGHT : {
+								style : {left:'___variable___'},
+								checkBorderList : ['r'],
+							},
+							LEFT : {
+								style : {left:"___variable___"},
+								checkBorderList : ['l'],
+							},
+						};
+						const sides = build_sideRules(sidesTemplate);
+						const update = (leftForRIGHT, leftForLEFT)=>{
+							sidesTemplate.RIGHT.style.left = leftForRIGHT;
+							sidesTemplate.LEFT.style.left  = leftForLEFT;
+						};
+						root[TMEM] ||= {};
+						root[TMEM].get_RIGHTLEFT = (...args)=>{ update(...args); return sides; };
+					},
+					process : (menu, uKey, addOffset)=>{ // check
+
+						addOffset ||= { mainMenu:{RIGHT:'0px',LEFT:'0px'}, subMenu:{RIGHT:'0px',LEFT:'0px'} };
+
+						menu[uKey].update_rect();
+						const menuWidth = menu[uKey].get_rect().w;
+						
+						let offsets = {RIGHT:'',LEFT:''}; // priority by order
+		
+						if(menu[uKey].elems.get_chainLength() === 0){
+							// main menu case
+							offsets.RIGHT = `calc(0px + ${addOffset.mainMenu?.RIGHT||'0px'})`;
+							offsets.LEFT  = `calc(-100% + ${addOffset.mainMenu?.LEFT||'0px'})`;
+						}else{ // submenu case
+							offsets.RIGHT = `calc(100% + ${addOffset.subMenu?.RIGHT||'0px'})`;
+							offsets.LEFT  = `calc(-${menuWidth}px + ${addOffset.subMenu?.LEFT||'0px'})`;
+						}
+						const offsetArray = Object.values(offsets);
+		
+						const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
+						const sides = menu[uKey].elems.get_root()[TMEM].get_RIGHTLEFT(...offsetArray);
+						const settings = {elem:menu, sides, frameRect};
+						
+						let inBound = check_sides(settings, uKey);
+						const apply = inBound ? (()=>menu.style.left=offsets[inBound]||'') : null;
+						return {status:inBound, _apply:apply};
+					},
+				},
+				DOWNTOP : {
+					init : (root)=>{ // init mem space (on menu root)
+						const sidesTemplate = {
+							// declares by priotity order
+							DOWN : {
+								style : {top:'___variable___'},
+								checkBorderList : ['b'],
+							},
+							TOP : {
+								style : {top:"___variable___"},
+								checkBorderList : ['t'],
+							},
+						};
+						const sides = build_sideRules(sidesTemplate);
+						const update = (topForDOWN, topForTOP)=>{
+							sidesTemplate.DOWN.style.top = topForDOWN;
+							sidesTemplate.TOP.style.top  = topForTOP;
+						};
+						root[TMEM] ||= {};
+						root[TMEM].get_DOWNTOP = (...args)=>{ update(...args); return sides; };
+					},
+					process : (menu, uKey, addOffset)=>{ // check and apply
+
+						addOffset ||= { mainMenu:{DOWN:'0px',TOP:'0px'}, subMenu:{DOWN:'0px',TOP:'0px'} };
+
+						menu[uKey].update_rect();
+						const menuHeight = menu[uKey].get_rect().h;
+		
+						let offsets = {DOWN:'',TOP:''}; // priority by order
+		
+						if(menu[uKey].elems.get_chainLength() === 0){
+							// main menu case
+							offsets.DOWN = `calc(0px + ${addOffset.mainMenu?.DOWN||'0px'})`;
+							offsets.TOP  = `calc(-100% + ${addOffset.mainMenu?.TOP||'0px'})`;
+						}else{ // submenu case
+							offsets.DOWN = `calc(0% + ${addOffset.subMenu?.DOWN||'0px'})`;
+							offsets.TOP  = `calc(-${menuHeight}px + ${addOffset.subMenu?.TOP||'0px'})`;
+						}
+						const offsetArray = Object.values(offsets);
+		
+						const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
+						const sides = menu[uKey].elems.get_root()[TMEM].get_DOWNTOP(...offsetArray);
+						const settings = {elem:menu, sides, frameRect};
+						
+						let inBound = check_sides(settings, uKey);
+						const apply = inBound ? (()=>menu.style.top=offsets[inBound]||'') : null;
+						return {status:inBound, _apply:apply};
+					},
+				},
+			},
+		};
+
+		return {check_sides, make_sideMethods, build_sideRules, presets};
 	})();
 
 	// MAKES PUBLIC FEATURES
