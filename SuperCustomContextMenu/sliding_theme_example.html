@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>sccm original sliding theme example</title>
+	<script src="SCCM.js"></script>
+	<style>
+		html{
+			height: 100%;
+		}
+		body{
+			box-sizing: border-box;
+			border : 3px solid red;
+			margin: 0;
+			height: 100%;
+			width: 200%;
+		}
+	</style>
+</head>
+
+
+<body>
+	
+<script> (()=>{
+
+	
+	let id = 0;
+	const forceDisable = ()=>false;
+	const check = forceDisable;
+
+	const SCCM = SuperCustomContextMenu;
+	api_key = Symbol('dev user key for sccm api');
+
+	// theme
+	//
+
+	const theme = SCCM.providing.theme;
+
+	// context menu theme
+	theme.sccmOriginal.set_sliding(api_key);
+	theme.sccmOriginal.set_slidingMain(api_key);
+
+
+	const _default = theme.sccmOriginal.get_sliding();
+	const _defaultMain = theme.sccmOriginal.get_slidingMain('menu');
+
+	//const {css,  initELEM, behavior      } = theme.group.get_[themeName]();
+	//const {init, behavior, layerInit:null} = theme.group.get_[themeName](specifyElem);
+	//const {init, behavior, layerInit     } = theme.group.get_[themeName]('menu');
+	//const {init,                         } = theme.group.get_[themeName]('handle');
+
+
+	const separator = {
+		 settings:{init:e=>e.classList.add('asSeparator'), check}, content:()=>{}, 
+	};
+
+	const sccmTemplate = {
+		settings : _default,
+		mainMenu : {
+			settings:{id:'main', ..._defaultMain},
+			items : [
+				// settings{id, txt, check, update, init, behavior}
+				{ settings:{id:'a1',txt:'item'}, content:()=>{}, },
+				separator,
+				{ settings:{id,txt:'Read Information'}, content:()=>{}, },
+				separator,
+				{ settings:{id,txt:'Change wallpaper'}, content:()=>{}, },
+				{ settings:{id,txt:'Align'}, content:()=>{}, },
+				{ settings:{id,txt:'Align by'}, content:()=>{}, },
+				{ settings:{id,txt:'Sort by'}, content:()=>{}, },
+				{ settings:{id,txt:'Display presention options'}, content:()=>{}, },
+			],
+		},
+	};
+	sccmTemplate.mainMenu.items[5].content = {
+		settings : {},
+		items : [
+			{ settings:{id,txt:'Change wallpaper'}, content:()=>{}, },
+			{ settings:{id,txt:'Align'}, content:()=>{}, },
+			{ settings:{id,txt:'Align by'}, content:()=>{}, },
+			{ settings:{id,txt:'Sort by'}, content:()=>{}, },
+		],
+	};
+	sccmTemplate.mainMenu.items[5].content.items[1].content = {
+		settings : {},
+		items : [
+			{ settings:{id,txt:'item'}, content:()=>{}, },
+			{ settings:{id,txt:'Align'}, content:()=>{}, },
+			{ settings:{id,txt:'Align by'}, content:()=>{}, },
+		],
+	};
+	sccmTemplate.mainMenu.items[5].content.items[0].content = {
+		settings : {},
+		items : [
+			{ settings:{id,txt:'Change wallpaper'}, content:()=>{}, },
+			{ settings:{id,txt:'Align'}, content:()=>{}, },
+			{ settings:{id,txt:'Align by'}, content:()=>{}, },
+		],
+	};
+	
+	(()=>{
+		let handle = SuperCustomContextMenu.create_menu(sccmTemplate, api_key);
+		handle.style.position = 'absolute';
+	
+		handle[api_key].set_parent(document.body);
+
+		let menu = handle[api_key].get_menu('main');
+		handle[api_key].get_items().forEach(item=>item[api_key].set_rectWithBorder(true));
+
+		let data = {};
+		document.body.oncontextmenu = e=>{
+			e.preventDefault();
+			handle[api_key].set_contextData(data);
+			
+			handle.style.left = e.clientX + window.scrollX + 'px';
+			handle.style.top = e.clientY + window.scrollY + 'px';
+			
+			menu[api_key].update_rect();
+			handle[api_key].get_root()[api_key].update_rect();
+
+			if(handle[api_key].isOpen()) handle[api_key].close();
+			else handle[api_key].open();
+			console.log(e);
+		};
+	
+		window.onscroll = ()=>{
+			handle[api_key].get_root()[api_key].update_rect();
+			handle[api_key].update_chainItemRects();
+		};
+	})();
+
+	// document.body settings
+	const bodyTestBG = 'url("https://i.pinimg.com/736x/cb/c0/37/cbc0370bc576eef14f1d6bca0585221c.jpg")';
+	const bs = document.body.style;
+	//bs.backgroundImage = bodyTestBG;
+	document.body.onclick = ()=>(bs.backgroundImage = (bs.backgroundImage ? '' : bodyTestBG));
+
+
+})();</script>
+
+</body>
+</html>

@@ -668,11 +668,16 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 
+
+
+
+		// AAA
+
 		// SLIDING (DEFAULT) THEME
 		//
 
 		// contains only differences from its base
-		const sliding_base = mix_base(class_base, { // sliding style base
+		const sliding_base_ = mix_base(class_base, { // sliding style base
 			menu : {
 				style : {
 					left : '0%',
@@ -775,6 +780,20 @@ let SuperCustomContextMenu = {}; // API Receiver
 				});
 			},
 		};
+
+		// ******  sliding remaking *********
+		const sccm_sliding_part = {
+			menu : {
+				style : {
+					transition : 'left 1s, opacity 1s',
+				},
+			},
+			behaviors : sccm_sliding.behaviors,
+		};
+		const sliding_base = mix_base(glass_base, sccm_sliding_part);
+		//const sliding_baseMain = mix_base(default_baseMain, sccm_sliding_part);
+
+
 
 
 
@@ -1058,8 +1077,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 				glass     : make_themeGenerator(glass_base, sccm_NULL, sdtFold_rightLeft_additional_inits),
 				glassMain : make_themeGenerator(glass_base, default_baseMain),
 				fading : null,
-				sliding : make_themeGenerator(sliding_base, sccm_sliding, sliding_additional_inits),
-				slidingMain : null,
+				sliding : make_themeGenerator(sliding_base, sccm_NULL, sliding_additional_inits),
+				slidingMain : make_themeGenerator(sliding_base, default_baseMain, sliding_additional_inits),
 				growing : null,
 				growingMain : null,
 			},
@@ -1150,7 +1169,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 				// tests open side conditions
 				let inBound = true;
-				for(const brd of side.checkBorderList){
+				for(const brd of side.checkBorderList||[]){
 					inBound = inBoundRule[brd]( elemRect[brd], frameBox[brd] );
 					if( !inBound ) break;
 				}
@@ -1229,6 +1248,68 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return output;
 		};
 
+		/* 
+		SIDES = [
+			// declares by priotity order
+			{
+				name : '',
+				template : {
+					style : { propName:'propValue', ... },
+					class:{addset:[],remset:[]},
+					otherProp:{},
+					checkBorderList : [],
+				},
+				variables : {
+					style:{ propName:'variableValue', ... },
+				},
+				customProcess : (menu, uKey, addOffset, side)=>{}
+			},
+			...
+		];
+		*/
+
+		const compile_customPreset_varStyleOnly = (SIDES, frameRect)=>{
+			const SMEM = Symbol('Sides Private Memory');
+			return {
+				init : (root)=>{
+					const sidesTemplate = {};
+					const updateStack = [];
+					for(const SIDE of SIDES){
+						const template = structuredClone(SIDE.template);
+						template.variables = {style:{}};
+						template.customProcess = SIDE.customProcess;
+						sidesTemplate[SIDE.name] = template;
+						for(const sName in SIDE.variables.style){ // fill updateStack
+							const dst = template.style;
+							const src = template.variables.style;
+							updateStack.push( ()=>dst[sName]=src[sName] );
+						}
+					}
+					const sides = build_sideRules(sidesTemplate);
+					root[TMEM] ||= {};
+					root[TMEM][SMEM].get_sides = ()=>sides;
+					root[TMEM][SMEM].update_vars = ()=>updateStack.forEach( update=>update() );
+				},
+				process : (menu, uKey, addOffset)=>{
+					const sidesMem = menu[uKey].elems.get_root()[TMEM][SMEM];
+					const sides = sidesMem.get_sides();
+					for(const sName in sides){
+						const side = sides[sName];
+						// custom process (variables modification process)
+						side.customProcess(menu, uKey, addOffset, side);
+					}
+					sidesMem.update_vars();
+					frameRect ||= {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
+					const settings = {elem:menu, sides, frameRect};
+					const sideName = check_sides(settings, uKey);
+					const inBound = !!sideName;
+					const side = sides[sideName];
+					const apply = inBound ? ()=>side.setOpen(menu) : null;
+					return {status:inBound, sideName, _apply:apply, side, sides}
+				},
+			};
+		};
+
 		// AAA
 		const presets = {
 			standard : {
@@ -1276,9 +1357,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 						const sides = menu[uKey].elems.get_root()[TMEM].get_RIGHTLEFT(...offsetArray);
 						const settings = {elem:menu, sides, frameRect};
 						
-						let inBound = check_sides(settings, uKey);
-						const apply = inBound ? (()=>menu.style.left=offsets[inBound]||'') : null;
-						return {status:inBound, _apply:apply};
+						const sideName = check_sides(settings, uKey);
+						const inBound = !!sideName;
+						const side = sides[sideName];
+						const apply = inBound ? (()=>menu.style.left=offsets[sideName]||'') : null;
+						return {status:inBound, sideName, _apply:apply, side, sides};
 					},
 				},
 				DOWNTOP : {
