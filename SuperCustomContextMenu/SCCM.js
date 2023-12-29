@@ -186,9 +186,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//
 
 		
+		// base and baseMain
 
-		// MUST HAVE ALL TREE PROPS EVENT IF ARE EMPTY
-		const _base = { // minimal style base
+		const _base = { // minimal base :: +[style.prtEvt/display], *[behav.all]
+			// MUST HAVE ALL TREE PROPS EVENT IF ARE EMPTY
 			_all : {
 				style : {},
 				class : [],
@@ -291,8 +292,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		// contains only differences from its base
-		const _baseMain_part = {
+		const _baseMain_part = { // baseMain settings :: *[behav.replace]
+			// contains only differences from its base
 			behaviors : {
 				replaceLayer_method : (uKey)=>{
 					return ({hook, root, upMenu, item, layer, menu})=>{
@@ -308,8 +309,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		// contains only differences from its base
-		const withClass_part = {
+		// class
+
+		const withClass_part = { // class settings :: +[class.menu/item], *[behav.all-replace]
+			// contains only differences from its base
 			menu : {
 				class : ['menu'],
 			},
@@ -322,20 +325,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 				openMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.remove('closed');
-						//menu.style.pointerEvents = 'auto';
 						menu[uKey].elems.update_itemRects();
 					};
 				},
 				closeMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
-						//menu.style.pointerEvents = 'none';
 					};
 				},
 				setClosedMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
-						//menu.style.pointerEvents = 'none';
 					};
 				},
 				hoverItem_method : (uKey)=>{
@@ -373,7 +373,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		const classLogic_part = {
+		const classLogic_part = { // class use prtEvt :: +[css.menu.auto/css.closed.none]
+			// contains only differences from its base
 			menu : {
 				css : '\n'
 				    + '.menu{'
@@ -385,14 +386,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		const mainMenuClass_part = {
-			menu : {
-				class : ['main'],
-			},
-		};
-
-		// contains only differences from its base
-		const expendClass_part = {
+		const expendClass_part = { // add class open :: *[behav.open/close/setclose]
+			// contains only differences from its base
 			behaviors : {
 				
 				// binders
@@ -401,7 +396,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 					return (menu)=>{
 						menu.classList.add('open');
 						menu.classList.remove('closed');
-						//menu.style.pointerEvents = 'auto';
 						menu[uKey].elems.update_itemRects();
 					};
 				},
@@ -409,22 +403,30 @@ let SuperCustomContextMenu = {}; // API Receiver
 					return (menu)=>{
 						menu.classList.add('closed');
 						menu.classList.remove('open');
-						//menu.style.pointerEvents = 'none';
 					};
 				},
 				setClosedMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
 						menu.classList.remove('open');
-						//menu.style.pointerEvents = 'none';
 					};
 				},
 
 			},
 		};
 
-		// contains only differences from its base
-		const foldRight_part = (offset='0px')=>({ // submenu cases
+		// classMain
+
+		const mainMenuClass_part = { // add class main :: +[class.menu.main]
+			menu : {
+				class : ['main'],
+			},
+		};
+
+		// baisc position
+
+		const foldRight_part = (offset='0px')=>({ // set submenu position :: +[style.menu.left:100%+offset]
+			// contains only differences from its base
 			menu : {
 				style : {
 					left : `calc(100% + ${offset})`,
@@ -432,8 +434,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		});
 		
-		// contains only differences from its base
-		const openRight_part = { // main menu case
+		// basic position main
+
+		const openRight_part = { // set main menu position :: +[style.menu.left:'']
+			// contains only differences from its base
 			menu : {
 				style : {
 					left : '',
@@ -441,13 +445,44 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		// everything optional (root/layer/menu/item)
-		const sdtFold_rightLeft_additional_inits = {
+		// advanced position (main and sub)
+
+		const sdtFold_additional_inits = { // add smart positioning :: +[init.root.LR/DT]
+			// everything optional (root/layer/menu/item)
 			root : (root, uKey)=>{
 				sdtCheckOverflow__().RIGHTLEFT.init(root);
 				sdtCheckOverflow__().DOWNTOP.init(root);
 			},
 		};
+
+		const stdFold_checkOnly = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
+			// use it in an openMenu_method
+			const ofst = symetricOffset;
+			const hrzOfst = {
+				//mainMenu:{RIGHT:'0%',LEFT:'0%'},
+				subMenu:{RIGHT:`${ofst}`,LEFT:`-${ofst}`} // equal to padding
+			}
+			const RL_result = sdtCheckOverflow__().RIGHTLEFT.process(menu, uKey, hrzOfst);
+
+			const vrtOfst = {
+				//mainMenu:{DOWN:'0%',TOP:'0%'},
+				subMenu:{DOWN:`-${ofst}`,TOP:`${ofst}`}, // equal to padding
+			};
+			const DT_result = sdtCheckOverflow__().DOWNTOP.process(menu, uKey, vrtOfst);
+	
+			return {RL_result, DT_result};
+		};
+
+		const stdFold_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
+			// use it in an openMenu_method
+			const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
+			if(RL_result.status) RL_result._apply();
+			if(DT_result.status) DT_result._apply();
+		};
+		
+
+
+
 		// AAA
 
 
@@ -455,16 +490,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 		const class_base = mix_base(_base, withClass_part);
-
-
-		/* 
-		const class_baseMain = mix_base(_baseMain, withClass_part);
-		const classMain_baseMain = mix_base(class_base, mainMenuClass_part);
-		const classLogic_base = mix_base(class_base, classLogic_part);
-		const expClass_base = mix_base(class_base, expendClass_part);
-		*/
-
-
 
 
 
@@ -494,21 +519,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// DEFAULT THEME
 		//
-
-
-
-		// 
-		/* Ineritance tracking : class_base
-		   ----------------------------------------------------------------------------
-			_base          : struct rect config,                opn/clo use prtEvt and display
-			withClass_part :                     use def class, opn/clo use prtEvt
-		*/
-
-		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		//const default_base = mix_base(classLogic_base, foldRight_part); // default style base
-
-		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		//const default_baseMain = mix_base(classLogic_base, _baseMain_part); // default style base main menu
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const sccm_default_cosmetic = { // SCCM original default style
@@ -639,18 +649,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						menu.classList.add('open');
 						menu.classList.remove('closed');
 
-						const hrzOfst = {
-							mainMenu:{RIGHT:'0%',LEFT:'0%'},
-							subMenu:{RIGHT:'2px',LEFT:'-2px'} // equal to padding
-						}
-						const RL_response = sdtCheckOverflow__().RIGHTLEFT.process(menu, uKey, hrzOfst);
-						if(RL_response.status) RL_response._apply();
-						
-						const vrtOfst = {
-							subMenu:{TOP:'+100%'}
-						};
-						const DT_response = sdtCheckOverflow__().DOWNTOP.process(menu, uKey, vrtOfst);
-						if(DT_response.status) DT_response._apply();
+						stdFold_process(menu, uKey, '2px') // px : equal to padding
 
 						menu[uKey].elems.update_itemRects();
 					};
@@ -733,11 +732,24 @@ let SuperCustomContextMenu = {}; // API Receiver
 			behaviors : {
 				// binders
 				//
-				openMenu_method : (uKey)=>{
+				/* openMenu_method_OLD : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('open');
 						menu.classList.remove('closed');
 						menu.style.left = '100%';
+						menu[uKey].elems.update_itemRects();
+					};
+				}, */
+				openMenu_method : (uKey)=>{
+					return (menu)=>{
+						let waitfor_2frames = function(callback){
+							requestAnimationFrame( (()=>requestAnimationFrame(callback)) );
+						};
+						menu.classList.add('open');
+						menu.classList.remove('closed');
+						//menu.style.left = '100%';
+						const res = stdFold_checkOnly(menu, uKey, '2px') // px : equal to padding
+						waitfor_2frames( ()=>{res.RL_result._apply?.();res.DT_result._apply?.();} )
 						menu[uKey].elems.update_itemRects();
 					};
 				},
@@ -795,7 +807,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 
-
+		const sdtfoldAndSliding_addonInit = stack_addonInit(
+			sdtFold_additional_inits, sliding_additional_inits
+		);
 
 
 
@@ -1065,6 +1079,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const macosx_setSeparatorClass = mix_base(sccm_NULL, macosx_setSeparatorClass_part);
 		
+		// AAA
 
 		return { // object depth 2 : groups <- themes
 			empty : {
@@ -1074,11 +1089,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 			sccmOriginal : {
 				default     : make_themeGenerator(default_base, sccm_NULL),
 				defaultMain : make_themeGenerator(default_base, default_baseMain),
-				glass     : make_themeGenerator(glass_base, sccm_NULL, sdtFold_rightLeft_additional_inits),
+				glass     : make_themeGenerator(glass_base, sccm_NULL, sdtFold_additional_inits),
 				glassMain : make_themeGenerator(glass_base, default_baseMain),
 				fading : null,
-				sliding : make_themeGenerator(sliding_base, sccm_NULL, sliding_additional_inits),
-				slidingMain : make_themeGenerator(sliding_base, default_baseMain, sliding_additional_inits),
+				sliding : make_themeGenerator(sliding_base, sccm_NULL, sdtfoldAndSliding_addonInit),
+				slidingMain : make_themeGenerator(sliding_base, default_baseMain, sdtfoldAndSliding_addonInit),
 				growing : null,
 				growingMain : null,
 			},
@@ -1318,11 +1333,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 						const sidesTemplate = {
 							// declares by priotity order
 							RIGHT : {
-								style : {left:'___variable___'},
+								style : {left:'___variable___',transition:'none'},
 								checkBorderList : ['r'],
 							},
 							LEFT : {
-								style : {left:"___variable___"},
+								style : {left:"___variable___",transition:'none'},
 								checkBorderList : ['l'],
 							},
 						};
@@ -1369,11 +1384,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 						const sidesTemplate = {
 							// declares by priotity order
 							DOWN : {
-								style : {top:'___variable___'},
+								style : {top:'___variable___',transition:'none'},
 								checkBorderList : ['b'],
 							},
 							TOP : {
-								style : {top:"___variable___"},
+								style : {top:"___variable___",transition:'none'},
 								checkBorderList : ['t'],
 							},
 						};
@@ -1400,7 +1415,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 							offsets.TOP  = `calc(-100% + ${addOffset.mainMenu?.TOP||'0px'})`;
 						}else{ // submenu case
 							offsets.DOWN = `calc(0% + ${addOffset.subMenu?.DOWN||'0px'})`;
-							offsets.TOP  = `calc(-${menuHeight}px + ${addOffset.subMenu?.TOP||'0px'})`;
+							offsets.TOP  = `calc(100% - ${menuHeight}px + ${addOffset.subMenu?.TOP||'0px'})`;
 						}
 						const offsetArray = Object.values(offsets);
 		
