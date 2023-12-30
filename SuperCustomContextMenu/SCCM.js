@@ -182,6 +182,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const sdtCheckOverflow__ = ()=>core.preventOverflowLib.presets.standard; // later lib available
 		// AAA
 
+		// TODO segment behavior in _behav
+
 		// THEME TEMPLATE BASES
 		//
 
@@ -373,7 +375,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		const classLogic_part = { // class use prtEvt :: +[css.menu.auto/css.closed.none]
+		const class_prtLogic_part = { // class use prtEvt :: +[css.menu.auto/css.closed.none]
 			// contains only differences from its base
 			menu : {
 				css : '\n'
@@ -382,6 +384,19 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '}\n'
 				    + '.closed{'
 				    + '  pointer-events : none;'
+				    + '}\n',
+			},
+		};
+
+		const class_displayLogic_part = { // class use opacity :: +[css.menu.opa:1/css.menu.clo.opa:0]
+			// contains only differences from its base
+			menu : {
+				css : '\n'
+				    + '.menu{'
+				    + '  opacity : 1;'
+				    + '}\n'
+				    + '.closed{'
+				    + '  opacity : 0;'
 				    + '}\n',
 			},
 		};
@@ -479,7 +494,79 @@ let SuperCustomContextMenu = {}; // API Receiver
 			if(RL_result.status) RL_result._apply();
 			if(DT_result.status) DT_result._apply();
 		};
+
+		const stdFold_processWithTransition = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
+			// use it in an openMenu_method
+			const original_transition_value = menu.style.transition;
+			menu.style.transition = '';
+			const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
+			menu.style.transition = original_transition_value;
+			const _apply = ()=>{
+				if(RL_result.status) RL_result._apply();
+				if(DT_result.status) DT_result._apply();
+			};
+			let waitfor_2frames = function(callback){
+				requestAnimationFrame( (()=>requestAnimationFrame(callback)) );
+			};
+			waitfor_2frames( _apply );
+		};
 		
+		// fading effect
+
+		const classFading_standard_part = (time='1s')=> ({
+			// contains only differences from its base
+			menu : {
+				css : '\n'
+				    + '.menu{'
+					+ '  opacity : 1;'
+					+ `  transition : opacity ${time};`
+				    + '}\n'
+				    + '.closed{'
+				    + '  opacity : 0.2;'
+				    + '}\n',
+			},
+		});
+
+		const classFading_itemBackdrop_part = (time='1s')=> ({
+			// must overwrite theme_cosmetic
+			// contains only differences from its base
+			menu : {
+				css : '\n'
+					+ '.menu{'
+					+ `  transition : background-color ${time};`
+					+ '}\n'
+					+ '.closed{'
+					+ '  background-color : #00000000;'
+					+ '}\n',
+			},
+			item : {
+				css : '\n'
+				    + '.item{'
+					+ '  opacity : 1;'
+					+ `  transition : opacity ${time};`
+				    + '}\n'
+				    + '.closed .item{'
+				    + '  opacity : 0;'
+				    + '}\n',
+			},
+		});
+
+
+		const merge_sdtFadingWithSliding = (time='1s')=>({
+			menu : {
+				style : {
+					transition : `opacity ${time}, left ${time}`,
+				},
+			},
+		});
+
+		const merge_itmbdropFadingWithSliding = (time='1s')=>({
+			menu : {
+				style : {
+					transition : `background-color ${time}, left ${time}`,
+				},
+			},
+		});
 
 
 
@@ -567,7 +654,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const default_base = mix_base(
-			_base, withClass_part, classLogic_part, foldRight_part('2px'), sccm_default_cosmetic
+			_base, withClass_part, class_prtLogic_part, foldRight_part('2px'), sccm_default_cosmetic
 		);
 		const default_baseMain = mix_base(
 			sccm_NULL, _baseMain_part, mainMenuClass_part, openRight_part
@@ -587,7 +674,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '}\n'
 			},
 			root : {},
-			layer : {style:{boxShadow:'inset 0px 0px 0px 6px rgba(34, 136, 255, 0.533)'}}, // debug
+			layer : {
+				style:{
+					boxShadow:'inset 0px 0px 0px 6px rgba(34, 136, 255, 0.533)',
+					zIndex : 0,
+				}}, // debug
 			menu  : {
 				class : ['general'],
 				css : '\n'
@@ -600,35 +691,20 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '.main{'
 				    + '  top : 0px;'
 				    + '  left : 0%;'
-				    + '}\n'
-				    + '.closed{'
-				    + '  opacity : 0.2;'
-				    + '  pointer-events : none;'
-				    + '}\n'
-				    + '.open{'
-				    + '  pointer-events : auto;'
 				    + '}\n',
 			},
 			item  : {
 				class : ['general', 'item'],
 				css : '\n'
 				    + '.item{'
-				    + '  background-color : lightgrey;'
 				    + '  padding : 4 128 4 24;'
 				    + '  border-radius: 2px;'
 				    + '  box-shadow: inset -3px -2px 9px 0px white;'
 				    + '  background: linear-gradient(to top, #00000000 0%, #FFFFFF88 100%);'
 					+ '  backdrop-filter: blur(25px);'
-					// to avoid disfunctioning with blur de merde of css de merde add "text-shadow" ending by "1px 1px 25px transparent;"
-					// in absolute use a "text-shadow : x y blur color" with blur value big enough
-					// context : dev in vmware (pause/play not machine shutdown)
-					// bug is there when chrome inspector is open
-					//+ '  text-shadow: -1px 0px 0px white, 1px 1px 2px white, 1px 1px 25px transparent;'
-
-					+ '  text-shadow: -1px 0px 0px white, 1px 1px 1px black, 1px 1px 5px white;'
+					//+ '  text-shadow: -1px 0px 0px white, 1px 1px 1px black, 1px 1px 5px white;'
 					+ '  text-shadow: 1px 1px 0px white, 2px 2px 1px black;'
 					+ '  color : #00817540;'
-
 					+ '  font-family: Poppins, sans-serif;'
 				    + '}\n'
 				    + '.inPath{'
@@ -646,7 +722,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 				// AAA
 				openMenu_method : (uKey)=>{
 					return (menu)=>{
-						menu.classList.add('open');
 						menu.classList.remove('closed');
 
 						stdFold_process(menu, uKey, '2px') // px : equal to padding
@@ -659,7 +734,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const glass_base = mix_base(
-			_base, withClass_part, expendClass_part, classLogic_part, foldRight_part('2px'), sccm_glass_cosmetic
+			_base, withClass_part,
+			class_prtLogic_part,
+			//foldRight_part('2px'),
+			sccm_glass_cosmetic, classFading_itemBackdrop_part('1s'),
 		);
 		const glass_baseMain = mix_base(
 
@@ -732,41 +810,27 @@ let SuperCustomContextMenu = {}; // API Receiver
 			behaviors : {
 				// binders
 				//
-				/* openMenu_method_OLD : (uKey)=>{
-					return (menu)=>{
-						menu.classList.add('open');
-						menu.classList.remove('closed');
-						menu.style.left = '100%';
-						menu[uKey].elems.update_itemRects();
-					};
-				}, */
 				openMenu_method : (uKey)=>{
 					return (menu)=>{
-						let waitfor_2frames = function(callback){
-							requestAnimationFrame( (()=>requestAnimationFrame(callback)) );
-						};
-						menu.classList.add('open');
 						menu.classList.remove('closed');
-						//menu.style.left = '100%';
-						const res = stdFold_checkOnly(menu, uKey, '2px') // px : equal to padding
-						waitfor_2frames( ()=>{res.RL_result._apply?.();res.DT_result._apply?.();} )
+						//menu[uKey].elems.get_layer().style.zIndex = -1;
+						menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_depth()-2;
+						stdFold_processWithTransition(menu, uKey, '2px');
 						menu[uKey].elems.update_itemRects();
 					};
 				},
 				closeMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
-						menu.classList.remove('open');
 						menu.style.left = '0%';
-						menu.style.pointerEvents = 'none';
+						//menu.style.left = '';
 					};
 				},
 				setClosedMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
-						menu.classList.remove('open');
 						menu.style.left = '0%';
-						menu.style.pointerEvents = 'none';
+						//menu.style.left = '';
 					};
 				},
 			},
@@ -777,17 +841,18 @@ let SuperCustomContextMenu = {}; // API Receiver
 			menu : (menu, uKey)=>{
 				menu.addEventListener('transitionstart',e=>{
 					console.log(e);
-					if(menu.classList.contains('open')){
-						menu.style.zIndex = -1;
+					if(!menu.classList.contains('closed')){
+						//menu[uKey].elems.get_layer().style.zIndex = -1;
 						menu.style.pointerEvents = 'none';
 					}
 				});
 				menu.addEventListener('transitionend',e=>{
 					console.log(e);
-					if(menu.classList.contains('open')){
+					if(!menu.classList.contains('closed')){
 						menu[uKey].elems.update_itemRects();
-						menu.style.zIndex = menu[uKey].elems.get_chainLength()+1;
-						menu.style.pointerEvents = 'auto';
+						//menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_chainLength()+1;
+						menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_depth();
+						menu.style.pointerEvents = '';
 					}
 				});
 			},
@@ -799,10 +864,37 @@ let SuperCustomContextMenu = {}; // API Receiver
 				style : {
 					transition : 'left 1s, opacity 1s',
 				},
+				css : '\n'
+				    + '.menu{'
+				    + '  opacity : 1;'
+				    + '}\n',
 			},
 			behaviors : sccm_sliding.behaviors,
 		};
-		const sliding_base = mix_base(glass_base, sccm_sliding_part);
+
+		const sccm_sliding_partBEHAV = {
+			/* menu : { // debug
+				css : '\n'
+				    + '.menu{'
+				    + '  background-color : red;'
+				    + '}\n'
+				    + '.main{'
+				    + '  background-color : blue;'
+				    + '}\n',
+			}, */
+			menu : { // test
+				css : '\n'
+				    + '.closed{'
+				    + '  left : 0%;'
+				    + '}\n',
+			},
+			behaviors : sccm_sliding.behaviors,
+		};
+		//const sliding_base = mix_base(sccm_NULL, sccm_sliding_part, glass_base);
+		const sliding_base = mix_base(
+			glass_base, sccm_sliding_partBEHAV, merge_itmbdropFadingWithSliding('1s')
+		);
+
 		//const sliding_baseMain = mix_base(default_baseMain, sccm_sliding_part);
 
 
@@ -810,6 +902,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const sdtfoldAndSliding_addonInit = stack_addonInit(
 			sdtFold_additional_inits, sliding_additional_inits
 		);
+
+
+
+
+
+
 
 
 
@@ -954,7 +1052,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const macosx_base = mix_base(
-			_base, withClass_part, classLogic_part, sccm_macosx_cosmetic
+			_base, withClass_part, class_prtLogic_part, sccm_macosx_cosmetic
 		);
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
@@ -1333,11 +1431,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 						const sidesTemplate = {
 							// declares by priotity order
 							RIGHT : {
-								style : {left:'___variable___',transition:'none'},
+								style : {left:'___variable___',/* transition:'none' */},
 								checkBorderList : ['r'],
 							},
 							LEFT : {
-								style : {left:"___variable___",transition:'none'},
+								style : {left:"___variable___",/* transition:'none' */},
 								checkBorderList : ['l'],
 							},
 						};
@@ -1384,11 +1482,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 						const sidesTemplate = {
 							// declares by priotity order
 							DOWN : {
-								style : {top:'___variable___',transition:'none'},
+								style : {top:'___variable___',/* transition:'none' */},
 								checkBorderList : ['b'],
 							},
 							TOP : {
-								style : {top:"___variable___",transition:'none'},
+								style : {top:"___variable___",/* transition:'none' */},
 								checkBorderList : ['t'],
 							},
 						};
@@ -1968,7 +2066,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 				handle.style.display = 'inline-block';
 				handle.style.position = 'relative';
 
-			let container = handle.attachShadow({mode:'closed'});
+			//let container = handle.attachShadow({mode:'closed'});
+			let container = handle.attachShadow({mode:'open'});
 
 			return {handle, container};
 		};
