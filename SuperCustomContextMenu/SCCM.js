@@ -7,6 +7,20 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 	core.theme_key = Symbol("THEME PRIVATE MEMORY");
 
+
+	//core.atNextLoop = (callback,time)=>setTimeout(callback,time??1); // use time arg in debug case
+	// setTimeout TOOOOOOOOOOOOO MUCH RANDOM !
+
+	/* core.atNextLoop = function(callback){
+		requestAnimationFrame( (()=>requestAnimationFrame(callback)) );
+	}; */
+
+	core.atNextLoop = function(callback){
+		requestAnimationFrame( callback );
+	};
+
+
+
 	// MAKES PUBLIC PROPERTY (via public getter)
 	SCCM.providing ??= {};
 	SCCM.providing.get_theme_key = ()=>core.theme_key; 
@@ -278,7 +292,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			menu : {
 				style : {
 					//pointerEvents : 'none',
-					position : 'relative',  // \
+					position : 'absolute',  // \
 					width : 'fit-content',  // | together
 					height : 'fit-content', // /
 					display : 'grid',
@@ -369,6 +383,29 @@ let SuperCustomContextMenu = {}; // API Receiver
 				},
 			},
 		};
+
+		const _base_cssOffset_ = (sympetricPadding, symetricBorder, totalOffset)=>({
+			// args : css expression/value (accepts units and functions)
+			// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
+			_all  : {
+				
+			},
+			root  : {
+				class : ['sccmRoot'],
+				css : '\n'
+				    + '/* _base_cssOffset_ (_all) */\n'
+				    + '.sccmRoot{'
+				    + `  --padding : ${sympetricPadding||'0px'};`
+					+ `  --border : ${symetricBorder||'0px'};`
+					+ `  --posOfst : ${totalOffset||'0px'};`
+					+ `  --negOfst : calc(${totalOffset||'0px'} * -1);`
+				    + '}\n'
+			},
+			layer : {},
+			menu  : {},
+			item  : {},
+			behaviors : {},
+		});
 
 		// class
 
@@ -566,18 +603,15 @@ let SuperCustomContextMenu = {}; // API Receiver
 				if(RL_result.status) RL_result._apply();
 				if(DT_result.status) DT_result._apply();
 			};
-			let waitfor_2frames = function(callback){
-				requestAnimationFrame( (()=>requestAnimationFrame(callback)) );
-			};
-			waitfor_2frames( _apply );
+			core.atNextLoop(_apply);
 		};
 		
 		const stdFoldUsingClass_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top/translate
 			// use it in an openMenu_method
+			menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
 
 			const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
 
-			menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
 			if(RL_result.status) menu.classList.add(RL_result.sideName);
 			if(DT_result.status) menu.classList.add(DT_result.sideName);
 
@@ -585,157 +619,164 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const stdFoldUsingClass_processWithTransition = (menu, uKey, symetricOffset='0px')=>{  // :: left/top/translate
 			// use it in an openMenu_method
+			menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
 			const original_transition_value = menu.style.transition;
 			menu.style.transition = '';
 			const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
 			menu.style.transition = original_transition_value;
-			menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
 			const _apply = ()=>{
 				if(RL_result.status) menu.classList.add(RL_result.sideName);
 				if(DT_result.status) menu.classList.add(DT_result.sideName);
 				menu.classList.remove('closed'); // TODO find better way to do it
 			};
-			let waitfor_2frames = function(callback){
-				requestAnimationFrame( (()=>requestAnimationFrame(callback)) );
-			};
-			waitfor_2frames( _apply );
-			//setTimeout(_apply,1000); // debug
+			core.atNextLoop(_apply);
 		};
 
-		const class_stdFold_part_ = (symetricPixelPositiveOffset=0)=>{
-			const ofst = symetricPixelPositiveOffset + 'px';
-			return { // left/top % relative to parent (layer) // translate % relative to menu itself
-				menu_old : {
-					css : '\n'
-					    + '/* class_stdFold_part_ */\n'
-					    // vertical positioning before
-					    + '.main.DOWN{' // main menu (DT)
-					    + `  top : 0%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
-					    + '.main.TOP{'
-					    + `  top : -100%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
-					    + '.DOWN{' // submenu (DT)
-					    + `  top : 0%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
-					    + '.TOP{'
-					    + `  translate : 0% calc(-100% + ${ofst});`
-					    + `  top : 100%;`
-					    + '}\n'
-					    // horizontal positioning after
-					    + '.main.RIGHT{' // main menu (RL)
-					    + `  left : 0%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
-					    + '.main.LEFT{'
-					    + `  left : -100%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
-					    + '.RIGHT{' // submenu (RL)
-					    + `  left : calc(100% + ${ofst});`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
-					    + '.LEFT{'
-					    + `  translate : calc(-100% + -${ofst}) 0%;`
-					    + `  left : 0%;`
-					    + '}\n'
-				},
-				menu : {
-					css : '\n'
-					    + '/* class_stdFold_part_ */\n'
+		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top/translate
+			// use it in an openMenu_method
 
-						// main by axes
-						+ '.main.RIGHT{' // main menu (RL)
-					    + `  left : 0%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
-					    + '.main.LEFT{'
-					    + `  left : -100%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
+			const closing =true// menu.classList.contains('closing');
+			const closed = !closing;
+	
+			if(closed){ // from closed state : apply class will start tansition
+				menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP');
+				const original_transition_value = menu.style.transition;
+				menu.style.transition = 'none';
+				const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
+				if(RL_result.status) menu.classList.add('_'+RL_result.sideName);
+				if(DT_result.status) menu.classList.add('_'+DT_result.sideName);
+				//menu.classList.add('closed');
+				const _apply = ()=>{
+					menu.style.transition = original_transition_value;
+					menu.classList.remove('closed');
+					if(RL_result.status) menu.classList.add(RL_result.sideName);
+					if(DT_result.status) menu.classList.add(DT_result.sideName);
+				};
+				core.atNextLoop(_apply);
+			}
+			if(closing){ // from closing state : preserves current running transition
+				//menu.classList.remove('closing');
+				const propList = ['left','right',...menu[TMEM].stdFold_transitionProps];
+				let styles = getComputedStyle(menu);
+				styles = propList.reduce((acc,cur)=>{acc[cur]=styles[cur];return acc;},{});
+				menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP');
+				const original_transition_value = menu.style.transition;
+				menu.style.transition = 'none';
+				const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
+				if(RL_result.status){
+					menu.classList.add('_'+RL_result.sideName);
+					menu.classList.add(RL_result.sideName);
+				}
+				if(DT_result.status){
+					menu.classList.add('_'+DT_result.sideName);
+					menu.classList.add(DT_result.sideName);
+				}
 
-					    + '.main.DOWN{' // main menu (DT)
-					    + `  top : 0%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
-					    + '.main.TOP{'
-					    + `  top : -100%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
+				let directStyle = propList;
+				directStyle.forEach(prop=>menu.style[prop]=styles[prop]);
 
-						// main by corners
-						+ '.main.RIGHT.DOWN{' // main menu (RD)
-					    + `  left : 0%;`
-						+ `  top : 0%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
 
-						+ '.main.RIGHT.TOP{' // main menu (RT)
-					    + `  left : 0%;`
-						+ `  top : -100%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
+				const removeDirectStyle = ()=>{
+					menu.style.transition = original_transition_value;
+					menu.classList.remove('closed');
+					directStyle.forEach(prop=>menu.style[prop]='');
+				};
+				core.atNextLoop(removeDirectStyle);
 
-						+ '.main.LEFT.DOWN{' // main menu (LD)
-					    + `  left : -100%;`
-						+ `  top : 0%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
+				// 
+			}
+		};
 
-						+ '.main.LEFT.TOP{' // main menu (LT)
-					    + `  left : -100%;`
-						+ `  top : -100%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
+		const class_stdFold_part = {
+			// left/top % relative to parent (layer) // translate % relative to menu itself
+			menu : {
+				css : '\n'
+					+ '/* class_stdFold_part */\n'
 
-						// submenu by axes
-						+ '.RIGHT{' // submenu (RL)
-					    + `  left : calc(100% + ${ofst});`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
-					    + '.LEFT{'
-					    + `  translate : calc(-100% + -${ofst}) 0%;`
-					    + `  left : 0%;`
-					    + '}\n'
+					// main by axes
+					+ '.main.RIGHT{' // main menu (RL)
+					+ `  left : 0%;`
+					+ '}\n'
+					+ '.main.LEFT{'
+					+ `  right : 100%;`
+					+ '}\n'
 
-					    + '.DOWN{' // submenu (DT)
-					    + `  top : 0%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
-					    + '.TOP{'
-					    + `  translate : 0% calc(-100% + ${ofst});`
-					    + `  top : 100%;`
-					    + '}\n'
+					+ '.main.DOWN{' // main menu (DT)
+					+ `  top : 0%;`
+					+ '}\n'
+					+ '.main.TOP{'
+					+ `  bottom : 100%;`
+					+ '}\n'
 
-						// submenu by corners
-						+ '.RIGHT.DOWN{' // submenu (RD)
-					    + `  left : calc(100% + ${ofst});`
-						+ `  top : 0%;`
-					    + `  translate : 0% 0%;`
-					    + '}\n'
+					/*
+					// main by corners
+					+ '.main.RIGHT.DOWN{' // main menu (RD)
+					+ `  left : 0%;`
+					+ `  top : 0%;`
+					+ `  translate : 0% 0%;`
+					+ '}\n'
 
-						+ '.RIGHT.TOP{' // submenu (RT)
-					    + `  left : calc(100% + ${ofst});`
-					    + `  top : 100%;`
-						+ `  translate : 0% calc(-100% + ${ofst});`
-					    + '}\n'
+					+ '.main.RIGHT.TOP{' // main menu (RT)
+					+ `  left : 0%;`
+					+ `  top : -100%;`
+					+ `  translate : 0% 0%;`
+					+ '}\n'
 
-						+ '.LEFT.DOWN{' // submenu (LD)
-					    + `  left : 0%;`
-					    + `  top : 0%;`
-					    + `  translate : calc(-100% + -${ofst}) 0%;`
-					    + '}\n'
+					+ '.main.LEFT.DOWN{' // main menu (LD)
+					+ `  left : -100%;`
+					+ `  top : 0%;`
+					+ `  translate : 0% 0%;`
+					+ '}\n'
 
-						+ '.LEFT.TOP{' // submenu (LT)
-					    + `  left : 0%;`
-					    + `  top : 100%;`
-					    + `  translate : calc(-100% + -${ofst}) calc(-100% + ${ofst});`
-					    + '}\n',
-				},
-			};
+					+ '.main.LEFT.TOP{' // main menu (LT)
+					+ `  left : -100%;`
+					+ `  top : -100%;`
+					+ `  translate : 0% 0%;`
+					+ '}\n'
+					*/
+
+					// submenu by axes
+					+ '.RIGHT{' // submenu (RL)
+					+ `  left : calc(100% + var(--posOfst));`
+					+ '}\n'
+					+ '.LEFT{'
+					+ `  right : calc(100% + var(--posOfst));`
+					+ '}\n'
+
+					+ '.DOWN{' // submenu (DT)
+					+ `  top : var(--negOfst);`
+					+ '}\n'
+					+ '.TOP{'
+					+ `  bottom : var(--negOfst);`
+					+ '}\n' // TODO add comma
+
+					/*
+					// submenu by corners
+					+ '.RIGHT.DOWN{' // submenu (RD)
+					+ `  left : calc(100% + var(--posOfst));`
+					+ `  top : var(--negOfst);`
+					+ `  translate : 0% 0%;`
+					+ '}\n'
+
+					+ '.RIGHT.TOP{' // submenu (RT)
+					+ `  left : calc(100% + var(--posOfst));`
+					+ `  top : 100%;`
+					+ `  translate : 0% calc(-100% + var(--posOfst));`
+					+ '}\n'
+
+					+ '.LEFT.DOWN{' // submenu (LD)
+					+ `  left : 0%;`
+					+ `  top : var(--negOfst);`
+					+ `  translate : calc(-100% + var(--negOfst)) 0%;`
+					+ '}\n'
+
+					+ '.LEFT.TOP{' // submenu (LT)
+					+ `  left : 0%;`
+					+ `  top : 100%;`
+					+ `  translate : calc(-100% + var(--negOfst)) calc(-100% + var(--posOfst));`
+					+ '}\n',
+					*/
+			},
 		};
 		const class_stdFoldClose_part = { // left/top % relative to parent (layer) // translate % relative to menu itself
 			menu : {
@@ -748,6 +789,151 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ '}\n',
 			},
 		};
+
+		// sliding effect
+
+		const class_slidingStartPos_part = {
+			// left/top % relative to parent (layer) // translate % relative to menu itself
+			menu : {
+				css : '\n'
+					+ '/* class_slidingStartPos_part */\n'
+
+					// main by axes
+					+ '.main._RIGHT{' // main menu (RL)
+					+ `  left : 0%;`
+					+ '}\n'
+					+ '.main._LEFT{'
+					+ `  right : 100%;`
+					+ '}\n'
+
+					+ '.main._DOWN{' // main menu (DT)
+					+ `  top : 0%;`
+					+ '}\n'
+					+ '.main._TOP{'
+					+ `  bottom : 100%;`
+					+ '}\n'
+
+					/*
+					// main by corners
+					+ '.main._RIGHT_DOWN{' // main menu (RD)
+					+ `  left : 0%;`
+					+ `  top : 0%;`
+					+ `  translate : 0% 0%;`
+					+ '}\n'
+
+					+ '.main._RIGHT_TOP{' // main menu (RT)
+					+ `  left : 0%;`
+					+ `  top : -100%;`
+					+ `  translate : 0% 0%;`
+					+ '}\n'
+
+					+ '.main._LEFT_DOWN{' // main menu (LD)
+					+ `  left : -100%;`
+					+ `  top : 0%;`
+					+ `  translate : 0% 0%;`
+					+ '}\n'
+
+					+ '.main._LEFT_TOP{' // main menu (LT)
+					+ `  left : -100%;`
+					+ `  top : -100%;`
+					+ `  translate : 0% 0%;`
+					+ '}\n'
+					*/
+
+					// submenu by axes
+					+ '._RIGHT{' // submenu (RL)
+					+ `  left : calc(0% + var(--negOfst));`
+					+ '}\n'
+					+ '._LEFT{'
+					+ `  right : calc(0% + var(--negOfst));`
+					+ '}\n'
+
+					+ '._DOWN{' // submenu (DT)
+					+ `  top : var(--negOfst);`
+					+ '}\n'
+					+ '._TOP{'
+					+ `  bottom : var(--negOfst);`
+					+ '}\n' // TODO add comma
+
+					/*
+					// submenu by corners
+					+ '._RIGHT_DOWN{' // submenu (RD)
+					+ `  left : calc(0% + var(--negOfst));`
+					+ `  top : var(--negOfst);`
+					+ `  translate : 0% 0%;`
+					+ '}\n'
+
+					+ '._RIGHT_TOP{' // submenu (RT)
+					+ `  left : calc(0% + var(--negOfst));`
+					+ `  top : 100%;`
+					+ `  translate : 0% calc(-100% + var(--posOfst));`
+					+ '}\n'
+
+					+ '._LEFT_DOWN{' // submenu (LD)
+					+ `  left : 0%;`
+					+ `  top : var(--negOfst);`
+					+ `  translate : calc(0% + var(--posOfst)) 0%;`
+					+ '}\n'
+
+					+ '._LEFT_TOP{' // submenu (LT)
+					+ `  left : 0%;`
+					+ `  top : 100%;`
+					+ `  translate : calc(0% + var(--posOfst)) calc(-100% + var(--posOfst));`
+					+ '}\n',
+					*/
+			},
+		};
+		const class_slidingStartPos_partMain = {
+			// left/top % relative to parent (layer) // translate % relative to menu itself
+			menu : {
+				css : '\n'
+					+ '/* class_slidingStartPos_partMain */\n'
+
+					/*
+					+ '.main{' // main menu
+					+ `  translate : 0% 0%;`
+					+ '}\n'
+					*/
+
+					// main by axes
+					+ '.main._RIGHT{' // main menu (RL)
+					+ `  left : -100%;`
+					+ '}\n'
+					+ '.main._LEFT{'
+					+ `  left : 0%;`
+					+ '}\n'
+
+					+ '.main._DOWN{' // main menu (DT)
+					+ `  top : -100%;`
+					+ '}\n'
+					+ '.main._TOP{'
+					+ `  top : 0%;`
+					+ '}\n'
+
+					// main by corners
+					+ '.main._RIGHT_DOWN{' // main menu (RD)
+					+ `  left : -100%;`
+					+ `  top : -100%;`
+					+ '}\n'
+
+					+ '.main._RIGHT_TOP{' // main menu (RT)
+					+ `  left : -100%;`
+					+ `  top : 0%;`
+					+ '}\n'
+
+					+ '.main._LEFT_DOWN{' // main menu (LD)
+					+ `  left : 0%;`
+					+ `  top : -100%;`
+					+ '}\n'
+
+					+ '.main._LEFT_TOP{' // main menu (LT)
+					+ `  left : 0%;`
+					+ `  top : 0%;`
+					+ '}\n',
+			},
+		};
+
+
 
 
 		// fading effect
@@ -795,19 +981,45 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const merge_sdtFadingWithSliding = (time='1s')=>({
 			menu : {
-				style : {
+				/* style : {
 					transition : `opacity ${time}, left ${time}, translate ${time}`,
-				},
+				}, */
+				css : '\n'
+				+ '/* merge_sdtFadingWithSliding */\n'
+
+				+ '.menu{'
+				+ `  transition : opacity ${time}, left ${time}, right ${time};`
+				+ '}\n',
 			},
 		});
 
+		const sdtFadingWithSliding_additional_inits = {
+			menu : (menu, uKey)=>{
+				menu[TMEM] ||= {};
+				menu[TMEM].stdFold_transitionProps = ['opacity'];
+			},
+		};
+
 		const merge_itmbdropFadingWithSliding = (time='1s')=>({
 			menu : {
-				style : {
+				/* style : {
 					transition : `background-color ${time}, left ${time}, translate ${time}`,
-				},
+				}, */
+				css : '\n'
+				+ '/* merge_itmbdropFadingWithSliding */\n'
+
+				+ '.menu{'
+				+ `  transition : background-color ${time}, left ${time}, right ${time};`
+				+ '}\n',
 			},
 		});
+
+		const itmbdropFadingWithSliding_additional_inits = {
+			menu : (menu, uKey)=>{
+				menu[TMEM] ||= {};
+				menu[TMEM].stdFold_transitionProps = ['background-color'];
+			},
+		};
 
 
 
@@ -853,7 +1065,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			_all : {
 				css : '\n'
 				    + '.general{'
-				    + '  padding : 2px;'
+				    + '  padding : var(--padding);'
 				    + '}\n',
 			},
 			root : {},
@@ -911,7 +1123,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				css : '\n'
 				    + '/* sccm_glass_cosmetic (_all) */\n'
 				    + '.general{'
-				    + '  padding : 2px;'
+				    + '  padding : var(--padding);'
 					+ '  font-size : 20;'
 				    + '}\n'
 			},
@@ -973,10 +1185,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const glass_base = mix_base(
-			_base, withClass_part,
+			_base, _base_cssOffset_('2px','0px','2px'),
+			withClass_part,
 			class_ptrLogic_part,
 			//foldRight_part('2px'),
-			class_stdFold_part_(2), // 2 px :  equal to padding
+			class_stdFold_part, // 2 px :  equal to padding
 			classFading_itemBackdrop_part('1s'), sccm_glass_cosmetic,
 		);
 		const glass_baseMain = mix_base(
@@ -1003,26 +1216,29 @@ let SuperCustomContextMenu = {}; // API Receiver
 				//
 				openMenu_method : (uKey)=>{
 					return (menu)=>{
-						//menu.classList.remove('closed');
 						//menu[uKey].elems.get_layer().style.zIndex = -1;
+						//menu.classList.remove('closed');
 						menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_depth()-2;
-						stdFoldUsingClass_processWithTransition(menu, uKey, '2px');
+						stdFoldUsingClassStartPos_process(menu, uKey, '2px');
 						menu[uKey].elems.update_itemRects();
+						menu.classList.remove('closing');
 					};
 				},
 				closeMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
+						menu.classList.add('closing');
 						menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
+						menu[uKey].elems.get_layer().style.zIndex = -1;
 						//menu.style.left = '0%';
-						menu.style.left = '';
+						//menu.style.left = '';
 					};
 				},
 				setClosedMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
 						//menu.style.left = '0%';
-						menu.style.left = '';
+						//menu.style.left = '';
 					};
 				},
 			},
@@ -1032,19 +1248,42 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const sliding_additional_inits = {
 			menu : (menu, uKey)=>{
 				menu.addEventListener('transitionstart',e=>{
-					console.log(e);
-					if(!menu.classList.contains('closed')){
-						//menu[uKey].elems.get_layer().style.zIndex = -1;
-						menu.style.pointerEvents = 'none';
+					if(menu === e.composedPath().shift()){
+						//
+						console.log(e);
+						if(!menu.classList.contains('closed')){
+							//menu[uKey].elems.get_layer().style.zIndex = -1;
+							menu.style.pointerEvents = 'none';
+						}
+						//
+					}
+				});
+				menu.addEventListener('transitioncancel',e=>{
+					if(menu === e.composedPath().shift()){
+						//
+						console.log('cancel');
+						//
 					}
 				});
 				menu.addEventListener('transitionend',e=>{
-					console.log(e);
-					if(!menu.classList.contains('closed')){
-						menu[uKey].elems.update_itemRects();
-						//menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_chainLength()+1;
-						menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_depth();
-						menu.style.pointerEvents = '';
+					if(menu === e.composedPath().shift()){
+						//
+						const main = (menu[uKey].elems.get_depth() === 0);
+						console.log(e);
+						//if(main || ['left','right'].includes(e.propertyName) && !main)
+						if(['left','right'].includes(e.propertyName))
+						{
+	
+							if(!menu.classList.contains('closed')){
+								menu[uKey].elems.update_itemRects();
+								//menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_chainLength()+1;
+								menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_depth();
+								menu.style.pointerEvents = '';
+							}else
+							menu.classList.remove('closing');
+							
+						}
+						//
 					}
 				});
 			},
@@ -1057,13 +1296,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//const sliding_base = mix_base(sccm_NULL, sccm_sliding_part, glass_base);
 		const sliding_base = mix_base(
 			// glass base copy
-				_base, withClass_part,
+				_base, _base_cssOffset_('2px','0px','2px'), // padd/bord/total
+				withClass_part,
 				class_ptrLogic_part,
-				class_stdFold_part_(2), // 2 px :  equal to padding
-				classFading_itemBackdrop_part('1s'), sccm_glass_cosmetic,
+				class_slidingStartPos_part, class_stdFold_part, //class_slidingStartPos_partMain,
+				classFading_itemBackdrop_part('3s'), sccm_glass_cosmetic,
 			// glass base end
-			sccm_sliding_behav, merge_itmbdropFadingWithSliding('1s'),
-			class_stdFoldClose_part
+			sccm_sliding_behav, merge_itmbdropFadingWithSliding('3s'),
+			//class_stdFoldClose_part
 		);
 
 		//const sliding_baseMain = mix_base(default_baseMain, sccm_sliding_part);
@@ -1071,7 +1311,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 		const sdtfoldAndSliding_addonInit = stack_addonInit(
-			sdtFold_additional_inits, sliding_additional_inits
+			sdtFold_additional_inits, sliding_additional_inits,
+			itmbdropFadingWithSliding_additional_inits
 		);
 
 
