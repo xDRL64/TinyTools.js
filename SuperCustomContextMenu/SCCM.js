@@ -108,7 +108,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 			const src = src_init.style;
 			for(const prop in src) dst[prop] = src[prop];
 			// apply class
-			dst_elem.className = src_init.class;
+			//dst_elem.className = src_init.class; // removes previous className
+			dst_elem.className = [...new Set( // preserve previous className
+				(dst_elem.className+' '+src_init.class).split(' ')
+			)].join(' ');
 		};
 
 		const build_init = (base, sccm, usr, {addon_init, usrKey})=>{
@@ -1480,7 +1483,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				glassMain : make_themeGenerator(glass_base, default_baseMain),
 				fading : null,
 				sliding : make_themeGenerator(sliding_base, sccm_NULL, sdtfoldAndSliding_addonInit),
-				slidingMain : make_themeGenerator(sliding_base, default_baseMain, sdtfoldAndSliding_addonInit),
+				slidingMain : make_themeGenerator(sccm_NULL, default_baseMain, sdtfoldAndSliding_addonInit),
 				growing : null,
 				growingMain : null,
 			},
@@ -2562,8 +2565,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 			};
 		};
 
-
-
+		const store_usrInits = (elem, type, init)=>{ // type : root/layer/menu/item (str)
+			// using : store_usrInits(elem, 'root'|'layer'|'menu'|'item', init)
+			elem[APP].run_inits = ()=>{
+				mainInit[type](elem);
+				init?.(elem);
+			};
+		}; // TODO : ready, waiting for implementation and tests
+			
 
 
 		// root
@@ -2696,6 +2705,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				get_layer : ()=>elem[APP].layer,
 				get_items : ()=>[...elem[APP].items],
 				update_itemRects : (submenuOnly=true)=>update_subRects(elem, submenuOnly),
+				is_main : ()=>!!elem[APP].depth,
 			};
 		};
 
