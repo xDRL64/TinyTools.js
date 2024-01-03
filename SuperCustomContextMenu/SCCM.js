@@ -258,6 +258,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 
+		// GLOBAL THEME TEMP
+		let padding, border, total, time;
+
+
 		// TODO segment behavior in _behav
 
 		// THEME TEMPLATE BASES
@@ -539,9 +543,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		// baisc position
+		// basic position
 
 		const foldRight_part = (offset='0px')=>({ // set submenu position :: +[style.menu.left:100%+offset]
+			// use in submenu case to unfold at right side
 			// contains only differences from its base
 			menu : {
 				style : {
@@ -553,6 +558,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// basic position main
 
 		const openRight_part = { // set main menu position :: +[style.menu.left:'']
+			// use in main menu case to overwrite foldRight_part
 			// contains only differences from its base
 			menu : {
 				style : {
@@ -692,7 +698,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const class_stdFold_part = {
-			// use to overwrite [class_slidingStartPos_part / class_slidingStartPos_partMain]
+			// use to overwrite [class_slidingStartPos_part / class_slidingStartPosMain_part]
 			// left/top % relative to parent (layer) // translate % relative to menu itself
 			menu : {
 				css : '\n'
@@ -781,13 +787,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ '}\n',
 			},
 		};
-		const class_slidingStartPos_partMain = {
+		const class_slidingStartPosMain_part = {
 			// do not use as alone
 			// use to overwrite [class_slidingStartPos_part]
 			// left/top % relative to parent (layer) // translate % relative to menu itself
 			menu : {
 				css : '\n'
-					+ '/* class_slidingStartPos_partMain */\n'
+					+ '/* class_slidingStartPosMain_part */\n'
 
 					// main by axes
 					+ '.main._RIGHT{' // main menu (RL)
@@ -807,6 +813,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 
+		const class_slidingDontLockPtrOpening_partMain = {
+			menu : {
+				class : ['notLockOpening']
+			},
+		};
 
 
 		// fading effect
@@ -1079,43 +1090,46 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// SLIDING (DEFAULT) THEME
 		//
 
+		// z-index [opening/closing] and [open] patern, see :
+		// for(let i=0; i<10; i++) console.log('opening/closing : '+(3 + (i-1)*2 - 1)+'\n'+'open : '+(3 + (i)*2));
 
-
-		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		const sccm_sliding_behav = { // SCCM sliding style
-
+		const sliding_behav = { // SCCM sliding style
+			// contains only differences from its base
 			behaviors : {
 				// binders
 				//
 				openMenu_method : (uKey)=>{
 					return (menu)=>{
 						//const main = (menu[uKey].elems.get_depth() === 0);
+			
 						const depth = menu[uKey].elems.get_depth();
-						menu[uKey].elems.get_layer().style.zIndex = -depth;
-						stdFoldUsingClassStartPos_process(menu, uKey, '2px');
+						const maxDepth = menu[uKey].elems.get_maxDepth();
+						//menu[uKey].elems.get_layer().style.zIndex = -depth;
+						//menu[uKey].elems.get_layer().style.zIndex = maxDepth - depth;
+						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
+
+						const offset = getComputedStyle(menu).getPropertyValue('--posOfst');
+						stdFoldUsingClassStartPos_process(menu, uKey, offset);
 						menu[uKey].elems.update_itemRects();
 					};
 				},
 				closeMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
-						//menu.classList.add('closing');
 						menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
-						menu[uKey].elems.get_layer().style.zIndex = -1;
-					};
-				},
-				setClosedMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.add('closed');
-						//menu.style.left = '0%';
-						//menu.style.left = '';
+
+						const depth = menu[uKey].elems.get_depth();
+						const maxDepth = menu[uKey].elems.get_maxDepth();
+						//menu[uKey].elems.get_layer().style.zIndex = -1;
+						//menu[uKey].elems.get_layer().style.zIndex = maxDepth - depth;
+						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
 					};
 				},
 			},
 		};
 
-		// everything optional (root/layer/menu/item)
 		const sliding_additional_inits = {
+			// everything optional (root/layer/menu/item)
 			menu : (menu, uKey)=>{
 
 				const check_transitionProps = (menu,evt)=>{
@@ -1128,64 +1142,60 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 				menu.addEventListener('transitionstart',e=>{
 					if(check_transitionProps(menu,e)){
-						//
 						console.log(e);
 						if(menu.classList.contains('closed'))
 							menu.classList.add('closing');
 						else{
-							//menu[uKey].elems.get_layer().style.zIndex = -1;
-							menu.style.pointerEvents = 'none';
+							if(!menu.classList.contains('notLockOpening'))
+								menu.style.pointerEvents = 'none';
 						}
-						//
 					}
 				});
-				menu.addEventListener('transitioncancel',e=>{
-					if(menu === e.composedPath().shift()){
-						//
-						console.log('cancel');
-						//
-					}
-				});
+
 				menu.addEventListener('transitionend',e=>{
-					
 					if(check_transitionProps(menu,e)){
-						//
 						console.log(e);
 						if(menu.classList.contains('closed')){
 							menu.classList.remove('closing');
 						}else{
 							menu[uKey].elems.update_itemRects();
-							//menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_chainLength()+1;
-							menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_depth();
+
+							const depth = menu[uKey].elems.get_depth();
+							const maxDepth = menu[uKey].elems.get_maxDepth();
+							//menu[uKey].elems.get_layer().style.zIndex = depth;
+							//menu[uKey].elems.get_layer().style.zIndex = maxDepth+1 + depth;
+							menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
+
 							menu.style.pointerEvents = '';
 						}
-						
-						//
 					}
 				});
 			},
 		};
 
-		// ******  sliding remaking *********
-
-
+		// tmp glo var for settings
+		padding = '2px';
+		border  = '0px';
+		total   = '2px';
+		time    = '1s';
 
 		//const sliding_base = mix_base(sccm_NULL, sccm_sliding_part, glass_base);
 		const sliding_base = mix_base(
 			// glass base copy
-				_base, _base_cssOffset_('2px','0px','2px'), // padd/bord/total
+				_base, _base_cssOffset_(padding,border,total), // padd/bord/total
 				withClass_part,
 				class_ptrLogic_part,
-				class_slidingStartPos_part, class_slidingStartPos_partMain, class_stdFold_part,
-				classFading_itemBackdrop_part('3s'), sccm_glass_cosmetic,
+				class_slidingStartPos_part, class_slidingStartPosMain_part, class_stdFold_part,
+				classFading_itemBackdrop_part(time), sccm_glass_cosmetic,
 			// glass base end
-			sccm_sliding_behav, merge_itmbdropFadingWithSliding('3s'),
+			sliding_behav, merge_itmbdropFadingWithSliding(time),
 			//class_stdFoldClose_part
 		);
 
-		//const sliding_baseMain = mix_base(default_baseMain, sccm_sliding_part);
-
-
+		const sliding_baseMain = mix_base(
+			sccm_NULL, _baseMain_part, mainMenuClass_part,
+			class_slidingDontLockPtrOpening_partMain
+		);
 
 		const sdtfoldAndSliding_addonInit = stack_addonInit(
 			sdtFold_additional_inits, sliding_additional_inits,
@@ -1483,7 +1493,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				glassMain : make_themeGenerator(glass_base, default_baseMain),
 				fading : null,
 				sliding : make_themeGenerator(sliding_base, sccm_NULL, sdtfoldAndSliding_addonInit),
-				slidingMain : make_themeGenerator(sccm_NULL, default_baseMain, sdtfoldAndSliding_addonInit),
+				slidingMain : make_themeGenerator(sccm_NULL, sliding_baseMain, sdtfoldAndSliding_addonInit),
 				growing : null,
 				growingMain : null,
 			},
@@ -2428,6 +2438,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 				// NO CHECK
 				return [...instance.itemPath];
 			};
+			handle[uKey].get_maxDepth = ()=>{
+				// NO CHECK
+				return instance.maxDepth;
+			};
 
 			handle[uKey].set_itemFoldableReactionDelay = (milliseconds)=>{
 				// NO CHECK
@@ -2699,6 +2713,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				get_menuChain : ()=>[...instance.menuChain],
 				get_itemPath : ()=>[...instance.itemPath],
 				get_depth : ()=>elem[APP].depth,
+				get_maxDepth : ()=>instance.maxDepth,
 				get_itsItemPath : ()=>[...elem[APP].itemPath],
 				get_itsMenuChain : ()=>instance.menuChain.slice(0, elem[APP].depth+1),
 				get_upItem : ()=>elem[APP].itemPath.at(-1)||null,
@@ -2895,7 +2910,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// arg isMain : must be true on first recursive loop
 		// arg chainElem : first elem owning {depth, itemPath}
 		let builder = (menuRef, isMain, chainElem)=>{
-			let {all_menus, all_items} = instance;
+			let {all_menus, all_items, update_maxDepth} = instance;
 
 			// MENU
 			//
@@ -2909,6 +2924,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 			menu[APP].depth = chainElem[APP].depth + 1;
 			menu[APP].itemPath = [...chainElem[APP].itemPath];
+			update_maxDepth( menu[APP].depth );
 
 			menu[APP].items = [];
 
@@ -2989,6 +3005,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 			menuChain : [],
 			itemPath  : [],
+			maxDepth  : -1,
 
 			all_menus : [],
 			all_items : [],
@@ -3002,6 +3019,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 
 			closeSetup(){ this.isOpen = false; },
+
+			update_maxDepth(value){ this.maxDepth=Math.max(this.maxDepth,value); },
 
 			get_hook   : ()=>usrHookElem,
 			get_handle : ()=>handle,
