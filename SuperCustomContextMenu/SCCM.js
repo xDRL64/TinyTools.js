@@ -635,7 +635,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top/translate
 			// use it in an openMenu_method
 
-			const closing =true// menu.classList.contains('closing');
+			const closing = menu.classList.contains('closing');
 			const closed = !closing;
 	
 			if(closed){ // from closed state : apply class will start tansition
@@ -655,10 +655,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 				core.atNextLoop(_apply);
 			}
 			if(closing){ // from closing state : preserves current running transition
-				//menu.classList.remove('closing');
+				menu.classList.remove('closing');
 				const propList = ['left','right',...menu[TMEM].stdFold_transitionProps];
 				let styles = getComputedStyle(menu);
 				styles = propList.reduce((acc,cur)=>{acc[cur]=styles[cur];return acc;},{});
+
 				menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP');
 				const original_transition_value = menu.style.transition;
 				menu.style.transition = 'none';
@@ -688,6 +689,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const class_stdFold_part = {
+			// use to overwrite [class_slidingStartPos_part / class_slidingStartPos_partMain]
 			// left/top % relative to parent (layer) // translate % relative to menu itself
 			menu : {
 				css : '\n'
@@ -708,33 +710,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ `  bottom : 100%;`
 					+ '}\n'
 
-					/*
-					// main by corners
-					+ '.main.RIGHT.DOWN{' // main menu (RD)
-					+ `  left : 0%;`
-					+ `  top : 0%;`
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-
-					+ '.main.RIGHT.TOP{' // main menu (RT)
-					+ `  left : 0%;`
-					+ `  top : -100%;`
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-
-					+ '.main.LEFT.DOWN{' // main menu (LD)
-					+ `  left : -100%;`
-					+ `  top : 0%;`
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-
-					+ '.main.LEFT.TOP{' // main menu (LT)
-					+ `  left : -100%;`
-					+ `  top : -100%;`
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-					*/
-
 					// submenu by axes
 					+ '.RIGHT{' // submenu (RL)
 					+ `  left : calc(100% + var(--posOfst));`
@@ -748,34 +723,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ '}\n'
 					+ '.TOP{'
 					+ `  bottom : var(--negOfst);`
-					+ '}\n' // TODO add comma
-
-					/*
-					// submenu by corners
-					+ '.RIGHT.DOWN{' // submenu (RD)
-					+ `  left : calc(100% + var(--posOfst));`
-					+ `  top : var(--negOfst);`
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-
-					+ '.RIGHT.TOP{' // submenu (RT)
-					+ `  left : calc(100% + var(--posOfst));`
-					+ `  top : 100%;`
-					+ `  translate : 0% calc(-100% + var(--posOfst));`
-					+ '}\n'
-
-					+ '.LEFT.DOWN{' // submenu (LD)
-					+ `  left : 0%;`
-					+ `  top : var(--negOfst);`
-					+ `  translate : calc(-100% + var(--negOfst)) 0%;`
-					+ '}\n'
-
-					+ '.LEFT.TOP{' // submenu (LT)
-					+ `  left : 0%;`
-					+ `  top : 100%;`
-					+ `  translate : calc(-100% + var(--negOfst)) calc(-100% + var(--posOfst));`
 					+ '}\n',
-					*/
 			},
 		};
 		const class_stdFoldClose_part = { // left/top % relative to parent (layer) // translate % relative to menu itself
@@ -793,6 +741,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// sliding effect
 
 		const class_slidingStartPos_part = {
+			// do not use as alone
 			// left/top % relative to parent (layer) // translate % relative to menu itself
 			menu : {
 				css : '\n'
@@ -813,33 +762,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ `  bottom : 100%;`
 					+ '}\n'
 
-					/*
-					// main by corners
-					+ '.main._RIGHT_DOWN{' // main menu (RD)
-					+ `  left : 0%;`
-					+ `  top : 0%;`
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-
-					+ '.main._RIGHT_TOP{' // main menu (RT)
-					+ `  left : 0%;`
-					+ `  top : -100%;`
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-
-					+ '.main._LEFT_DOWN{' // main menu (LD)
-					+ `  left : -100%;`
-					+ `  top : 0%;`
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-
-					+ '.main._LEFT_TOP{' // main menu (LT)
-					+ `  left : -100%;`
-					+ `  top : -100%;`
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-					*/
-
 					// submenu by axes
 					+ '._RIGHT{' // submenu (RL)
 					+ `  left : calc(0% + var(--negOfst));`
@@ -853,82 +775,30 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ '}\n'
 					+ '._TOP{'
 					+ `  bottom : var(--negOfst);`
-					+ '}\n' // TODO add comma
-
-					/*
-					// submenu by corners
-					+ '._RIGHT_DOWN{' // submenu (RD)
-					+ `  left : calc(0% + var(--negOfst));`
-					+ `  top : var(--negOfst);`
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-
-					+ '._RIGHT_TOP{' // submenu (RT)
-					+ `  left : calc(0% + var(--negOfst));`
-					+ `  top : 100%;`
-					+ `  translate : 0% calc(-100% + var(--posOfst));`
-					+ '}\n'
-
-					+ '._LEFT_DOWN{' // submenu (LD)
-					+ `  left : 0%;`
-					+ `  top : var(--negOfst);`
-					+ `  translate : calc(0% + var(--posOfst)) 0%;`
-					+ '}\n'
-
-					+ '._LEFT_TOP{' // submenu (LT)
-					+ `  left : 0%;`
-					+ `  top : 100%;`
-					+ `  translate : calc(0% + var(--posOfst)) calc(-100% + var(--posOfst));`
 					+ '}\n',
-					*/
 			},
 		};
 		const class_slidingStartPos_partMain = {
+			// do not use as alone
+			// use to overwrite [class_slidingStartPos_part]
 			// left/top % relative to parent (layer) // translate % relative to menu itself
 			menu : {
 				css : '\n'
 					+ '/* class_slidingStartPos_partMain */\n'
-
-					/*
-					+ '.main{' // main menu
-					+ `  translate : 0% 0%;`
-					+ '}\n'
-					*/
 
 					// main by axes
 					+ '.main._RIGHT{' // main menu (RL)
 					+ `  left : -100%;`
 					+ '}\n'
 					+ '.main._LEFT{'
-					+ `  left : 0%;`
+					+ `  right : 0%;`
 					+ '}\n'
 
 					+ '.main._DOWN{' // main menu (DT)
-					+ `  top : -100%;`
+					+ `  top : 0%;`
 					+ '}\n'
 					+ '.main._TOP{'
-					+ `  top : 0%;`
-					+ '}\n'
-
-					// main by corners
-					+ '.main._RIGHT_DOWN{' // main menu (RD)
-					+ `  left : -100%;`
-					+ `  top : -100%;`
-					+ '}\n'
-
-					+ '.main._RIGHT_TOP{' // main menu (RT)
-					+ `  left : -100%;`
-					+ `  top : 0%;`
-					+ '}\n'
-
-					+ '.main._LEFT_DOWN{' // main menu (LD)
-					+ `  left : 0%;`
-					+ `  top : -100%;`
-					+ '}\n'
-
-					+ '.main._LEFT_TOP{' // main menu (LT)
-					+ `  left : 0%;`
-					+ `  top : 0%;`
+					+ `  bottom : 100%;`
 					+ '}\n',
 			},
 		};
@@ -1216,22 +1086,19 @@ let SuperCustomContextMenu = {}; // API Receiver
 				//
 				openMenu_method : (uKey)=>{
 					return (menu)=>{
-						//menu[uKey].elems.get_layer().style.zIndex = -1;
-						//menu.classList.remove('closed');
-						menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_depth()-2;
+						//const main = (menu[uKey].elems.get_depth() === 0);
+						const depth = menu[uKey].elems.get_depth();
+						menu[uKey].elems.get_layer().style.zIndex = -depth;
 						stdFoldUsingClassStartPos_process(menu, uKey, '2px');
 						menu[uKey].elems.update_itemRects();
-						menu.classList.remove('closing');
 					};
 				},
 				closeMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
-						menu.classList.add('closing');
+						//menu.classList.add('closing');
 						menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
 						menu[uKey].elems.get_layer().style.zIndex = -1;
-						//menu.style.left = '0%';
-						//menu.style.left = '';
 					};
 				},
 				setClosedMenu_method : (uKey)=>{
@@ -1247,11 +1114,22 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// everything optional (root/layer/menu/item)
 		const sliding_additional_inits = {
 			menu : (menu, uKey)=>{
+
+				const check_transitionProps = (menu,evt)=>{
+					const propList = ['left','right',...menu[TMEM].stdFold_transitionProps];
+					if(menu === evt.composedPath().shift())
+					if(propList.includes(evt.propertyName))
+						return true;
+					return false;
+				};
+
 				menu.addEventListener('transitionstart',e=>{
-					if(menu === e.composedPath().shift()){
+					if(check_transitionProps(menu,e)){
 						//
 						console.log(e);
-						if(!menu.classList.contains('closed')){
+						if(menu.classList.contains('closed'))
+							menu.classList.add('closing');
+						else{
 							//menu[uKey].elems.get_layer().style.zIndex = -1;
 							menu.style.pointerEvents = 'none';
 						}
@@ -1266,23 +1144,19 @@ let SuperCustomContextMenu = {}; // API Receiver
 					}
 				});
 				menu.addEventListener('transitionend',e=>{
-					if(menu === e.composedPath().shift()){
+					
+					if(check_transitionProps(menu,e)){
 						//
-						const main = (menu[uKey].elems.get_depth() === 0);
 						console.log(e);
-						//if(main || ['left','right'].includes(e.propertyName) && !main)
-						if(['left','right'].includes(e.propertyName))
-						{
-	
-							if(!menu.classList.contains('closed')){
-								menu[uKey].elems.update_itemRects();
-								//menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_chainLength()+1;
-								menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_depth();
-								menu.style.pointerEvents = '';
-							}else
+						if(menu.classList.contains('closed')){
 							menu.classList.remove('closing');
-							
+						}else{
+							menu[uKey].elems.update_itemRects();
+							//menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_chainLength()+1;
+							menu[uKey].elems.get_layer().style.zIndex = menu[uKey].elems.get_depth();
+							menu.style.pointerEvents = '';
 						}
+						
 						//
 					}
 				});
@@ -1299,7 +1173,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				_base, _base_cssOffset_('2px','0px','2px'), // padd/bord/total
 				withClass_part,
 				class_ptrLogic_part,
-				class_slidingStartPos_part, class_stdFold_part, //class_slidingStartPos_partMain,
+				class_slidingStartPos_part, class_slidingStartPos_partMain, class_stdFold_part,
 				classFading_itemBackdrop_part('3s'), sccm_glass_cosmetic,
 			// glass base end
 			sccm_sliding_behav, merge_itmbdropFadingWithSliding('3s'),
@@ -3150,6 +3024,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		container.appendChild(usrStyle);
 		container.appendChild(root);
 
+		// TODO run mainInit and .init here instead in make_sccm_any()
 
 		// debug global vars TODO remove it
 		DEBUG = {instance};
