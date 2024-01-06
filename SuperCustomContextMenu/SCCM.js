@@ -11,13 +11,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 	//core.atNextLoop = (callback,time)=>setTimeout(callback,time??1); // use time arg in debug case
 	// setTimeout TOOOOOOOOOOOOO MUCH RANDOM !
 
-	/* core.atNextLoop = function(callback){
+	core.atNextLoop = function(callback){ // for slow host machine or for firefox
 		requestAnimationFrame( (()=>requestAnimationFrame(callback)) );
-	}; */
-
-	core.atNextLoop = function(callback){
-		requestAnimationFrame( callback );
 	};
+
+	/* core.atNextLoop = function(callback){
+		requestAnimationFrame( callback );
+	}; */
 
 
 
@@ -600,6 +600,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
 			if(RL_result.status) RL_result._apply();
 			if(DT_result.status) DT_result._apply();
+			// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
+			// TODO add follow last sens sys
 		};
 
 		const stdFold_processWithTransition = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
@@ -611,11 +613,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 			const _apply = ()=>{
 				if(RL_result.status) RL_result._apply();
 				if(DT_result.status) DT_result._apply();
+				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
 			};
 			core.atNextLoop(_apply);
+			// TODO add follow last sens sys
 		};
 		
-		const stdFoldUsingClass_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top/translate
+		const stdFoldUsingClass_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
 			// use it in an openMenu_method
 			menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
 
@@ -623,10 +627,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 			if(RL_result.status) menu.classList.add(RL_result.sideName);
 			if(DT_result.status) menu.classList.add(DT_result.sideName);
-
+			// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
+			// TODO add follow last sens sys
 		};
 
-		const stdFoldUsingClass_processWithTransition = (menu, uKey, symetricOffset='0px')=>{  // :: left/top/translate
+		const stdFoldUsingClass_processWithTransition = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
 			// use it in an openMenu_method
 			menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
 			const original_transition_value = menu.style.transition;
@@ -636,16 +641,21 @@ let SuperCustomContextMenu = {}; // API Receiver
 			const _apply = ()=>{
 				if(RL_result.status) menu.classList.add(RL_result.sideName);
 				if(DT_result.status) menu.classList.add(DT_result.sideName);
+				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
 				menu.classList.remove('closed'); // TODO find better way to do it
 			};
 			core.atNextLoop(_apply);
+			// TODO add follow last sens sys
 		};
 
-		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top/translate
+		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
 			// use it in an openMenu_method
 
 			const closing = menu.classList.contains('closing');
 			const closed = !closing;
+
+			let horizontalResult = null;
+			stdFoldFollowLastSens_propcessSet(menu, uKey);
 	
 			if(closed){ // from closed state : apply class will start tansition
 				menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP');
@@ -654,14 +664,16 @@ let SuperCustomContextMenu = {}; // API Receiver
 				const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
 				if(RL_result.status) menu.classList.add('_'+RL_result.sideName);
 				if(DT_result.status) menu.classList.add('_'+DT_result.sideName);
-				//menu.classList.add('closed');
+				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
 				const _apply = ()=>{
 					menu.style.transition = original_transition_value;
 					menu.classList.remove('closed');
 					if(RL_result.status) menu.classList.add(RL_result.sideName);
 					if(DT_result.status) menu.classList.add(DT_result.sideName);
+					// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
 				};
 				core.atNextLoop(_apply);
+				horizontalResult = RL_result;
 			}
 			if(closing){ // from closing state : preserves current running transition
 				menu.classList.remove('closing');
@@ -681,6 +693,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 					menu.classList.add('_'+DT_result.sideName);
 					menu.classList.add(DT_result.sideName);
 				}
+				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
 
 				let directStyle = propList;
 				directStyle.forEach(prop=>menu.style[prop]=styles[prop]);
@@ -693,9 +706,34 @@ let SuperCustomContextMenu = {}; // API Receiver
 				};
 				core.atNextLoop(removeDirectStyle);
 
-				// 
+				horizontalResult = RL_result;
+			}
+			stdFoldFollowLastSens_propcessGet(menu, horizontalResult);
+		};
+
+		const stdFoldFollowLastSens_propcessSet = (menu, uKey)=>{
+			// submenu case
+			if(!menu[uKey].elems.is_main())
+			if(menu[TMEM]?.stdFold_followLastSens?.started){ // process (set reverse)
+				const current = menu[uKey].elems.get_upMenu[TMEM].stdFold_followLastSens.current;
+				const defsens = menu[TMEM].stdFold_followLastSens.defaultSens;
+				menu[TMEM].stdFold_followLastSens.reverseSens = (current !== defsens);
 			}
 		};
+		
+		const stdFoldFollowLastSens_propcessGet = (menu, hrzRes)=>{
+			if(menu[TMEM].stdFold_followLastSens === null){ // init
+				menu[TMEM].stdFold_followLastSens = {};
+				menu[TMEM].stdFold_followLastSens.started = true;
+				menu[TMEM].stdFold_followLastSens.reverseSens = false;
+				menu[TMEM].stdFold_followLastSens.defaultSens = Object.values(hrzRes.sides)[0]; // get default side name
+			}
+			if(menu[TMEM]?.stdFold_followLastSens?.started){ // process (get current)
+				if(hrzRes.status)
+					menu[TMEM].stdFold_followLastSens.current = hrzRes.sideName;
+			}
+		};
+		
 
 		const class_stdFold_part = {
 			// use to overwrite [class_slidingStartPos_part / class_slidingStartPosMain_part]
@@ -744,6 +782,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ `  top : 0%;`
 					+ `  translate : 0% 0%;`
 					+ '}\n',
+			},
+		};
+
+		const class_stdFoldFollowLastSens_additional_inits = {
+			menu : (menu, uKey)=>{
+				menu[TMEM] ||= {};
+				menu[TMEM].stdFold_followLastSens = null;
 			},
 		};
 
@@ -1106,6 +1151,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 						const maxDepth = menu[uKey].elems.get_maxDepth();
 						//menu[uKey].elems.get_layer().style.zIndex = -depth;
 						//menu[uKey].elems.get_layer().style.zIndex = maxDepth - depth;
+						
+						// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
 						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
 
 						const offset = getComputedStyle(menu).getPropertyValue('--posOfst');
@@ -1122,6 +1169,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 						const maxDepth = menu[uKey].elems.get_maxDepth();
 						//menu[uKey].elems.get_layer().style.zIndex = -1;
 						//menu[uKey].elems.get_layer().style.zIndex = maxDepth - depth;
+						
+						// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
 						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
 					};
 				},
@@ -1164,6 +1213,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 							const maxDepth = menu[uKey].elems.get_maxDepth();
 							//menu[uKey].elems.get_layer().style.zIndex = depth;
 							//menu[uKey].elems.get_layer().style.zIndex = maxDepth+1 + depth;
+							
+							// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
 							menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
 
 							menu.style.pointerEvents = '';
@@ -2717,6 +2768,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				get_itsItemPath : ()=>[...elem[APP].itemPath],
 				get_itsMenuChain : ()=>instance.menuChain.slice(0, elem[APP].depth+1),
 				get_upItem : ()=>elem[APP].itemPath.at(-1)||null,
+				get_upMenu : ()=>elem[APP].itemPath.at(-1)?.inMenu,
 				get_layer : ()=>elem[APP].layer,
 				get_items : ()=>[...elem[APP].items],
 				update_itemRects : (submenuOnly=true)=>update_subRects(elem, submenuOnly),
