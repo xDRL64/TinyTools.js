@@ -715,9 +715,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// submenu case
 			if(menu[uKey].elems.is_sub()){
 				const upMenu = menu[uKey].elems.get_upMenu();
+				const main = menu[uKey].elems.get_main();
 				if(upMenu[TMEM]?.stdFold_followLastSens){ // process (set reverse)
 					const current = upMenu[TMEM].stdFold_followLastSens.current;
-					const defsens = upMenu[TMEM].stdFold_followLastSens.defaultSens;
+					const defsens = main[TMEM].stdFold_followLastSens.defaultSens;
 					menu[TMEM].stdFold_followLastSens.reverseSens = (current !== defsens);
 				}
 			}
@@ -726,7 +727,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const stdFoldFollowLastSens_propcessGet = (menu, uKey, hrzRes)=>{
 			if(menu[uKey].elems.is_main())
 			if(menu[TMEM].stdFold_followLastSens) // init
-				menu[TMEM].stdFold_followLastSens.defaultSens = Object.values(hrzRes.sides)[0]; // get default side name
+				menu[TMEM].stdFold_followLastSens.defaultSens = Object.keys(hrzRes.sides)[0]; // get default side name
 			
 			if(hrzRes.status) menu[TMEM].stdFold_followLastSens.current = hrzRes.sideName;
 		};
@@ -2765,6 +2766,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				//
 				get_hook : ()=>instance.get_hook(),
 				get_root : ()=>instance.get_root(),
+				get_main : ()=>instance.get_mainMenu(),
 				get_chainLength : ()=>instance.menuChain.length,
 				get_menuChain : ()=>[...instance.menuChain],
 				get_itemPath : ()=>[...instance.itemPath],
