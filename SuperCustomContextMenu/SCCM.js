@@ -708,30 +708,27 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 				horizontalResult = RL_result;
 			}
-			stdFoldFollowLastSens_propcessGet(menu, horizontalResult);
+			stdFoldFollowLastSens_propcessGet(menu, uKey, horizontalResult);
 		};
 
 		const stdFoldFollowLastSens_propcessSet = (menu, uKey)=>{
 			// submenu case
-			if(!menu[uKey].elems.is_main())
-			if(menu[TMEM]?.stdFold_followLastSens?.started){ // process (set reverse)
-				const current = menu[uKey].elems.get_upMenu[TMEM].stdFold_followLastSens.current;
-				const defsens = menu[TMEM].stdFold_followLastSens.defaultSens;
-				menu[TMEM].stdFold_followLastSens.reverseSens = (current !== defsens);
+			if(menu[uKey].elems.is_sub()){
+				const upMenu = menu[uKey].elems.get_upMenu();
+				if(upMenu[TMEM]?.stdFold_followLastSens){ // process (set reverse)
+					const current = upMenu[TMEM].stdFold_followLastSens.current;
+					const defsens = upMenu[TMEM].stdFold_followLastSens.defaultSens;
+					menu[TMEM].stdFold_followLastSens.reverseSens = (current !== defsens);
+				}
 			}
 		};
-		
-		const stdFoldFollowLastSens_propcessGet = (menu, hrzRes)=>{
-			if(menu[TMEM].stdFold_followLastSens === null){ // init
-				menu[TMEM].stdFold_followLastSens = {};
-				menu[TMEM].stdFold_followLastSens.started = true;
-				menu[TMEM].stdFold_followLastSens.reverseSens = false;
+
+		const stdFoldFollowLastSens_propcessGet = (menu, uKey, hrzRes)=>{
+			if(menu[uKey].elems.is_main())
+			if(menu[TMEM].stdFold_followLastSens) // init
 				menu[TMEM].stdFold_followLastSens.defaultSens = Object.values(hrzRes.sides)[0]; // get default side name
-			}
-			if(menu[TMEM]?.stdFold_followLastSens?.started){ // process (get current)
-				if(hrzRes.status)
-					menu[TMEM].stdFold_followLastSens.current = hrzRes.sideName;
-			}
+			
+			if(hrzRes.status) menu[TMEM].stdFold_followLastSens.current = hrzRes.sideName;
 		};
 		
 
@@ -788,7 +785,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const class_stdFoldFollowLastSens_additional_inits = {
 			menu : (menu, uKey)=>{
 				menu[TMEM] ||= {};
-				menu[TMEM].stdFold_followLastSens = null;
+				menu[TMEM].stdFold_followLastSens = {};
 			},
 		};
 
@@ -1249,7 +1246,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 		);
 
 		const sdtfoldAndSliding_addonInit = stack_addonInit(
-			sdtFold_additional_inits, sliding_additional_inits,
+			sdtFold_additional_inits,
+			class_stdFoldFollowLastSens_additional_inits,
+			sliding_additional_inits,
 			itmbdropFadingWithSliding_additional_inits
 		);
 
@@ -1618,11 +1617,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 			b : (elemB,frameB)=>elemB<frameB,
 		};
 
-		const check_sides = ({elem, sides, frameRect}, user_key)=>{
+		const check_sides = ({elem, sides, frameRect, reversable}, user_key)=>{
 			const uKey = user_key;
 			const frameBox = rect_to_box(frameRect);
 			
-			for(let sideName in sides){
+			let sideNames = Object.keys(sides);
+			if(reversable)
+			if(elem[TMEM]?.stdFold_followLastSens?.reverseSens)
+				sideNames = sideNames.toReversed();
+
+			//for(let sideName in sides){
+			for(const sideName of sideNames){
 
 				// get side object
 				const side = sides[sideName];
@@ -1835,7 +1840,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		
 						const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
 						const sides = menu[uKey].elems.get_root()[TMEM].get_RIGHTLEFT(...offsetArray);
-						const settings = {elem:menu, sides, frameRect};
+						const settings = {elem:menu, sides, frameRect, reversable:true};
 						
 						const sideName = check_sides(settings, uKey);
 						const inBound = !!sideName;
@@ -2768,11 +2773,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 				get_itsItemPath : ()=>[...elem[APP].itemPath],
 				get_itsMenuChain : ()=>instance.menuChain.slice(0, elem[APP].depth+1),
 				get_upItem : ()=>elem[APP].itemPath.at(-1)||null,
-				get_upMenu : ()=>elem[APP].itemPath.at(-1)?.inMenu,
+				get_upMenu : ()=>elem[APP].itemPath.at(-1)?.[APP].inMenu,
 				get_layer : ()=>elem[APP].layer,
 				get_items : ()=>[...elem[APP].items],
 				update_itemRects : (submenuOnly=true)=>update_subRects(elem, submenuOnly),
-				is_main : ()=>!!elem[APP].depth,
+				is_main : ()=>!elem[APP].depth,
+				is_sub : ()=>!!elem[APP].depth,
 			};
 		};
 
