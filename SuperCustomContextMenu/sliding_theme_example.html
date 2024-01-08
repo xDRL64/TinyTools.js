@@ -125,7 +125,8 @@
 			e.preventDefault();
 			handle[api_key].set_contextData(data);
 			
-			handle.style.left = e.clientX + window.scrollX + 'px';
+			handle.style.left = e.clientX + window.scrollX + 'px'; // BBB
+			//handle.style.left = 658+1 + window.scrollX + 'px'; // win x:991
 			handle.style.top = e.clientY + window.scrollY + 'px';
 			
 			menu[api_key].update_rect();
@@ -133,7 +134,7 @@
 
 			if(handle[api_key].isOpen()) handle[api_key].close();
 			else handle[api_key].open();
-			console.log(e);
+			//console.log(e);
 		};
 	
 		window.onscroll = ()=>{
