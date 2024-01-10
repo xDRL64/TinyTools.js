@@ -613,7 +613,16 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// TODO add follow last sens sys
 		};
 
-		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
+
+
+
+
+
+
+
+
+
+		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top // OLD
 			// use it in an openMenu_method
 
 			const closing = menu.classList.contains('closing');
@@ -675,6 +684,43 @@ let SuperCustomContextMenu = {}; // API Receiver
 			}
 			stdFoldFollowLastSens_processGet(menu, uKey, horizontalResult);
 		};
+
+
+
+
+		const stdFoldUsingClassStartPos_process2 = (menu, uKey, symetricOffset='0px')=>{ // NEW
+
+			const {RL_result,DT_result} = stdFoldFollowLastSens_process(menu, uKey, symetricOffset);
+
+			const _apply = ()=>{
+				menu.style.transition = '';
+				if(RL_result.status) menu.classList.add(RL_result.sideName);
+				if(DT_result.status) menu.classList.add(DT_result.sideName);
+				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
+			};
+
+			if(!menu[TMEM].stdFold_isTransition){
+				menu.style.transition = menu[TMEM].stdFold_startPosLock;
+				if(RL_result.status) menu.classList.add('_'+RL_result.sideName);
+				if(DT_result.status) menu.classList.add('_'+DT_result.sideName);
+				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
+				core.atNextLoop(_apply);
+				
+			}else{
+				_apply();
+			}
+
+		};
+
+		const stdFoldFollowLastSens_process = (menu, uKey, symetricOffset)=>{
+			stdFoldFollowLastSens_processSet(menu, uKey);
+			const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
+			stdFoldFollowLastSens_processGet(menu, uKey, RL_result);
+			return {RL_result,DT_result};
+		};
+		
+
+		
 
 		const stdFoldFollowLastSens_processSet = (menu, uKey)=>{
 			// submenu cases
@@ -872,6 +918,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 		});
 
 
+
+
+
+		// merge effect
+
 		const merge_sdtFadingWithSliding = (time='1s')=>({
 			menu : {
 				/* style : {
@@ -907,12 +958,39 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		});
 
-		const itmbdropFadingWithSliding_additional_inits = {
+
+
+
+
+
+
+		const itmbdropFadingWithSliding_additional_inits = { // OLD
 			menu : (menu, uKey)=>{
 				menu[TMEM] ||= {};
 				menu[TMEM].stdFold_transitionProps = ['background-color'];
 			},
 		};
+
+		const itmbdropFadingWithSliding_additional_inits_ = (time='1s')=>({ // NEW
+			menu : (menu, uKey)=>{
+				menu[TMEM] ||= {};
+				menu[TMEM].stdFold_transitionProps = ['left','right','background-color'];
+				//menu[TMEM].stdFold_transitionFull = `background-color ${time}, left ${time}, right ${time}`;
+				//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
+				menu[TMEM].stdFold_startPosLock = `background-color ${time}`; // remove transition that affect position
+				menu[TMEM].stdFold_transitionings = {'left':false,'right':false,'background-color':false};
+				menu[TMEM].stdFold_isTransition = false;
+				menu[TMEM].stdFold_transitionUpdate = function(propName, transitioning){
+					this.stdFold_transitionings[propName] = transitioning;
+					this.stdFold_isTransition = Object.values(this.stdFold_transitionings).some(e=>e);
+				};
+			},
+		});
+
+
+
+
+
 
 
 
@@ -1102,7 +1180,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// z-index [opening/closing] and [open] patern, see :
 		// for(let i=0; i<10; i++) console.log('opening/closing : '+(3 + (i-1)*2 - 1)+'\n'+'open : '+(3 + (i)*2));
 
-		const sliding_behav = { // SCCM sliding style
+		const sliding_behav = { // SCCM sliding style // OLD
 			// contains only differences from its base
 			behaviors : {
 				// binders
@@ -1112,10 +1190,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 						//const main = (menu[uKey].elems.get_depth() === 0);
 			
 						const depth = menu[uKey].elems.get_depth();
-						const maxDepth = menu[uKey].elems.get_maxDepth();
-						//menu[uKey].elems.get_layer().style.zIndex = -depth;
-						//menu[uKey].elems.get_layer().style.zIndex = maxDepth - depth;
-						
 						// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
 						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
 
@@ -1129,11 +1203,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						menu.classList.add('closed');
 						menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
 
-						const depth = menu[uKey].elems.get_depth();
-						const maxDepth = menu[uKey].elems.get_maxDepth();
-						//menu[uKey].elems.get_layer().style.zIndex = -1;
-						//menu[uKey].elems.get_layer().style.zIndex = maxDepth - depth;
-						
+						const depth = menu[uKey].elems.get_depth();			
 						// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
 						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
 					};
@@ -1141,7 +1211,43 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		const sliding_additional_inits = {
+		const sliding_behav2 = { // SCCM sliding style // NEW
+			// contains only differences from its base
+			behaviors : {
+				// binders
+				//
+				openMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.remove('closed');
+						//const main = (menu[uKey].elems.get_depth() === 0);
+			
+						const depth = menu[uKey].elems.get_depth();
+						// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
+						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
+
+						const offset = getComputedStyle(menu).getPropertyValue('--posOfst');
+						stdFoldUsingClassStartPos_process2(menu, uKey, offset);
+						menu[uKey].elems.update_itemRects();
+					};
+				},
+				closeMenu_method : (uKey)=>{
+					return (menu)=>{
+						menu.classList.add('closed');
+						menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
+
+						const depth = menu[uKey].elems.get_depth();			
+						// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
+						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
+					};
+				},
+			},
+		};
+
+
+
+
+
+		const sliding_additional_inits = { // OLD
 			// everything optional (root/layer/menu/item)
 			menu : (menu, uKey)=>{
 
@@ -1174,10 +1280,48 @@ let SuperCustomContextMenu = {}; // API Receiver
 							menu[uKey].elems.update_itemRects();
 
 							const depth = menu[uKey].elems.get_depth();
-							const maxDepth = menu[uKey].elems.get_maxDepth();
-							//menu[uKey].elems.get_layer().style.zIndex = depth;
-							//menu[uKey].elems.get_layer().style.zIndex = maxDepth+1 + depth;
-							
+							// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
+							menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
+
+							menu.style.pointerEvents = '';
+						}
+					}
+				});
+			},
+		};
+		const sliding_additional_inits2 = { // NEW
+			// everything optional (root/layer/menu/item)
+			menu : (menu, uKey)=>{
+
+				const check_transitionProps = (menu,evt)=>{
+					const propList = menu[TMEM].stdFold_transitionProps;
+					if(menu === evt.composedPath().shift())
+					if(propList.includes(evt.propertyName))
+						return true;
+					return false;
+				};
+
+				menu.addEventListener('transitionstart',e=>{
+					if(check_transitionProps(menu,e)){
+						menu[TMEM].stdFold_transitionUpdate(e.propertyName, true);
+						if(menu.classList.contains('closed')){
+						}else{
+							if(!menu.classList.contains('notLockOpening'))
+								menu.style.pointerEvents = 'none';
+						}
+					}
+				});
+
+				menu.addEventListener('transitionend',e=>{
+					if(check_transitionProps(menu,e)){
+						menu[TMEM].stdFold_transitionUpdate(e.propertyName, false);
+						if(menu.classList.contains('closed')){
+							if(!menu[TMEM].stdFold_isTransition)
+								menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP');
+						}else{
+							menu[uKey].elems.update_itemRects();
+
+							const depth = menu[uKey].elems.get_depth();
 							// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
 							menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
 
@@ -1194,8 +1338,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 		total   = '2px';
 		time    = '1s';
 
+
+
+
+
+
+
 		//const sliding_base = mix_base(sccm_NULL, sccm_sliding_part, glass_base);
-		const sliding_base = mix_base(
+		const sliding_base = mix_base( // OLD
 			// glass base copy
 				_base, _base_cssOffset_(padding,border,total), // padd/bord/total
 				withClass_part,
@@ -1207,15 +1357,36 @@ let SuperCustomContextMenu = {}; // API Receiver
 			//class_stdFoldClose_part
 		);
 
+		const sliding_base2 = mix_base( // NEW
+			// glass base copy
+				_base, _base_cssOffset_(padding,border,total), // padd/bord/total
+				withClass_part,
+				class_ptrLogic_part,
+				class_slidingStartPos_part, class_slidingStartPosMain_part, class_stdFold_part,
+				classFading_itemBackdrop_part(time), sccm_glass_cosmetic,
+			// glass base end
+			sliding_behav2, merge_itmbdropFadingWithSliding(time),
+			//class_stdFoldClose_part
+		);
+
+
+
+
+
 		const sliding_baseMain = mix_base(
 			sccm_NULL, _baseMain_part, mainMenuClass_part,
 			class_slidingDontLockPtrOpening_partMain
 		);
 
-		const sdtfoldAndSliding_addonInit = stack_addonInit(
+		const sdtfoldAndSliding_addonInit = stack_addonInit( // OLD
 			class_stdFoldFollowLastSens_additional_inits,
 			sliding_additional_inits,
 			itmbdropFadingWithSliding_additional_inits
+		);
+		const sdtfoldAndSliding_addonInit2 = stack_addonInit( // NEW
+			class_stdFoldFollowLastSens_additional_inits,
+			sliding_additional_inits2,
+			itmbdropFadingWithSliding_additional_inits_('1s')
 		);
 
 
@@ -1508,8 +1679,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 				glass     : make_themeGenerator(glass_base, sccm_NULL),
 				glassMain : make_themeGenerator(glass_base, default_baseMain),
 				fading : null,
-				sliding : make_themeGenerator(sliding_base, sccm_NULL, sdtfoldAndSliding_addonInit),
-				slidingMain : make_themeGenerator(sccm_NULL, sliding_baseMain, sdtfoldAndSliding_addonInit),
+				sliding : make_themeGenerator(sliding_base2, sccm_NULL, sdtfoldAndSliding_addonInit2),
+				slidingMain : make_themeGenerator(sccm_NULL, sliding_baseMain, sdtfoldAndSliding_addonInit2),
 				growing : null,
 				growingMain : null,
 			},
@@ -1761,9 +1932,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 	// - export to main api
 	SCCM.providing ??= {};
 	SCCM.providing.preventOverflowLib = {};
+
 	SCCM.providing.preventOverflowLib.check_precalcSides = (settings)=>{
 		core.preventOverflowLib.check_precalcSides(settings);
 	};
+
+	SCCM.providing.preventOverflowLib.precalcPresets = core.preventOverflowLib.precalcPresets;
+
+	SCCM.providing.preventOverflowLib.run_stdPresetProcess = (SIDESNAME, reversable, menu, uKey, symetricOffset=0)=>{
+		core.preventOverflowLib.run_stdPresetProcess(SIDESNAME, reversable, menu, uKey, symetricOffset=0);
+	};
+
 	SCCM.providing.preventOverflowLib.make_sideMethods = (settings)=>{
 		core.preventOverflowLib.make_sideMethods(settings);
 	};

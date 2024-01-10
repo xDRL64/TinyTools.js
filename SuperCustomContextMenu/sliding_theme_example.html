@@ -123,17 +123,22 @@
 		let data = {};
 		document.body.oncontextmenu = e=>{
 			e.preventDefault();
-			handle[api_key].set_contextData(data);
 			
-			handle.style.left = e.clientX + window.scrollX + 'px'; // BBB
-			//handle.style.left = 658+1 + window.scrollX + 'px'; // win x:991
-			handle.style.top = e.clientY + window.scrollY + 'px';
-			
-			menu[api_key].update_rect();
-			handle[api_key].get_root()[api_key].update_rect();
+			if(handle[api_key].isOpen()){
+				handle[api_key].close();
+			}else{
 
-			if(handle[api_key].isOpen()) handle[api_key].close();
-			else handle[api_key].open();
+				handle[api_key].set_contextData(data);
+			
+				handle.style.left = e.clientX + window.scrollX + 'px'; // BBB
+				//handle.style.left = 658+1 + window.scrollX + 'px'; // win x:991
+				handle.style.top = e.clientY + window.scrollY + 'px';
+				
+				menu[api_key].update_rect();
+				handle[api_key].get_root()[api_key].update_rect();
+
+				handle[api_key].open();
+			}
 			//console.log(e);
 		};
 	
