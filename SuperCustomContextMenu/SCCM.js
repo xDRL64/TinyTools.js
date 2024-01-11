@@ -196,8 +196,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const {sccm_NULL, mix_base, stack_addonInit, make_themeGenerator} = core.themeLib;
 
-		const sdtCheckOverflow__ = ()=>core.preventOverflowLib.presets.standard; // later lib available
-		const sdtCheckOverflow__v2 = ()=>core.preventOverflowLib.run_stdPresetProcess // later lib available
+		const sdtCheckOverflow__ = ()=>core.preventOverflowLib.run_stdPresetProcess // later lib available
 
 		// AAA
 
@@ -272,7 +271,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		
 		// base and baseMain
 
-		const _base = { // minimal base :: +[style.prtEvt/display], *[behav.all]
+		const _base = { // minimal base :: +[style.prtEvt/display]
 			// MUST HAVE ALL TREE PROPS EVENT IF ARE EMPTY
 			_all : {
 				style : {},
@@ -316,6 +315,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 				class : [/*StringArray*/],
 				css : '',
 			},
+			
+		};
+
+		const _behav = { // minimal behavior :: *[behav.all]
 			behaviors : {
 				// binders
 				//
@@ -376,7 +379,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		const _baseMain_part = { // baseMain settings :: *[behav.replace]
+		const _behavMain = { // baseMain settings :: *[behav.replace]
 			// contains only differences from its base
 			behaviors : {
 				replaceLayer_method : (uKey)=>{
@@ -393,7 +396,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		const _base_cssOffset_ = (sympetricPadding, symetricBorder, totalOffset)=>({
+		const _cssvar_ = (sympetricPadding, symetricBorder, totalOffset, transitionTime)=>({
 			// args : css expression/value (accepts units and functions)
 			// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 			_all  : {
@@ -402,12 +405,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 			root  : {
 				class : ['sccmRoot'],
 				css : '\n'
-				    + '/* _base_cssOffset_ (_all) */\n'
+				    + '/* _cssvar_ (_all) */\n'
 				    + '.sccmRoot{'
 				    + `  --padding : ${sympetricPadding||'0px'};`
 					+ `  --border : ${symetricBorder||'0px'};`
 					+ `  --posOfst : ${totalOffset||'0px'};`
 					+ `  --negOfst : calc(${totalOffset||'0px'} * -1);`
+					+ `  --animTime : ${transitionTime||'0s'};`
 				    + '}\n'
 			},
 			layer : {},
@@ -569,21 +573,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		// advanced position (main and sub)
+		// advanced position [stdFold]
 
 		const stdFold_checkOnly = (menu, uKey, symetricOffset='0px')=>{  // :: // BBB
 			// use it in an openMenu_method
 			const ofst = parseInt(symetricOffset);
-			const RL_result = sdtCheckOverflow__v2()('RIGHTLEFT', true, menu, uKey, ofst);
-			const DT_result = sdtCheckOverflow__v2()('DOWNTOP', false, menu, uKey, ofst);
+			const RL_result = sdtCheckOverflow__()('RIGHTLEFT', true, menu, uKey, ofst);
+			const DT_result = sdtCheckOverflow__()('DOWNTOP', false, menu, uKey, ofst);
 
 			return {RL_result, DT_result};
 		};
 
-
-
-
-		
 		const stdFoldUsingClass_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
 			// use it in an openMenu_method
 			menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
@@ -613,82 +613,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// TODO add follow last sens sys
 		};
 
-
-
-
-
-
-
-
-
-
-		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top // OLD
-			// use it in an openMenu_method
-
-			const closing = menu.classList.contains('closing');
-			const closed = !closing;
-
-			let horizontalResult = null;
-			stdFoldFollowLastSens_processSet(menu, uKey);
-	
-			if(closed){ // from closed state : apply class will start tansition
-				menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP');
-				const original_transition_value = menu.style.transition;
-				menu.style.transition = 'none';
-				const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
-				if(RL_result.status) menu.classList.add('_'+RL_result.sideName);
-				if(DT_result.status) menu.classList.add('_'+DT_result.sideName);
-				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
-				const _apply = ()=>{
-					menu.style.transition = original_transition_value;
-					menu.classList.remove('closed');
-					if(RL_result.status) menu.classList.add(RL_result.sideName);
-					if(DT_result.status) menu.classList.add(DT_result.sideName);
-					// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
-				};
-				core.atNextLoop(_apply);
-				horizontalResult = RL_result;
-			}
-			if(closing){ // from closing state : preserves current running transition
-				menu.classList.remove('closing');
-				const propList = ['left','right',...menu[TMEM].stdFold_transitionProps];
-				let styles = getComputedStyle(menu);
-				styles = propList.reduce((acc,cur)=>{acc[cur]=styles[cur];return acc;},{});
-
-				menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP');
-				const original_transition_value = menu.style.transition;
-				menu.style.transition = 'none';
-				const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
-				if(RL_result.status){
-					menu.classList.add('_'+RL_result.sideName);
-					menu.classList.add(RL_result.sideName);
-				}
-				if(DT_result.status){
-					menu.classList.add('_'+DT_result.sideName);
-					menu.classList.add(DT_result.sideName);
-				}
-				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
-
-				let directStyle = propList;
-				directStyle.forEach(prop=>menu.style[prop]=styles[prop]);
-
-
-				const removeDirectStyle = ()=>{
-					menu.style.transition = original_transition_value;
-					menu.classList.remove('closed');
-					directStyle.forEach(prop=>menu.style[prop]='');
-				};
-				core.atNextLoop(removeDirectStyle);
-
-				horizontalResult = RL_result;
-			}
-			stdFoldFollowLastSens_processGet(menu, uKey, horizontalResult);
-		};
-
-
-
-
-		const stdFoldUsingClassStartPos_process2 = (menu, uKey, symetricOffset='0px')=>{ // NEW
+		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{
 
 			const {RL_result,DT_result} = stdFoldFollowLastSens_process(menu, uKey, symetricOffset);
 
@@ -712,16 +637,15 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		};
 
-		const stdFoldFollowLastSens_process = (menu, uKey, symetricOffset)=>{
+		// advanced position [sdtFold follow last sens]
+
+		const stdFoldFollowLastSens_process = (menu, uKey, symetricOffset='0px')=>{
 			stdFoldFollowLastSens_processSet(menu, uKey);
 			const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
 			stdFoldFollowLastSens_processGet(menu, uKey, RL_result);
 			return {RL_result,DT_result};
 		};
 		
-
-		
-
 		const stdFoldFollowLastSens_processSet = (menu, uKey)=>{
 			// submenu cases
 			if(menu[uKey].elems.is_sub()){
@@ -842,6 +766,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ '}\n',
 			},
 		};
+
+		// sliding main menu (optionals)
+
 		const class_slidingStartPosMain_part = {
 			// do not use as alone
 			// use to overwrite [class_slidingStartPos_part]
@@ -867,7 +794,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-
 		const class_slidingDontLockPtrOpening_partMain = {
 			menu : {
 				class : ['notLockOpening']
@@ -877,7 +803,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// fading effect
 
-		const classFading_standard_part = (time='1s')=> ({
+		const classFading_standard_part_ = (time='var(--animTime)')=> ({
 			// contains only differences from its base
 			menu : {
 				css : '\n'
@@ -892,11 +818,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		});
 
-		const classFading_itemBackdrop_part = (time='1s')=> ({
+		const classFading_itemBackdrop_part_ = (time='var(--animTime)')=> ({
 			// contains only differences from its base
 			menu : {
 				css : '\n'
-				    + '/* classFading_itemBackdrop_part (menu) */\n'
+				    + '/* classFading_itemBackdrop_part_ (menu) */\n'
 					+ '.menu{'
 					+ `  transition : background-color ${time};`
 					+ '}\n'
@@ -906,7 +832,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 			item : {
 				css : '\n'
-				    + '/* classFading_itemBackdrop_part (item) */\n'
+				    + '/* classFading_itemBackdrop_part_ (item) */\n'
 				    + '.item{'
 					+ '  opacity : 1;'
 					+ `  transition : opacity ${time};`
@@ -937,20 +863,29 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		});
 
-		const sdtFadingWithSliding_additional_inits = {
+		const sdtFadingWithSliding_additional_inits_ = (time='1s')=>({
 			menu : (menu, uKey)=>{
 				menu[TMEM] ||= {};
-				menu[TMEM].stdFold_transitionProps = ['opacity'];
+				menu[TMEM].stdFold_transitionProps = ['left','right','opacity'];
+				//menu[TMEM].stdFold_transitionFull = `opacity ${time}, left ${time}, right ${time}`;
+				//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
+				menu[TMEM].stdFold_startPosLock = `opacity ${time}`; // remove transition that affect position
+				menu[TMEM].stdFold_transitionings = {'left':false,'right':false,'opacity':false};
+				menu[TMEM].stdFold_isTransition = false;
+				menu[TMEM].stdFold_transitionUpdate = function(propName, transitioning){
+					this.stdFold_transitionings[propName] = transitioning;
+					this.stdFold_isTransition = Object.values(this.stdFold_transitionings).some(e=>e);
+				};
 			},
-		};
+		});
 
-		const merge_itmbdropFadingWithSliding = (time='1s')=>({
+		const merge_itmbdropFadingWithSliding_ = (time='var(--animTime)')=>({
 			menu : {
 				/* style : {
 					transition : `background-color ${time}, left ${time}, translate ${time}`,
 				}, */
 				css : '\n'
-				+ '/* merge_itmbdropFadingWithSliding */\n'
+				+ '/* merge_itmbdropFadingWithSliding_ */\n'
 
 				+ '.menu{'
 				+ `  transition : background-color ${time}, left ${time}, right ${time};`
@@ -958,20 +893,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		});
 
-
-
-
-
-
-
-		const itmbdropFadingWithSliding_additional_inits = { // OLD
-			menu : (menu, uKey)=>{
-				menu[TMEM] ||= {};
-				menu[TMEM].stdFold_transitionProps = ['background-color'];
-			},
-		};
-
-		const itmbdropFadingWithSliding_additional_inits_ = (time='1s')=>({ // NEW
+		const itmbdropFadingWithSliding_additional_inits_ = (time='var(--animTime)')=>({
 			menu : (menu, uKey)=>{
 				menu[TMEM] ||= {};
 				menu[TMEM].stdFold_transitionProps = ['left','right','background-color'];
@@ -997,10 +919,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// AAA
 
 
-		//const _baseMain = mix_base(_base, _baseMain_part);
+		//const _baseMain = mix_base(_base, _behavMain);
 
 
-		const class_base = mix_base(_base, withClass_part);
+		const class_base = mix_base(_base, _behav, withClass_part);
 
 
 
@@ -1010,7 +932,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// EMPTY THEME
 		//
 		
-		const empty_base = mix_base(_base, foldRight_part());
+		const empty_base = mix_base(_base, _behav, foldRight_part());
 
 		const emptyClass_base = mix_base(class_base, foldRight_part());
 
@@ -1078,10 +1000,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const default_base = mix_base(
-			_base, withClass_part, class_ptrLogic_part, foldRight_part('2px'), sccm_default_cosmetic
+			_base, _behav, withClass_part, class_ptrLogic_part, foldRight_part('2px'), sccm_default_cosmetic
 		);
 		const default_baseMain = mix_base(
-			sccm_NULL, _baseMain_part, mainMenuClass_part, openRight_part
+			sccm_NULL, _behavMain, mainMenuClass_part, openRight_part
 		);
 
 
@@ -1155,13 +1077,19 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
+		// tmp glo var for settings
+		padding = '2px';
+		border  = '0px';
+		total   = '2px';
+		time    = '1s';
+
 		const glass_base = mix_base(
-			_base, _base_cssOffset_('2px','0px','2px'),
+			_base, _behav, _cssvar_(padding,border,total,time),
 			withClass_part,
 			class_ptrLogic_part,
 			//foldRight_part('2px'),
 			class_stdFold_part, // 2 px :  equal to padding
-			classFading_itemBackdrop_part('1s'), sccm_glass_cosmetic,
+			classFading_itemBackdrop_part_(), sccm_glass_cosmetic,
 		);
 		const glass_baseMain = mix_base(
 
@@ -1180,13 +1108,16 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// z-index [opening/closing] and [open] patern, see :
 		// for(let i=0; i<10; i++) console.log('opening/closing : '+(3 + (i-1)*2 - 1)+'\n'+'open : '+(3 + (i)*2));
 
-		const sliding_behav = { // SCCM sliding style // OLD
+
+
+		const sliding_behav = { // SCCM sliding style
 			// contains only differences from its base
 			behaviors : {
 				// binders
 				//
 				openMenu_method : (uKey)=>{
 					return (menu)=>{
+						menu.classList.remove('closed');
 						//const main = (menu[uKey].elems.get_depth() === 0);
 			
 						const depth = menu[uKey].elems.get_depth();
@@ -1211,85 +1142,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		const sliding_behav2 = { // SCCM sliding style // NEW
-			// contains only differences from its base
-			behaviors : {
-				// binders
-				//
-				openMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.remove('closed');
-						//const main = (menu[uKey].elems.get_depth() === 0);
-			
-						const depth = menu[uKey].elems.get_depth();
-						// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
-						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
-
-						const offset = getComputedStyle(menu).getPropertyValue('--posOfst');
-						stdFoldUsingClassStartPos_process2(menu, uKey, offset);
-						menu[uKey].elems.update_itemRects();
-					};
-				},
-				closeMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.add('closed');
-						menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
-
-						const depth = menu[uKey].elems.get_depth();			
-						// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
-						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
-					};
-				},
-			},
-		};
 
 
 
 
 
-		const sliding_additional_inits = { // OLD
-			// everything optional (root/layer/menu/item)
-			menu : (menu, uKey)=>{
-
-				const check_transitionProps = (menu,evt)=>{
-					const propList = ['left','right',...menu[TMEM].stdFold_transitionProps];
-					if(menu === evt.composedPath().shift())
-					if(propList.includes(evt.propertyName))
-						return true;
-					return false;
-				};
-
-				menu.addEventListener('transitionstart',e=>{
-					if(check_transitionProps(menu,e)){
-						console.log(e);
-						if(menu.classList.contains('closed'))
-							menu.classList.add('closing');
-						else{
-							if(!menu.classList.contains('notLockOpening'))
-								menu.style.pointerEvents = 'none';
-						}
-					}
-				});
-
-				menu.addEventListener('transitionend',e=>{
-					if(check_transitionProps(menu,e)){
-						console.log(e);
-						if(menu.classList.contains('closed')){
-							menu.classList.remove('closing');
-						}else{
-							menu[uKey].elems.update_itemRects();
-
-							const depth = menu[uKey].elems.get_depth();
-							// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
-							menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
-
-							menu.style.pointerEvents = '';
-						}
-					}
-				});
-			},
-		};
-		const sliding_additional_inits2 = { // NEW
+		const sliding_additional_inits = {
 			// everything optional (root/layer/menu/item)
 			menu : (menu, uKey)=>{
 
@@ -1332,61 +1190,34 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
+
+
+
 		// tmp glo var for settings
 		padding = '2px';
 		border  = '0px';
 		total   = '2px';
 		time    = '1s';
 
-
-
-
-
-
-
-		//const sliding_base = mix_base(sccm_NULL, sccm_sliding_part, glass_base);
-		const sliding_base = mix_base( // OLD
-			// glass base copy
-				_base, _base_cssOffset_(padding,border,total), // padd/bord/total
-				withClass_part,
-				class_ptrLogic_part,
-				class_slidingStartPos_part, class_slidingStartPosMain_part, class_stdFold_part,
-				classFading_itemBackdrop_part(time), sccm_glass_cosmetic,
-			// glass base end
-			sliding_behav, merge_itmbdropFadingWithSliding(time),
+		const sliding_base = mix_base(
+			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
+			withClass_part,
+			class_ptrLogic_part,
+			class_slidingStartPos_part, class_slidingStartPosMain_part, class_stdFold_part,
+			classFading_itemBackdrop_part_(), sccm_glass_cosmetic,
+			sliding_behav, merge_itmbdropFadingWithSliding_(),
 			//class_stdFoldClose_part
 		);
-
-		const sliding_base2 = mix_base( // NEW
-			// glass base copy
-				_base, _base_cssOffset_(padding,border,total), // padd/bord/total
-				withClass_part,
-				class_ptrLogic_part,
-				class_slidingStartPos_part, class_slidingStartPosMain_part, class_stdFold_part,
-				classFading_itemBackdrop_part(time), sccm_glass_cosmetic,
-			// glass base end
-			sliding_behav2, merge_itmbdropFadingWithSliding(time),
-			//class_stdFoldClose_part
-		);
-
-
-
-
 
 		const sliding_baseMain = mix_base(
-			sccm_NULL, _baseMain_part, mainMenuClass_part,
+			sccm_NULL, _behavMain, mainMenuClass_part,
 			class_slidingDontLockPtrOpening_partMain
 		);
 
-		const sdtfoldAndSliding_addonInit = stack_addonInit( // OLD
+		const sdtfoldAndSliding_addonInit = stack_addonInit(
 			class_stdFoldFollowLastSens_additional_inits,
 			sliding_additional_inits,
-			itmbdropFadingWithSliding_additional_inits
-		);
-		const sdtfoldAndSliding_addonInit2 = stack_addonInit( // NEW
-			class_stdFoldFollowLastSens_additional_inits,
-			sliding_additional_inits2,
-			itmbdropFadingWithSliding_additional_inits_('1s')
+			itmbdropFadingWithSliding_additional_inits_()
 		);
 
 
@@ -1538,12 +1369,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const macosx_base = mix_base(
-			_base, withClass_part, class_ptrLogic_part, sccm_macosx_cosmetic
+			_base, _behav, withClass_part, class_ptrLogic_part, sccm_macosx_cosmetic
 		);
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const macosx_baseMain = mix_base(
-			sccm_NULL, _baseMain_part, mainMenuClass_part
+			sccm_NULL, _behavMain, mainMenuClass_part
 		);
 
 
@@ -1679,8 +1510,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 				glass     : make_themeGenerator(glass_base, sccm_NULL),
 				glassMain : make_themeGenerator(glass_base, default_baseMain),
 				fading : null,
-				sliding : make_themeGenerator(sliding_base2, sccm_NULL, sdtfoldAndSliding_addonInit2),
-				slidingMain : make_themeGenerator(sccm_NULL, sliding_baseMain, sdtfoldAndSliding_addonInit2),
+				sliding : make_themeGenerator(sliding_base, sccm_NULL, sdtfoldAndSliding_addonInit),
+				slidingMain : make_themeGenerator(sccm_NULL, sliding_baseMain, sdtfoldAndSliding_addonInit),
 				growing : null,
 				growingMain : null,
 			},
