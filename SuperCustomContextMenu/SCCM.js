@@ -494,6 +494,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '}\n'
 				    + '.closed{'
 				    + '  pointer-events : none;'
+				    + '}\n'
+				    + '.locked{'
+				    + '  pointer-events : none;'
 				    + '}\n',
 			},
 		};
@@ -794,9 +797,23 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		const class_slidingDontLockPtrOpening_partMain = {
+		const class_slidingNotLockMain_part = { // does not lock ptrEvt on opening (main menu only)
 			menu : {
-				class : ['notLockOpening']
+				css : '\n'
+				    + '/* class_slidingNotLockMain_part */\n'
+				    + '.main.locked{'
+				    + '  pointer-events : auto;'
+				    + '}\n',
+			},
+		};
+
+		const class_slidingNotLockOpen_part = { // does not lock ptrEvt on opening (all menus)
+			menu : {
+				css : '\n'
+				    + '/* class_slidingNotLockOpen_part */\n'
+				    + '.menu.locked{'
+				    + '  pointer-events : auto;'
+				    + '}\n',
 			},
 		};
 
@@ -848,6 +865,22 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 		// merge effect
+
+		const onlySliding_additional_inits_ = (time='var(--animTime)')=>({
+			menu : (menu, uKey)=>{
+				menu[TMEM] ||= {};
+				menu[TMEM].stdFold_transitionProps = ['left','right'];
+				//menu[TMEM].stdFold_transitionFull = `left ${time}, right ${time}`;
+				//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
+				menu[TMEM].stdFold_startPosLock = 'none'; // remove transition that affect position
+				menu[TMEM].stdFold_transitionings = {'left':false,'right':false};
+				menu[TMEM].stdFold_isTransition = false;
+				menu[TMEM].stdFold_transitionUpdate = function(propName, transitioning){
+					this.stdFold_transitionings[propName] = transitioning;
+					this.stdFold_isTransition = Object.values(this.stdFold_transitionings).some(e=>e);
+				};
+			},
+		});
 
 		const merge_sdtFadingWithSliding = (time='1s')=>({
 			menu : {
@@ -1105,9 +1138,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// SLIDING (DEFAULT) THEME
 		//
 
-		// z-index [opening/closing] and [open] patern, see :
-		// for(let i=0; i<10; i++) console.log('opening/closing : '+(3 + (i-1)*2 - 1)+'\n'+'open : '+(3 + (i)*2));
-
+		
 
 
 		const sliding_behav = { // SCCM sliding style
@@ -1118,25 +1149,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 				openMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.remove('closed');
-						//const main = (menu[uKey].elems.get_depth() === 0);
-			
-						const depth = menu[uKey].elems.get_depth();
-						// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
-						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
-
+						menu[TMEM].slidingExtra.overlapping_onmove();
 						const offset = getComputedStyle(menu).getPropertyValue('--posOfst');
 						stdFoldUsingClassStartPos_process(menu, uKey, offset);
-						menu[uKey].elems.update_itemRects();
+						if(menu[uKey].elems.is_main()) menu[uKey].elems.update_itemRects();
 					};
 				},
 				closeMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
 						menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
-
-						const depth = menu[uKey].elems.get_depth();			
-						// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
-						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
+						menu[TMEM].slidingExtra.overlapping_onmove();
 					};
 				},
 			},
@@ -1144,7 +1167,26 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 
-
+		const overlapInterlacing_additional_inits = {
+			// does not affect brother menus.
+			// z-index [opening/closing] and [open] patern, see :
+			// for(let i=0; i<10; i++) console.log('opening/closing : '+(3 + (i-1)*2 - 1)+'\n'+'open : '+(3 + (i)*2));
+			// orders from main to submenu chain as bg to fg.
+			// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
+			menu : (menu, uKey)=>{
+				menu[TMEM] ||= {};
+				menu[TMEM].slidingExtra = {
+					overlapping_onmove : ()=>{
+						const depth = menu[uKey].elems.get_depth();
+						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
+					},
+					overlapping_stable : ()=>{
+						const depth = menu[uKey].elems.get_depth();
+						menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
+					},
+				};
+			},
+		};
 
 
 		const sliding_additional_inits = {
@@ -1164,8 +1206,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						menu[TMEM].stdFold_transitionUpdate(e.propertyName, true);
 						if(menu.classList.contains('closed')){
 						}else{
-							if(!menu.classList.contains('notLockOpening'))
-								menu.style.pointerEvents = 'none';
+							menu.classList.add('locked');
 						}
 					}
 				});
@@ -1179,12 +1220,68 @@ let SuperCustomContextMenu = {}; // API Receiver
 						}else{
 							menu[uKey].elems.update_itemRects();
 
-							const depth = menu[uKey].elems.get_depth();
-							// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
-							menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
+							menu[TMEM].slidingExtra.overlapping_stable();
 
-							menu.style.pointerEvents = '';
+							menu.classList.remove('locked');
 						}
+					}
+				});
+
+			},
+		};
+
+		const overlapInvertDepth_additional_inits = {
+			// uses 2 levels of z-index by menu chain depth.
+			// opening menu z-index : its depth * 2
+			// all its brothers z-index : (its depth * 2) - 1
+			// orders from main to submenu chain as fg to bg.
+			// allows z-index logic without falling under zero. (zIndex<0 locks ptr event)
+			menu : (menu, uKey)=>{
+				const overlapping_method = ()=>{
+					const depth = menu[uKey].elems.get_depth();
+					const max = menu[uKey].elems.get_maxDepth();
+					const final = (max - depth) * 2;
+					menu[uKey].elems.get_upMenu()?.[uKey].elems.get_items().forEach(
+						item=>{
+							const submenu = item[uKey].elems.get_submenu();
+							if(submenu) submenu[uKey].elems.get_layer().style.zIndex = final - 1;
+						}
+					);
+					menu[uKey].elems.get_layer().style.zIndex = final;
+				};
+
+				menu[TMEM] ||= {};
+				menu[TMEM].slidingExtra = {
+					overlapping_onmove : overlapping_method,
+					overlapping_stable : overlapping_method,
+				};
+
+			},
+		};
+
+		const slidingFollowMove_additional_inits = {
+			// everything optional (root/layer/menu/item)
+			menu : (menu, uKey)=>{
+
+				const check_transitionProps = (menu,evt)=>{
+					const propList = ['left','right'];
+					if(menu === evt.composedPath().shift())
+					if(propList.includes(evt.propertyName))
+						return true;
+					return false;
+				};
+
+				const followMove = ()=>{
+					if(menu[uKey].elems.is_sub()){
+						menu[uKey].elems.get_upItem()[uKey].update_rect();
+						menu[uKey].elems.update_layerPos();
+						if(menu[TMEM].stdFold_isTransition) requestAnimationFrame( followMove );
+					}
+				};
+
+				menu.addEventListener('transitionstart',e=>{
+					if(check_transitionProps(menu,e)){
+						followMove();
 					}
 				});
 			},
@@ -1192,12 +1289,36 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 
+		// sliding possible conf :
+
+		// base add : _base AND _behav AND _cssvar_ AND withClass_part AND class_ptrLogic_part
+
+		// always add : class_stdFold_part AND class_slidingStartPos_part
+
+		// optional add : class_slidingStartPosMain_part
+
+		// optional add : class_stdFoldFollowLastSens_additional_inits
+
+		// always add : sliding_behav
+
+		// always add : overlapInterlacing_additional_inits XOR overlapInvertDepth_additional_inits
+
+		// optional add : class_slidingNotLockMain_part XOR class_slidingNotLockOpen_part
+
+		// always add : sliding_additional_inits
+
+		// optional add : slidingFollowMove_additional_inits
+
+		// always add : onlySliding_additional_inits_ XOR
+		//              merge_sdtFadingWithSliding AND sdtFadingWithSliding_additional_inits_ XOR
+		//              merge_itmbdropFadingWithSliding_ AND itmbdropFadingWithSliding_additional_inits_
+
 
 		// tmp glo var for settings
 		padding = '2px';
 		border  = '0px';
 		total   = '2px';
-		time    = '1s';
+		time    = '10s';
 
 		const sliding_base = mix_base(
 			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
@@ -1207,16 +1328,18 @@ let SuperCustomContextMenu = {}; // API Receiver
 			classFading_itemBackdrop_part_(), sccm_glass_cosmetic,
 			sliding_behav, merge_itmbdropFadingWithSliding_(),
 			//class_stdFoldClose_part
+			class_slidingNotLockOpen_part,
 		);
 
 		const sliding_baseMain = mix_base(
 			sccm_NULL, _behavMain, mainMenuClass_part,
-			class_slidingDontLockPtrOpening_partMain
 		);
 
 		const sdtfoldAndSliding_addonInit = stack_addonInit(
 			class_stdFoldFollowLastSens_additional_inits,
+			overlapInvertDepth_additional_inits,
 			sliding_additional_inits,
+			slidingFollowMove_additional_inits,
 			itmbdropFadingWithSliding_additional_inits_()
 		);
 
@@ -2654,6 +2777,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				get_layer : ()=>elem[APP].layer,
 				get_items : ()=>[...elem[APP].items],
 				update_itemRects : (submenuOnly=true)=>update_subRects(elem, submenuOnly),
+				update_layerPos : ()=>update_layerPosition(elem),
 				is_main : ()=>!elem[APP].depth,
 				is_sub : ()=>!!elem[APP].depth,
 			};
@@ -2845,7 +2969,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// arg isMain : must be true on first recursive loop
 		// arg chainElem : first elem owning {depth, itemPath}
 		let builder = (menuRef, isMain, chainElem)=>{
-			let {all_menus, all_items, update_maxDepth} = instance;
+			let {all_menus, all_items} = instance;
 
 			// MENU
 			//
@@ -2859,7 +2983,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 			menu[APP].depth = chainElem[APP].depth + 1;
 			menu[APP].itemPath = [...chainElem[APP].itemPath];
-			update_maxDepth( menu[APP].depth );
+			instance.update_maxDepth( menu[APP].depth );
 
 			menu[APP].items = [];
 
