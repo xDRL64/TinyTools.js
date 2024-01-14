@@ -945,7 +945,52 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 
+		// test rescale + scrollable (lab)
+		const test_class_scrollable_part = {
+			menu : {
+				css : '\n'
+				    + '/* test_class_scrollable_part */\n'
+				    + '.scrollControl{'
+				    + '  background-color: #00fd5769;'
+				    + '  width: 100%;'
+				    + '  position: sticky;'
+				    + '  z-index: 1;'
+				    + '  display: none;'
+				    + '}\n'
+				    + '.scrollControl.above{'
+				    + '  top: 0px;'
+				    + '}\n'
+				    + '.scrollControl.below{'
+				    + '  bottom: 0px;'
+				    + '}\n'
+				    + '.scrollable .scrollControl{'
+				    + '  display: unset;'
+				    + '}\n',
+			},
+		};
+		const test_scrollable_additional_inits = {
+			menu : (menu, uKey)=>{
+				const aboveElem = document.createElement('div');
+				const belowElem = document.createElement('div');
+				aboveElem.className = 'scrollControl above';
+				belowElem.className = 'scrollControl below';
+				aboveElem.textContent = 'A';
+				belowElem.textContent = 'V';
+				aboveElem.onclick = ()=>menu.scrollTop -= 10;
+				belowElem.onclick = ()=>menu.scrollTop += 10;
 
+				const items = menu[uKey].elems.get_items();
+				items[0].insertAdjacentElement('beforebegin', aboveElem);
+				items.at(-1).insertAdjacentElement('afterend', belowElem);
+			},
+		};
+		const test_minscale_additional_inits = {
+			menu : (menu, uKey)=>{
+				menu.style.height = `100px`;
+				menu.style.overflow = `hidden`;
+				menu.classList.add('scrollable');
+			},
+		};
 
 
 
@@ -1329,18 +1374,24 @@ let SuperCustomContextMenu = {}; // API Receiver
 			sliding_behav, merge_itmbdropFadingWithSliding_(),
 			//class_stdFoldClose_part
 			class_slidingNotLockOpen_part,
+
+			test_class_scrollable_part, // in test
 		);
 
 		const sliding_baseMain = mix_base(
 			sccm_NULL, _behavMain, mainMenuClass_part,
 		);
 
-		const sdtfoldAndSliding_addonInit = stack_addonInit(
+		const sliding_addonInit = stack_addonInit(
 			class_stdFoldFollowLastSens_additional_inits,
 			overlapInvertDepth_additional_inits,
 			sliding_additional_inits,
 			slidingFollowMove_additional_inits,
-			itmbdropFadingWithSliding_additional_inits_()
+			itmbdropFadingWithSliding_additional_inits_(),
+
+
+			test_scrollable_additional_inits, // in test
+			test_minscale_additional_inits, // in test
 		);
 
 
@@ -1633,8 +1684,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 				glass     : make_themeGenerator(glass_base, sccm_NULL),
 				glassMain : make_themeGenerator(glass_base, default_baseMain),
 				fading : null,
-				sliding : make_themeGenerator(sliding_base, sccm_NULL, sdtfoldAndSliding_addonInit),
-				slidingMain : make_themeGenerator(sccm_NULL, sliding_baseMain, sdtfoldAndSliding_addonInit),
+				sliding : make_themeGenerator(sliding_base, sccm_NULL, sliding_addonInit),
+				slidingMain : make_themeGenerator(sccm_NULL, sliding_baseMain),
 				growing : null,
 				growingMain : null,
 			},
@@ -2671,7 +2722,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			//
 
 			// elem init (css/html usr process)
-			mainInit.root(elem);
+			//mainInit.root(elem);
+			store_usrInits(elem, 'root');
 			
 			// [last step for root] process
 			//
@@ -2711,8 +2763,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			//
 			
 			// elem init (css/html usr process)
-			mainInit.layer(elem);
-			init?.(elem);
+			//mainInit.layer(elem); init?.(elem);
+			store_usrInits(elem, 'layer', init);
 
 			// [last step for layer] process
 			//
@@ -2821,8 +2873,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			//
 
 			// elem init (css/html usr process)
-			mainInit.menu(elem);
-			init?.(elem);
+			//mainInit.menu(elem); init?.(elem);
+			store_usrInits(elem, 'menu', init);
 
 			// [last step for menu] process
 			//
@@ -2949,8 +3001,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			//
 
 			// elem init (css/html usr process)
-			mainInit.item(elem);
-			init?.(elem);
+			//mainInit.item(elem); init?.(elem);
+			store_usrInits(elem, 'item', init);
 
 			// [last step for item] process
 			//
@@ -3049,13 +3101,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 		} = core.theme.sccmOriginal.default.get();
 
 		// final theme
-
 		const mainInit = {...defaultInit, ...(usrTemplate.settings?.initELEM||{})};
-
 		const mainBehavior = {...defaultBehavior, ...(usrTemplate.settings?.behavior||{})};
+		const mainCSS = usrTemplate.settings?.css || default_css;
 
-		// sccm instance
-
+		// sccm instance (definition)
 		let instance = {
 			isOpen : false,
 
@@ -3089,34 +3139,45 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		instance.detainedItemReaction = null; // format : {item,reactionStack[function,...]}
+		instance.lastLateProcessID = null;
 
+		// sccm instance (default config)
 		instance.foldableDelay = 100; // also considerated as flag : false if === 0 , true if > 0
 		instance.merge_delaySysWithItemReaction = false; // usr can release delaySys but delaySys will release itemReaction at every delaySys' release
-		instance.lastLateProcessID = null;
 		instance.clear_lateProcessOnLeaveItem = true;
-
 		instance.sdtClickEnable = true;
 
+		// sccm Context Data object
 		let contextData = null;
 
+		// support elems
 		let usrHookElem = null;
 		let handle = build_handleWithShadow();
 		let container = handle[APP].container;
 		let root = make_sccm_root();
 
+		// sccm elems
 		builder(usrTemplate.mainMenu, true, root);
 
+		// sccm css
 		let usrStyle = document.createElement('STYLE');
-		usrStyle.textContent = usrTemplate.settings?.css || default_css;
+		usrStyle.textContent = mainCSS;
 
+		// support connexion
 		container.appendChild(usrStyle);
 		container.appendChild(root);
 
-		// TODO run mainInit and .init here instead in make_sccm_any()
+		// runs user inits
+		root[APP].run_inits(); // root
+		instance.all_menus.forEach(menu=>{
+			menu[APP].layer[APP].run_inits(); // layers
+			menu[APP].run_inits(); // menus
+		});
+		instance.all_items.forEach( item=>item[APP].run_inits() ); // items
+
 
 		// debug global vars TODO remove it
 		DEBUG = {instance};
-
 
 
 		return handle;
