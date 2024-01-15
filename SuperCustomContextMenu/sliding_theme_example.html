@@ -61,15 +61,15 @@
 			settings:{id:'main', ..._defaultMain},
 			items : [
 				// settings{id, txt, check, update, init, behavior}
-				{ settings:{id:'a1',txt:'item'}, content:()=>{}, },
+				{ settings:{id:'a1',txt:'1 item'}, content:()=>{}, },
 				separator,
-				{ settings:{id,txt:'Read Information'}, content:()=>{}, },
+				{ settings:{id,txt:'2 Read Information'}, content:()=>{}, },
 				separator,
-				{ settings:{id,txt:'Change wallpaper'}, content:()=>{}, },
-				{ settings:{id,txt:'Align'}, content:()=>{}, },
-				{ settings:{id,txt:'Align by'}, content:()=>{}, },
-				{ settings:{id,txt:'Sort by'}, content:()=>{}, },
-				{ settings:{id,txt:'Display presention options'}, content:()=>{}, },
+				{ settings:{id,txt:'3 Change wallpaper'}, content:()=>{}, },
+				{ settings:{id,txt:'4 Align'}, content:()=>{}, },
+				{ settings:{id,txt:'5 Align by'}, content:()=>{}, },
+				{ settings:{id,txt:'6 Sort by'}, content:()=>{}, },
+				{ settings:{id,txt:'7 Display presention options'}, content:()=>{}, },
 			],
 		},
 	};
@@ -152,7 +152,7 @@
 	const bodyTestBG = 'url("https://i.pinimg.com/736x/cb/c0/37/cbc0370bc576eef14f1d6bca0585221c.jpg")';
 	const bs = document.body.style;
 	//bs.backgroundImage = bodyTestBG;
-	document.body.onclick = ()=>(bs.backgroundImage = (bs.backgroundImage ? '' : bodyTestBG));
+	document.body.onkeyup = ()=>(bs.backgroundImage = (bs.backgroundImage ? '' : bodyTestBG));
 
 
 })();</script>

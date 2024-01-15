@@ -950,38 +950,114 @@ let SuperCustomContextMenu = {}; // API Receiver
 			menu : {
 				css : '\n'
 				    + '/* test_class_scrollable_part */\n'
-				    + '.scrollControl{'
+				    + '.item.scrollControl{'
 				    + '  background-color: #00fd5769;'
 				    + '  width: 100%;'
 				    + '  position: sticky;'
 				    + '  z-index: 1;'
 				    + '  display: none;'
+				    + '  text-align: center;'
 				    + '}\n'
-				    + '.scrollControl.above{'
+				    + '.item.scrollControl.above{'
 				    + '  top: 0px;'
 				    + '}\n'
-				    + '.scrollControl.below{'
+				    + '.item.scrollControl.below{'
 				    + '  bottom: 0px;'
 				    + '}\n'
-				    + '.scrollable .scrollControl{'
+				    + '.scrollable .item.scrollControl{'
 				    + '  display: unset;'
 				    + '}\n',
 			},
 		};
+
+		const test_check_vrtScrollRect = (topLimit, downLimit, item, uKey)=>{
+			const itemRect = item[uKey].update_rect().get_rect();
+			if(topLimit <= itemRect.t && downLimit >= itemRect.b)
+				item.style.backgroundColor = 'red';
+			else
+				item.style.backgroundColor = '';
+		};
+
+		const test_get_vrtScrollRect = (aboveElem, belowElem, items, uKey)=>{
+			const aboveRect = aboveElem.getBoundingClientRect();
+			const belowRect = belowElem.getBoundingClientRect();
+			const out = {t:aboveRect.bottom, b:belowRect.top};
+			items.forEach(item=>test_check_vrtScrollRect(out.t, out.b, item, uKey));
+			return out;
+		};
+
 		const test_scrollable_additional_inits = {
 			menu : (menu, uKey)=>{
 				const aboveElem = document.createElement('div');
 				const belowElem = document.createElement('div');
-				aboveElem.className = 'scrollControl above';
-				belowElem.className = 'scrollControl below';
-				aboveElem.textContent = 'A';
-				belowElem.textContent = 'V';
-				aboveElem.onclick = ()=>menu.scrollTop -= 10;
-				belowElem.onclick = ()=>menu.scrollTop += 10;
+				aboveElem.className = 'item scrollControl above';
+				belowElem.className = 'item scrollControl below';
+				aboveElem.textContent = '◢◣';
+				belowElem.textContent = '◥◤';
 
 				const items = menu[uKey].elems.get_items();
 				items[0].insertAdjacentElement('beforebegin', aboveElem);
 				items.at(-1).insertAdjacentElement('afterend', belowElem);
+
+				const limiter = {
+					insiders:null, topsiders:null, botsiders:null, // array
+					limits : null, // vrt rect
+					_init  : null, // function
+					reset  : null, // function
+					init(){
+						this.update_vrtLimit(aboveElem, belowElem);
+						this.check_itemInLimit();
+						this._init = this.init;
+						delete this.init;
+						this.reset = function(){
+							this.init = this._init;
+						};
+					},
+					update_vrtLimit(aboveElem, belowElem){
+						const aboveRect = aboveElem.getBoundingClientRect();
+						const belowRect = belowElem.getBoundingClientRect();
+						this.limits = {t:aboveRect.bottom, b:belowRect.top};
+					},
+					check_itemInLimit(){
+						const {t:topLimit, b:downLimit} = this.limits;
+						this.insiders = [], this.topsiders = [], this.botsiders = [];
+						let inside = false;
+						items.forEach(item=>{
+							const itemRect = item[uKey].update_rect().get_rect();
+							const current = (topLimit <= itemRect.t && downLimit >= itemRect.b);
+							inside ||= current;
+							if(current) this.insiders.push(item);
+							else !inside ? this.topsiders.push(item) : this.botsiders.push(item);
+						});
+					},
+					get_topsiderOffset(){
+						const yItem = this.topsiders.at(-1)?.[uKey].get_rect().t;
+						const yLimit = this.limits.t;
+						return yItem ? yLimit - yItem : 0;
+					},
+					get_botsiderOffset(){
+						const yItem = this.botsiders[0]?.[uKey].get_rect().b;
+						const yLimit = this.limits.b;
+						return yItem ? yLimit - yItem : 0;
+					},
+				};
+
+				menu[TMEM].sdtScroll ||= {};
+				menu[TMEM].sdtScroll.reset = ()=>limiter.reset?.();
+
+				aboveElem.onclick = ()=>{
+					limiter.init?.();
+					menu.scrollTop -= limiter.get_topsiderOffset();
+					limiter.check_itemInLimit();
+				};
+				belowElem.onclick = ()=>{
+					limiter.init?.();
+					menu.scrollTop -= limiter.get_botsiderOffset();
+					limiter.check_itemInLimit();
+				};
+				
+
+				
 			},
 		};
 		const test_minscale_additional_inits = {
@@ -1363,7 +1439,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		padding = '2px';
 		border  = '0px';
 		total   = '2px';
-		time    = '10s';
+		time    = '1s';
 
 		const sliding_base = mix_base(
 			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
