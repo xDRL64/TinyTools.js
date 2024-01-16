@@ -196,7 +196,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const {sccm_NULL, mix_base, stack_addonInit, make_themeGenerator} = core.themeLib;
 
-		const sdtCheckOverflow__ = ()=>core.preventOverflowLib.run_stdPresetProcess // later lib available
+		const stdCheckOverflow__ = ()=>core.preventOverflowLib.run_stdPresetProcess // later lib available
 
 		// AAA
 
@@ -581,8 +581,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const stdFold_checkOnly = (menu, uKey, symetricOffset='0px')=>{  // :: // BBB
 			// use it in an openMenu_method
 			const ofst = parseInt(symetricOffset);
-			const RL_result = sdtCheckOverflow__()('RIGHTLEFT', true, menu, uKey, ofst);
-			const DT_result = sdtCheckOverflow__()('DOWNTOP', false, menu, uKey, ofst);
+			const RL_result = stdCheckOverflow__()('RIGHTLEFT', true, menu, uKey, ofst);
+			const DT_result = stdCheckOverflow__()('DOWNTOP', false, menu, uKey, ofst);
 
 			return {RL_result, DT_result};
 		};
@@ -617,6 +617,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{
+			// use it in an openMenu_method
+			const isClosed = !menu[TMEM].stdFold_isTransition;
+
+			if(isClosed) menu[TMEM].stdScroll?.reset_height();
 
 			const {RL_result,DT_result} = stdFoldFollowLastSens_process(menu, uKey, symetricOffset);
 
@@ -627,11 +631,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
 			};
 
-			if(!menu[TMEM].stdFold_isTransition){
+			if(isClosed){
 				menu.style.transition = menu[TMEM].stdFold_startPosLock;
 				if(RL_result.status) menu.classList.add('_'+RL_result.sideName);
 				if(DT_result.status) menu.classList.add('_'+DT_result.sideName);
-				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
+				// TODO manage fail case (hrz set pos 0,0 window)
+				else{ // vertical fold fail (downscales and makes scrollable)
+					menu.classList.add('_'+DT_result.defaultSide);
+					const menuTopPos = menu[uKey].update_rect().get_rect().t;
+					menu[TMEM].stdScroll?.rescale_height(innerHeight - menuTopPos -16 + 'px');
+				}
+
 				core.atNextLoop(_apply);
 				
 			}else{
@@ -640,7 +650,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		};
 
-		// advanced position [sdtFold follow last sens]
+		// advanced position [stdFold follow last sens]
 
 		const stdFoldFollowLastSens_process = (menu, uKey, symetricOffset='0px')=>{
 			stdFoldFollowLastSens_processSet(menu, uKey);
@@ -882,13 +892,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		});
 
-		const merge_sdtFadingWithSliding = (time='1s')=>({
+		const merge_stdFadingWithSliding = (time='1s')=>({
 			menu : {
 				/* style : {
 					transition : `opacity ${time}, left ${time}, translate ${time}`,
 				}, */
 				css : '\n'
-				+ '/* merge_sdtFadingWithSliding */\n'
+				+ '/* merge_stdFadingWithSliding */\n'
 
 				+ '.menu{'
 				+ `  transition : opacity ${time}, left ${time}, right ${time};`
@@ -896,7 +906,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		});
 
-		const sdtFadingWithSliding_additional_inits_ = (time='1s')=>({
+		const stdFadingWithSliding_additional_inits_ = (time='1s')=>({
 			menu : (menu, uKey)=>{
 				menu[TMEM] ||= {};
 				menu[TMEM].stdFold_transitionProps = ['left','right','opacity'];
@@ -946,10 +956,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 		// test rescale + scrollable (lab)
-		const test_class_scrollable_part = {
+		const class_scrollable_part = {
 			menu : {
 				css : '\n'
-				    + '/* test_class_scrollable_part */\n'
+				    + '/* class_scrollable_part */\n'
 				    + '.item.scrollControl{'
 				    + '  background-color: #00fd5769;'
 				    + '  width: 100%;'
@@ -966,28 +976,19 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '}\n'
 				    + '.scrollable .item.scrollControl{'
 				    + '  display: unset;'
+				    + '}\n'
+				    + '.scrollable{'
+				    + '  overflow-y: hidden;'
 				    + '}\n',
 			},
 		};
 
-		const test_check_vrtScrollRect = (topLimit, downLimit, item, uKey)=>{
-			const itemRect = item[uKey].update_rect().get_rect();
-			if(topLimit <= itemRect.t && downLimit >= itemRect.b)
-				item.style.backgroundColor = 'red';
-			else
-				item.style.backgroundColor = '';
-		};
 
-		const test_get_vrtScrollRect = (aboveElem, belowElem, items, uKey)=>{
-			const aboveRect = aboveElem.getBoundingClientRect();
-			const belowRect = belowElem.getBoundingClientRect();
-			const out = {t:aboveRect.bottom, b:belowRect.top};
-			items.forEach(item=>test_check_vrtScrollRect(out.t, out.b, item, uKey));
-			return out;
-		};
 
-		const test_scrollable_additional_inits = {
+		const stdScrollable_additional_inits = {
 			menu : (menu, uKey)=>{
+				// html elements
+				//
 				const aboveElem = document.createElement('div');
 				const belowElem = document.createElement('div');
 				aboveElem.className = 'item scrollControl above';
@@ -995,9 +996,21 @@ let SuperCustomContextMenu = {}; // API Receiver
 				aboveElem.textContent = '◢◣';
 				belowElem.textContent = '◥◤';
 
+				aboveElem.onclick = ()=>{
+					menu.scrollTop -= limiter.get_topsiderOffset();
+					limiter.check_itemInLimit();
+				};
+				belowElem.onclick = ()=>{
+					menu.scrollTop -= limiter.get_botsiderOffset();
+					limiter.check_itemInLimit();
+				};
+
 				const items = menu[uKey].elems.get_items();
 				items[0].insertAdjacentElement('beforebegin', aboveElem);
 				items.at(-1).insertAdjacentElement('afterend', belowElem);
+
+				// logic
+				//
 
 				const limiter = {
 					insiders:null, topsiders:null, botsiders:null, // array
@@ -1005,15 +1018,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 					_init  : null, // function
 					reset  : null, // function
 					init(){
-						this.update_vrtLimit(aboveElem, belowElem);
+						this.update_vrtLimit();
 						this.check_itemInLimit();
-						this._init = this.init;
-						delete this.init;
-						this.reset = function(){
-							this.init = this._init;
-						};
 					},
-					update_vrtLimit(aboveElem, belowElem){
+					update_vrtLimit(){
 						const aboveRect = aboveElem.getBoundingClientRect();
 						const belowRect = belowElem.getBoundingClientRect();
 						this.limits = {t:aboveRect.bottom, b:belowRect.top};
@@ -1042,31 +1050,35 @@ let SuperCustomContextMenu = {}; // API Receiver
 					},
 				};
 
-				menu[TMEM].sdtScroll ||= {};
-				menu[TMEM].sdtScroll.reset = ()=>limiter.reset?.();
-
-				aboveElem.onclick = ()=>{
-					limiter.init?.();
-					menu.scrollTop -= limiter.get_topsiderOffset();
-					limiter.check_itemInLimit();
+				menu[TMEM] ||= {};
+				menu[TMEM].stdScroll = {};
+				menu[TMEM].stdScroll.isDownscaled = false;
+				menu[TMEM].stdScroll.rescale_height = (newHeight)=>{
+					menu.style.height = newHeight; // overwrite from _base
+					const menuRect = menu[uKey].update_rect().get_rect();
+					if(menuRect.h < menu.scrollHeight){
+						menu[TMEM].stdScroll.isDownscaled = true;
+						menu.classList.add('scrollable');
+						limiter.init();
+					}else{
+						menu[TMEM].stdScroll.isDownscaled = false;
+						menu.classList.remove('scrollable');
+					}
+					if(menu[uKey].elems.is_main()) menu[uKey].elems.update_layerPos();
 				};
-				belowElem.onclick = ()=>{
-					limiter.init?.();
-					menu.scrollTop -= limiter.get_botsiderOffset();
-					limiter.check_itemInLimit();
+				menu[TMEM].stdScroll.reset_height = ()=>{
+					if(menu[TMEM].stdScroll.isDownscaled){
+						menu.style.height = 'fit-content'; // set back as original from _base
+						menu.classList.remove('scrollable');
+						menu[TMEM].stdScroll.isDownscaled = false;
+						if(menu[uKey].elems.is_main()) menu[uKey].elems.update_layerPos();
+					}
 				};
-				
 
-				
 			},
 		};
-		const test_minscale_additional_inits = {
-			menu : (menu, uKey)=>{
-				menu.style.height = `100px`;
-				menu.style.overflow = `hidden`;
-				menu.classList.add('scrollable');
-			},
-		};
+
+
 
 
 
@@ -1431,7 +1443,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// optional add : slidingFollowMove_additional_inits
 
 		// always add : onlySliding_additional_inits_ XOR
-		//              merge_sdtFadingWithSliding AND sdtFadingWithSliding_additional_inits_ XOR
+		//              merge_stdFadingWithSliding AND stdFadingWithSliding_additional_inits_ XOR
 		//              merge_itmbdropFadingWithSliding_ AND itmbdropFadingWithSliding_additional_inits_
 
 
@@ -1451,7 +1463,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			//class_stdFoldClose_part
 			class_slidingNotLockOpen_part,
 
-			test_class_scrollable_part, // in test
+			class_scrollable_part, // in dev
 		);
 
 		const sliding_baseMain = mix_base(
@@ -1466,8 +1478,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			itmbdropFadingWithSliding_additional_inits_(),
 
 
-			test_scrollable_additional_inits, // in test
-			test_minscale_additional_inits, // in test
+			stdScrollable_additional_inits, // in dev
 		);
 
 
@@ -2518,7 +2529,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		let run_itemFeatureProcess = (item, args, forced)=>{
 			// in all case, args contains : contextData
-			// in sdt click case, args contains : + allowedEventProps (alt 1)
+			// in std click case, args contains : + allowedEventProps (alt 1)
 			// in user handle call case, args contains : + [uKey]     (alt 2)
 			if(item)
 			if(item[APP].interact === core.key.USABLE || forced)
@@ -2530,7 +2541,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		let root_click = (e)=>{
 			console.log('root_click', e);
 			if(instance.isOpen)
-			if(instance.sdtClickEnable){
+			if(instance.stdClickEnable){
 				let {buttons, shiftKey, ctrlKey, altKey} = e;
 				let allowedEventProps = {buttons, shiftKey, ctrlKey, altKey};
 				run_itemFeatureProcess(instance.hoverItem, {contextData, allowedEventProps}, false);
@@ -2636,7 +2647,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 			handle[uKey].set_clickEnable = (bool)=>{
 				// NO CHECK
-				instance.sdtClickEnable = bool;
+				instance.stdClickEnable = bool;
 			};
 			handle[uKey].get_hoverElems = ()=>{
 				check_handleOpen();
@@ -3221,7 +3232,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		instance.foldableDelay = 100; // also considerated as flag : false if === 0 , true if > 0
 		instance.merge_delaySysWithItemReaction = false; // usr can release delaySys but delaySys will release itemReaction at every delaySys' release
 		instance.clear_lateProcessOnLeaveItem = true;
-		instance.sdtClickEnable = true;
+		instance.stdClickEnable = true;
 
 		// sccm Context Data object
 		let contextData = null;
