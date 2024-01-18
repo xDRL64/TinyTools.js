@@ -196,7 +196,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const {sccm_NULL, mix_base, stack_addonInit, make_themeGenerator} = core.themeLib;
 
-		const stdCheckOverflow__ = ()=>core.preventOverflowLib.run_stdPresetProcess // later lib available
+		// later available entities (use as "wrapper" by calling this : example__()() )
+		const stdCheckOverflow__ = ()=>core.preventOverflowLib.run_stdPresetProcess; // later (lib) function available
+		const get_currentWindowRect__ = ()=>get_currentWindowRect; // later (scope) function available
 
 		// AAA
 
@@ -618,9 +620,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{
 			// use it in an openMenu_method
-			const isClosed = !menu[TMEM].stdFold_isTransition;
+			const isClosed = !menu[TMEM].stdFold_isTransition; // is totally closed
+			const isMain = menu[uKey].elems.is_main();
 
-			if(isClosed) menu[TMEM].stdScroll?.reset_height();
+			if(isClosed || isMain) menu[TMEM].stdScroll?.reset_height();
 
 			const {RL_result,DT_result} = stdFoldFollowLastSens_process(menu, uKey, symetricOffset);
 
@@ -631,15 +634,22 @@ let SuperCustomContextMenu = {}; // API Receiver
 				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
 			};
 
-			if(isClosed){
+			if(isClosed || isMain){
 				menu.style.transition = menu[TMEM].stdFold_startPosLock;
 				if(RL_result.status) menu.classList.add('_'+RL_result.sideName);
 				if(DT_result.status) menu.classList.add('_'+DT_result.sideName);
 				// TODO manage fail case (hrz set pos 0,0 window)
 				else{ // vertical fold fail (downscales and makes scrollable)
-					menu.classList.add('_'+DT_result.defaultSide);
-					const menuTopPos = menu[uKey].update_rect().get_rect().t;
-					menu[TMEM].stdScroll?.rescale_height(innerHeight - menuTopPos -16 + 'px');
+					// last resort placing
+					const {lastResort} = DT_result;
+					const {status, sideName, offset} = lastResort;
+					menu.style.setProperty('--topwinOfst', offset+'px'); // TODO rename topwinOfst -> lastresort-vrtOfst
+					menu.classList.add(sideName);
+					menu.classList.add('_'+sideName);
+					if(!status){ // last resort is not enough : then downscaling process
+						const frameHeight = menu[TMEM].stdFold_frameRect.get().h;
+						menu[TMEM].stdScroll?.rescale_height(frameHeight + -16 + 'px');
+					}
 				}
 
 				core.atNextLoop(_apply);
@@ -717,6 +727,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ '}\n'
 					+ '.TOP{'
 					+ `  bottom : var(--negOfst);`
+					+ '}\n'
+
+					+ '.TOPWIN{'
+					+ `  top : var(--topwinOfst);`
 					+ '}\n',
 			},
 		};
@@ -737,6 +751,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 				menu[TMEM] ||= {};
 				menu[TMEM].stdFold_followLastSens = {};
 			},
+		};
+
+		const stdFold_windowAsFrameRect_additional_inits_ = ()=>{
+			const get_frameRect__ = get_currentWindowRect__;
+			return {
+				menu : (menu, uKey)=>{
+					menu[TMEM] ||= {};
+					menu[TMEM].stdFold_frameRect = {};
+					menu[TMEM].stdFold_frameRect.get = ()=>get_frameRect__()();
+				},
+			};
 		};
 
 		// sliding effect
@@ -776,6 +801,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ '}\n'
 					+ '._TOP{'
 					+ `  bottom : var(--negOfst);`
+					+ '}\n'
+
+					+ '._TOPWIN{'
+					+ `  top : var(--topwinOfst);`
 					+ '}\n',
 			},
 		};
@@ -996,13 +1025,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 				aboveElem.textContent = '◢◣';
 				belowElem.textContent = '◥◤';
 
-				aboveElem.onclick = ()=>{
-					menu.scrollTop -= limiter.get_topsiderOffset();
-					limiter.check_itemInLimit();
+				aboveElem.onclick = (e)=>{
+					scroll_up();
 				};
-				belowElem.onclick = ()=>{
-					menu.scrollTop -= limiter.get_botsiderOffset();
-					limiter.check_itemInLimit();
+				belowElem.onclick = (e)=>{
+					scroll_down();
+				};
+
+				menu.onmousewheel = (e)=>{
+					e.preventDefault();
+					if(e.deltaY < 0) scroll_up();
+					if(e.deltaY > 0) scroll_down();
 				};
 
 				const items = menu[uKey].elems.get_items();
@@ -1012,11 +1045,24 @@ let SuperCustomContextMenu = {}; // API Receiver
 				// logic
 				//
 
+				const scroll_up = ()=>{
+					if(menu[TMEM].stdScroll.isDownscaled){
+						menu.scrollTop -= limiter.get_topsiderOffset();
+						limiter.check_itemInLimit();
+						menu[uKey].elems.close_submenus();
+					}
+				};
+				const scroll_down = ()=>{
+					if(menu[TMEM].stdScroll.isDownscaled){
+						menu.scrollTop -= limiter.get_botsiderOffset();
+						limiter.check_itemInLimit();
+						menu[uKey].elems.close_submenus();
+					}
+				};
+
 				const limiter = {
-					insiders:null, topsiders:null, botsiders:null, // array
-					limits : null, // vrt rect
-					_init  : null, // function
-					reset  : null, // function
+					insiders:null, topsiders:null, botsiders:null, // items arrays
+					limits : null, // vertical rect
 					init(){
 						this.update_vrtLimit();
 						this.check_itemInLimit();
@@ -1076,7 +1122,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				};
 
 			},
-		};
+		}; // TODO use css var and class instead : menu.style.height
 
 
 
@@ -1291,7 +1337,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				closeMenu_method : (uKey)=>{
 					return (menu)=>{
 						menu.classList.add('closed');
-						menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
+						menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP', 'TOPWIN');
 						menu[TMEM].slidingExtra.overlapping_onmove();
 					};
 				},
@@ -1349,7 +1395,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						menu[TMEM].stdFold_transitionUpdate(e.propertyName, false);
 						if(menu.classList.contains('closed')){
 							if(!menu[TMEM].stdFold_isTransition)
-								menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP');
+								menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP', '_TOPWIN');
 						}else{
 							menu[uKey].elems.update_itemRects();
 
@@ -1479,6 +1525,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 			stdScrollable_additional_inits, // in dev
+			stdFold_windowAsFrameRect_additional_inits_(), // in dev
 		);
 
 
@@ -1834,10 +1881,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return !(xr>xp) && (xp<xr+wr) && !(yr>yp) && (yp<yr+hr); // new (alt 2)
 		};
 
-		const rect_to_box = (rect, R=rect)=>{
+		/* const rect_to_box = (rect, R=rect)=>{
 			// convert {x,y, w,h} to {l, r, t, b}
 			return {l:R.x, r:R.x+R.w, t:R.y, b:R.y+R.h};
-		};
+		}; */
 
 		const inBoundRule = { // all methods return 'in bound test result' (bool)
 			l : (elemL,frameL)=>elemL>frameL,
@@ -1847,7 +1894,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const check_precalcSides = ({elem, sides, frameRect, reversable})=>{
-			const frameBox = rect_to_box(frameRect);
+			//const frameBox = rect_to_box(frameRect);
 			
 			let sideNames = Object.keys(sides);
 			if(reversable)
@@ -1865,7 +1912,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 				// tests open side conditions
 				let inBound = true;
 				for(const brd of side.checkBorderList||[]){
-					inBound = inBoundRule[brd]( elemRect[brd], frameBox[brd] );
+					//inBound = inBoundRule[brd]( elemRect[brd], frameBox[brd] );
+					inBound = inBoundRule[brd]( elemRect[brd], frameRect[brd] );
 					if( !inBound ) break;
 				}
 				
@@ -1882,21 +1930,27 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return out;
 		};
 
+		const to_origine = ({w,h}, x=0, y=0)=>{
+			return {x,y,w,h, l:x, r:w, t:y, b:h};
+		};
+
 		const precalcPresets = {
 			standard : {
 				layerRect : null,
 				menuRect  : null,
 				isMain    : null,
 				ofst      : null,
-				setup(menu, uKey, symetricOffset=0){
+				frameRect : null,
+				setup(menu, uKey, symetricOffset=0, frameRect){
 					const layer = menu[uKey].elems.get_layer();
 					this.menuRect = menu[uKey].update_rect().get_rect();
 					this.layerRect = layer[uKey].update_rect().get_rect();
 					this.isMain = menu[uKey].elems.is_main();
 					this.ofst = symetricOffset;
+					this.frameRect = frameRect;
 				},
 				make_RIGHTLEFT(){ // RIGHTLEFT
-					const {layerRect:layer, menuRect:menu, ofst} = this;
+					const {layerRect:layer, menuRect:menu, ofst, frame:frameRect} = this;
 
 					if(this.isMain) return { // main menu case
 						RIGHT : {
@@ -1919,7 +1973,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 					};
 				},
 				make_DOWNTOP(){ // DOWNTOP
-					const {layerRect:layer, menuRect:menu, ofst} = this;
+					const {layerRect:layer, menuRect:menu, ofst, frameRect:frame} = this;
 
 					if(this.isMain) return { // main menu case
 						DOWN : {
@@ -1941,19 +1995,48 @@ let SuperCustomContextMenu = {}; // API Receiver
 						},
 					};
 				},
+				make_lastResort_DOWNTOP(){
+					const {layerRect:layer, menuRect:menu, ofst, frameRect:frame} = this;
+
+					const TOPWIN = {
+						elemRect : to_origine(menu),
+						checkBorderList : ['b'],
+						translateOffset : frame.t - layer.t,
+						// TODO : transmit css var name from here (for translateOffset dst)
+					};
+
+					if(this.isMain) return { // main menu case
+						TOPWIN,
+					};else return{ // submenu cases
+						TOPWIN,
+					};
+				},
 			},
 		};
 
 
 		const run_stdPresetProcess = (SIDESNAME, reversable, menu, uKey, symetricOffset=0)=>{
-			precalcPresets.standard.setup(menu, uKey, symetricOffset);
+			const defaultFrameRect = get_currentWindowRect(); // window as
+			const frameRect = menu[TMEM]?.stdFold_frameRect?.get() || defaultFrameRect;
+			precalcPresets.standard.setup(menu, uKey, symetricOffset, frameRect);
 			const SIDES = precalcPresets.standard['make_'+SIDESNAME]();
-			const frameRect = {x:0,y:0,w:innerWidth,h:innerHeight}; // window as
 			const settings = {elem:menu, sides:SIDES, frameRect, reversable};
 			
 			const sideName = check_precalcSides(settings);
+			const sideNames = Object.keys(SIDES);
+			const defaultSide = sideNames[0];
 			const inBound = !!sideName;
-			return {status:inBound, sideName, defaultSide:Object.keys(SIDES)[0]};
+
+			const lastResort = inBound ? null : (()=>{
+				const SIDES = precalcPresets.standard['make_lastResort_'+SIDESNAME]?.();
+				if(!SIDES) return {status:false, sideName:null, offset:0};
+				let sideName = check_precalcSides({...settings, sides:SIDES, reversable:false});
+				const inBound = !!sideName;
+				sideName = Object.keys(SIDES)[0];
+				return {status:inBound, sideName, offset:SIDES[sideName].translateOffset};
+			})();
+
+			return {status:inBound, sideName, defaultSide, lastResort};
 		};
 
 
@@ -2091,6 +2174,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 				return {...this.rounded};
 			},
 		};
+	};
+
+	const get_currentWindowRect = (x=0, y=0, w=innerWidth, h=innerHeight)=>{
+		return {x,y,w,h, l:x, r:w, t:y, b:h};
 	};
 
 	// SCCM KEYRING
@@ -2919,6 +3006,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				update_layerPos : ()=>update_layerPosition(elem),
 				is_main : ()=>!elem[APP].depth,
 				is_sub : ()=>!!elem[APP].depth,
+				close_submenus : ()=>control_foldUntil(elem),
 			};
 		};
 
