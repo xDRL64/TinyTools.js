@@ -618,12 +618,31 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// TODO add follow last sens sys
 		};
 
+		const stdFoldUsingClassStartPos_vrtLastResort = (menu, uKey, DT_result)=>{
+			const {lastResort} = DT_result;
+			const {status, sideName, cssVar} = lastResort;
+
+			menu.style.setProperty(cssVar.name, cssVar.value);
+			menu.classList.add(sideName, '_'+sideName);
+
+			if(!status){ // last resort is not enough : then downscaling process
+				const frameHeight = menu[TMEM].stdFold_frameRect.get().h;
+				menu[TMEM].stdScroll?.rescale_height(frameHeight + -16 + 'px');
+			}
+		};
+
 		const stdFoldUsingClassStartPos_process = (menu, uKey, symetricOffset='0px')=>{
 			// use it in an openMenu_method
 			const isClosed = !menu[TMEM].stdFold_isTransition; // is totally closed
 			const isMain = menu[uKey].elems.is_main();
+			let mainPosChanged = false;
 
 			if(isClosed || isMain) menu[TMEM].stdScroll?.reset_height();
+
+			if(isMain){
+				mainPosChanged = menu[TMEM].stdFold_mainPosTracking?.update();
+				if(mainPosChanged) menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP', '_TOPWIN');
+			}
 
 			const {RL_result,DT_result} = stdFoldFollowLastSens_process(menu, uKey, symetricOffset);
 
@@ -631,27 +650,18 @@ let SuperCustomContextMenu = {}; // API Receiver
 				menu.style.transition = '';
 				if(RL_result.status) menu.classList.add(RL_result.sideName);
 				if(DT_result.status) menu.classList.add(DT_result.sideName);
-				// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
 			};
 
-			if(isClosed || isMain){
+			if(isClosed || isMain && mainPosChanged)
 				menu.style.transition = menu[TMEM].stdFold_startPosLock;
-				if(RL_result.status) menu.classList.add('_'+RL_result.sideName);
-				if(DT_result.status) menu.classList.add('_'+DT_result.sideName);
-				// TODO manage fail case (hrz set pos 0,0 window)
-				else{ // vertical fold fail (downscales and makes scrollable)
-					// last resort placing
-					const {lastResort} = DT_result;
-					const {status, sideName, offset} = lastResort;
-					menu.style.setProperty('--topwinOfst', offset+'px'); // TODO rename topwinOfst -> lastresort-vrtOfst
-					menu.classList.add(sideName);
-					menu.classList.add('_'+sideName);
-					if(!status){ // last resort is not enough : then downscaling process
-						const frameHeight = menu[TMEM].stdFold_frameRect.get().h;
-						menu[TMEM].stdScroll?.rescale_height(frameHeight + -16 + 'px');
-					}
-				}
 
+			if(isClosed || isMain){
+				if(RL_result.status) menu.classList.add('_'+RL_result.sideName);
+				else{} // TODO manage fail case (hrz set pos 0,0 window)
+				if(DT_result.status) menu.classList.add('_'+DT_result.sideName);
+				else // vertical fold fail : last resort placing (downscales and makes scrollable)
+					stdFoldUsingClassStartPos_vrtLastResort(menu, uKey, DT_result);
+				
 				core.atNextLoop(_apply);
 				
 			}else{
@@ -833,6 +843,28 @@ let SuperCustomContextMenu = {}; // API Receiver
 					+ '.main._TOP{'
 					+ `  bottom : 100%;`
 					+ '}\n',
+			},
+		};
+
+		const class_slidingStartPosMain_additional_inits = {
+			menu : (menu, uKey)=>{
+
+				const posTracker = {
+					hasChanged : undefined, // will be 'true' at first time
+					lastPosStr : '',
+					update(){
+						const rect = menu[uKey].elems.get_layer()[uKey].update_rect().get_rect();
+						const newPosStr = '' + rect.x + rect.y;
+						this.hasChanged = (this.lastPosStr !== newPosStr)
+						this.lastPosStr = newPosStr;
+						return this.hasChanged;
+					},
+				};
+
+				menu[TMEM] ||= {};
+				menu[TMEM].stdFold_mainPosTracking = {};
+				menu[TMEM].stdFold_mainPosTracking.has_changed = ()=>posTracker.hasChanged;
+				menu[TMEM].stdFold_mainPosTracking.update = ()=>posTracker.update();
 			},
 		};
 
@@ -1528,7 +1560,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 			stdFold_windowAsFrameRect_additional_inits_(), // in dev
 		);
 
-
+		const slidingMain_addonInit = stack_addonInit(
+			class_slidingStartPosMain_additional_inits,
+		);
 
 
 
@@ -1819,7 +1853,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				glassMain : make_themeGenerator(glass_base, default_baseMain),
 				fading : null,
 				sliding : make_themeGenerator(sliding_base, sccm_NULL, sliding_addonInit),
-				slidingMain : make_themeGenerator(sccm_NULL, sliding_baseMain),
+				slidingMain : make_themeGenerator(sccm_NULL, sliding_baseMain, slidingMain_addonInit),
 				growing : null,
 				growingMain : null,
 			},
@@ -2001,8 +2035,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 					const TOPWIN = {
 						elemRect : to_origine(menu),
 						checkBorderList : ['b'],
-						translateOffset : frame.t - layer.t,
-						// TODO : transmit css var name from here (for translateOffset dst)
+						cssVar : {
+							name : '--topwinOfst',
+							value : (frame.t - layer.t) + 'px',
+						},
 					};
 
 					if(this.isMain) return { // main menu case
@@ -2033,7 +2069,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				let sideName = check_precalcSides({...settings, sides:SIDES, reversable:false});
 				const inBound = !!sideName;
 				sideName = Object.keys(SIDES)[0];
-				return {status:inBound, sideName, offset:SIDES[sideName].translateOffset};
+				return {status:inBound, sideName, cssVar:SIDES[sideName].cssVar};
 			})();
 
 			return {status:inBound, sideName, defaultSide, lastResort};
