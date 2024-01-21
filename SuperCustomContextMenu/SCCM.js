@@ -302,9 +302,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			menu : {
 				style : {
 					//pointerEvents : 'none',
-					position : 'absolute',  // \
-					width : 'fit-content',  // | together
-					height : 'fit-content', // /
+					position : 'absolute',
 					display : 'grid',
 				},
 				class : [/*StringArray*/],
@@ -513,6 +511,17 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '}\n'
 				    + '.closed{'
 				    + '  opacity : 0;'
+				    + '}\n',
+			},
+		};
+
+		const class_sizeFitContent_part = {
+			menu : {
+				css : '\n'
+				    + '/* class_sizeFitContent_part */\n'
+				    + '.menu{'
+				    + '  width: fit-content;'
+				    + '  height: fit-content;'
 				    + '}\n',
 			},
 		};
@@ -1038,9 +1047,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '.scrollable .item.scrollControl{'
 				    + '  display: unset;'
 				    + '}\n'
-				    + '.menu{'
-				    + '  height: fit-content;'
-				    + '}\n'
 				    + '.menu.scrollable{'
 				    + '  height: var(--verticalScroll);'
 				    + '  overflow-y: hidden;'
@@ -1054,7 +1060,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			menu : (menu, uKey)=>{
 
 				// overwriting from _base
-				menu.style.height = '';
+			//	menu.style.height = '';
 
 				// html elements
 				//
@@ -1173,7 +1179,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//const _baseMain = mix_base(_base, _behavMain);
 
 
-		const class_base = mix_base(_base, _behav, withClass_part);
+		const class_base = mix_base(_base, _behav, withClass_part, class_sizeFitContent_part);
 
 
 
@@ -1251,7 +1257,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		const default_base = mix_base(
-			_base, _behav, withClass_part, class_ptrLogic_part, foldRight_part('2px'), sccm_default_cosmetic
+			_base, _behav, withClass_part, class_sizeFitContent_part, class_ptrLogic_part, foldRight_part('2px'), sccm_default_cosmetic
 		);
 		const default_baseMain = mix_base(
 			sccm_NULL, _behavMain, mainMenuClass_part, openRight_part
@@ -1337,6 +1343,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const glass_base = mix_base(
 			_base, _behav, _cssvar_(padding,border,total,time),
 			withClass_part,
+			class_sizeFitContent_part,
 			class_ptrLogic_part,
 			//foldRight_part('2px'),
 			class_stdFold_part, // 2 px :  equal to padding
@@ -1509,7 +1516,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// sliding possible conf :
 
-		// base add : _base AND _behav AND _cssvar_ AND withClass_part AND class_ptrLogic_part
+		// base add : _base AND _behav AND _cssvar_ AND withClass_part AND class_ptrLogic_part AND class_sizeFitContent_part
 
 		// always add : class_stdFold_part AND class_slidingStartPos_part
 
@@ -1541,6 +1548,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const sliding_base = mix_base(
 			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
 			withClass_part,
+			class_sizeFitContent_part,
 			class_ptrLogic_part,
 			class_slidingStartPos_part, class_slidingStartPosMain_part, class_stdFold_part,
 			classFading_itemBackdrop_part_(), sccm_glass_cosmetic,
@@ -1718,7 +1726,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const macosx_base = mix_base(
-			_base, _behav, withClass_part, class_ptrLogic_part, sccm_macosx_cosmetic
+			_base, _behav, withClass_part, class_sizeFitContent_part, class_ptrLogic_part, sccm_macosx_cosmetic
 		);
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
@@ -1736,9 +1744,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 			menu : {
 				
 				css : '\n'
-				    + '.menu{'
-				    + '  width : fit-content;' // move from _base to here
-				    + '}\n'
+				//    + '.menu{' // TODO check osx theme working and remove this rule
+				//    + '  width : fit-content;' // move from _base to here
+				//    + '}\n'
 				    + '.main{'
 				    + '  width : 100%;'
 				    + '  grid-auto-flow : column;'
@@ -1769,7 +1777,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 			menu : {
 				style : {
-					width : '', // unlock from _base
+				//	width : '', // unlock from _base / TODO check osx theme working and remove this line
 				},
 			},
 		};
