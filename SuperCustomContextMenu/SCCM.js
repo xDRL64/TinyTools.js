@@ -1059,9 +1059,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const stdScrollable_additional_inits = {
 			menu : (menu, uKey)=>{
 
-				// overwriting from _base
-			//	menu.style.height = '';
-
 				// html elements
 				//
 				const aboveElem = document.createElement('div');
@@ -1744,9 +1741,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 			menu : {
 				
 				css : '\n'
-				//    + '.menu{' // TODO check osx theme working and remove this rule
-				//    + '  width : fit-content;' // move from _base to here
-				//    + '}\n'
 				    + '.main{'
 				    + '  width : 100%;'
 				    + '  grid-auto-flow : column;'
@@ -1773,11 +1767,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 			root : {
 				style : {
 					position : '', // reset from _base
-				},
-			},
-			menu : {
-				style : {
-				//	width : '', // unlock from _base / TODO check osx theme working and remove this line
 				},
 			},
 		};
