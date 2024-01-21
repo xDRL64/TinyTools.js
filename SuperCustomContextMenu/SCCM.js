@@ -1023,11 +1023,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '/* class_scrollable_part */\n'
 				    + '.item.scrollControl{'
 				    + '  background-color: #00fd5769;'
+				    + '  text-align: center;'
 				    + '  width: 100%;'
 				    + '  position: sticky;'
 				    + '  z-index: 1;'
 				    + '  display: none;'
-				    + '  text-align: center;'
 				    + '}\n'
 				    + '.item.scrollControl.above{'
 				    + '  top: 0px;'
@@ -1038,7 +1038,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '.scrollable .item.scrollControl{'
 				    + '  display: unset;'
 				    + '}\n'
-				    + '.scrollable{'
+				    + '.menu{'
+				    + '  height: fit-content;'
+				    + '}\n'
+				    + '.menu.scrollable{'
+				    + '  height: var(--verticalScroll);'
 				    + '  overflow-y: hidden;'
 				    + '}\n',
 			},
@@ -1048,6 +1052,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const stdScrollable_additional_inits = {
 			menu : (menu, uKey)=>{
+
+				// overwriting from _base
+				menu.style.height = '';
+
 				// html elements
 				//
 				const aboveElem = document.createElement('div');
@@ -1132,11 +1140,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 				menu[TMEM].stdScroll = {};
 				menu[TMEM].stdScroll.isDownscaled = false;
 				menu[TMEM].stdScroll.rescale_height = (newHeight)=>{
-					menu.style.height = newHeight; // overwrite from _base
+					menu.style.setProperty('--verticalScroll', newHeight);
+					menu.classList.add('scrollable');
 					const menuRect = menu[uKey].update_rect().get_rect();
 					if(menuRect.h < menu.scrollHeight){
 						menu[TMEM].stdScroll.isDownscaled = true;
-						menu.classList.add('scrollable');
 						limiter.init();
 					}else{
 						menu[TMEM].stdScroll.isDownscaled = false;
@@ -1146,7 +1154,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 				};
 				menu[TMEM].stdScroll.reset_height = ()=>{
 					if(menu[TMEM].stdScroll.isDownscaled){
-						menu.style.height = 'fit-content'; // set back as original from _base
 						menu.classList.remove('scrollable');
 						menu[TMEM].stdScroll.isDownscaled = false;
 						if(menu[uKey].elems.is_main()) menu[uKey].elems.update_layerPos();
@@ -1154,7 +1161,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				};
 
 			},
-		}; // TODO use css var and class instead : menu.style.height
+		};
 
 
 
