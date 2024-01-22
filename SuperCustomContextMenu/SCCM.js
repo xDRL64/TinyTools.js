@@ -1108,9 +1108,15 @@ let SuperCustomContextMenu = {}; // API Receiver
 					if(e.deltaY > 0) scroll_down();
 				};
 
-				const items = menu[uKey].elems.get_items();
+				let items = menu[uKey].elems.get_items();
 				items[0].insertAdjacentElement('beforebegin', aboveElem);
 				items.at(-1).insertAdjacentElement('afterend', belowElem);
+
+				const update_itemsList = ()=>{ // uses this process in limiter.init()
+					items = items.filter(      // because all menus' init run before all items' init
+						item=>!item.classList.contains(classNames.itemSeparator)
+					);
+				};
 
 				// logic
 				//
@@ -1134,6 +1140,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 					insiders:null, topsiders:null, botsiders:null, // items arrays
 					limits : null, // vertical rect
 					init(){
+						update_itemsList();
 						this.update_vrtLimit();
 						this.check_itemInLimit();
 					},
@@ -1179,7 +1186,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						names.forEach(name=>elem.classList.remove(prfx+name))
 					},
 					reset_siderClass(){ // for all items
-						items.forEach(item=>limiter.remove_siderClass(item));
+						items.forEach(item=>this.remove_siderClass(item));
 					},
 				};
 
