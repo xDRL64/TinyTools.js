@@ -51,8 +51,13 @@
 	//const {init,                         } = theme.group.get_[themeName]('handle');
 
 
+	// item separator
+	//
+	
+	theme.sccmOriginal.set_separator(api_key);
+	const themeSeparator = theme.sccmOriginal.get_separator('separator');
 	const separator = {
-		 settings:{init:e=>e.classList.add('asSeparator'), check}, content:()=>{}, 
+		 settings:{...themeSeparator, check}, content:()=>{}, 
 	};
 
 	const sccmTemplate = {

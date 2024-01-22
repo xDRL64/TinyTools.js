@@ -188,8 +188,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 		return {sccm_NULL, mix_base, stack_addonInit, make_themeGenerator};
 	})();
 
-	
-
 	core.theme = (()=>{
 
 		const TMEM = core.theme_key;
@@ -422,6 +420,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// class
 
+		const classNames = {
+			itemSeparator : 'asSeparator',
+			// TODO defines the rest
+		};
+
 		const withClass_part = { // class settings :: +[class.menu/item], *[behav.all-replace]
 			// contains only differences from its base
 			menu : {
@@ -560,6 +563,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const mainMenuClass_part = { // add class main :: +[class.menu.main]
 			menu : {
 				class : ['main'],
+			},
+		};
+
+		// class item separator
+		const class_itemSeparator_part = {
+			item : { // use on item
+				class : [classNames.itemSeparator],
 			},
 		};
 
@@ -1023,17 +1033,27 @@ let SuperCustomContextMenu = {}; // API Receiver
 		});
 
 
+		// AAA
 
-
-		// test rescale + scrollable (lab)
+		// rescale + scrollable
 		const class_scrollable_part = {
 			menu : {
 				css : '\n'
-				    + '/* class_scrollable_part */\n'
+				    + '/* class_scrollable_part (menu)*/\n'
+				    + '.menu.scrollable{'
+				    + '  height: var(--verticalScroll);'
+				    + '  overflow-y: hidden;'
+				    + '}\n'
+			},
+			item : {
+				css : '\n'
+				    + '/* class_scrollable_part (item)*/\n'
 				    + '.item.scrollControl{'
 				    + '  background-color: #00fd5769;'
 				    + '  text-align: center;'
-				    + '  width: 100%;'
+				    + '  width: 100%;'        // \
+				    + '  padding-left: 0px;'  //  | work together
+				    + '  padding-right: 0px;' // /
 				    + '  position: sticky;'
 				    + '  z-index: 1;'
 				    + '  display: none;'
@@ -1047,14 +1067,21 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '.scrollable .item.scrollControl{'
 				    + '  display: unset;'
 				    + '}\n'
-				    + '.menu.scrollable{'
-				    + '  height: var(--verticalScroll);'
-				    + '  overflow-y: hidden;'
+				    
+				    + '.item.vrtscrl-insider{'
+				    + '  background-color: #ffff0069;' // debug
+				    + '}\n'
+				    + '.item.vrtscrl-outsider{'
+				    + '  background-color: #00000069;' // debug
+				    + '}\n'
+				    + '.item.vrtscrl-topsider{'
+				    + '  background-color: #ff00ff69;' // debug
+				    + '}\n'
+				    + '.item.vrtscrl-botsider{'
+				    + '  background-color: #00ff0069;' // debug
 				    + '}\n',
 			},
 		};
-
-
 
 		const stdScrollable_additional_inits = {
 			menu : (menu, uKey)=>{
@@ -1120,11 +1147,20 @@ let SuperCustomContextMenu = {}; // API Receiver
 						this.insiders = [], this.topsiders = [], this.botsiders = [];
 						let inside = false;
 						items.forEach(item=>{
+							this.remove_siderClass(item);
 							const itemRect = item[uKey].update_rect().get_rect();
 							const current = (topLimit <= itemRect.t && downLimit >= itemRect.b);
 							inside ||= current;
-							if(current) this.insiders.push(item);
-							else !inside ? this.topsiders.push(item) : this.botsiders.push(item);
+							if(current){
+								this.insiders.push(item); // inside scroll view
+								item.classList.add('vrtscrl-insider');
+							}else if(!inside){
+								this.topsiders.push(item); // top outside scroll view
+								item.classList.add('vrtscrl-topsider', 'vrtscrl-outsider');
+							}else{
+								this.botsiders.push(item); // bottom outside scroll view
+								item.classList.add('vrtscrl-botsider', 'vrtscrl-outsider');
+							}
 						});
 					},
 					get_topsiderOffset(){
@@ -1136,6 +1172,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 						const yItem = this.botsiders[0]?.[uKey].get_rect().b;
 						const yLimit = this.limits.b;
 						return yItem ? yLimit - yItem : 0;
+					},
+					remove_siderClass(elem){ // for one item
+						const prfx = 'vrtscrl-';
+						const names = ['insider', 'outsider', 'topsider', 'botsider'];
+						names.forEach(name=>elem.classList.remove(prfx+name))
+					},
+					reset_siderClass(){ // for all items
+						items.forEach(item=>limiter.remove_siderClass(item));
 					},
 				};
 
@@ -1152,13 +1196,15 @@ let SuperCustomContextMenu = {}; // API Receiver
 					}else{
 						menu[TMEM].stdScroll.isDownscaled = false;
 						menu.classList.remove('scrollable');
+						limiter.reset_siderClass();
 					}
 					if(menu[uKey].elems.is_main()) menu[uKey].elems.update_layerPos();
 				};
 				menu[TMEM].stdScroll.reset_height = ()=>{
 					if(menu[TMEM].stdScroll.isDownscaled){
-						menu.classList.remove('scrollable');
 						menu[TMEM].stdScroll.isDownscaled = false;
+						menu.classList.remove('scrollable');
+						limiter.reset_siderClass();
 						if(menu[uKey].elems.is_main()) menu[uKey].elems.update_layerPos();
 					}
 				};
@@ -1199,7 +1245,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 		
 
 
-
+		// ORIGNAL THEMES [ITEM SEPARATOR]
+		const original_itemSeparator_base = mix_base(sccm_NULL, class_itemSeparator_part);
 
 
 
@@ -1271,7 +1318,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '/* sccm_glass_cosmetic (_all) */\n'
 				    + '.general{'
 				    + '  padding : var(--padding);'
-					+ '  font-size : 20;'
+					+ '  font-size : 20px;'
 				    + '}\n'
 			},
 			root : {},
@@ -1294,7 +1341,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				css : '\n'
 				    + '/* sccm_glass_cosmetic (item) */\n'
 				    + '.item{'
-				    + '  padding : 4 128 4 24;'
+				    + '  padding : 4px 128px 4px 24px;'
 				    + '  border-radius: 2px;'
 				    + '  box-shadow: inset -3px -2px 9px 0px white;'
 				    + '  background: linear-gradient(to top, #00000000 0%, #FFFFFF88 100%);'
@@ -1832,14 +1879,16 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// macosx item separator
 		//
 
-		const macosx_setSeparatorClass_part = {
-			item : { // use on item
-				class : ['asSeparator'],
-			},
-		};
-
-		const macosx_setSeparatorClass = mix_base(sccm_NULL, macosx_setSeparatorClass_part);
+		const macosx_setSeparatorClass = mix_base(sccm_NULL, class_itemSeparator_part);
 		
+
+
+
+
+
+
+
+
 		// AAA
 
 		return { // object depth 2 : groups <- themes
@@ -1860,6 +1909,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 				slidingMain : make_themeGenerator(sccm_NULL, sliding_baseMain, slidingMain_addonInit),
 				growing : null,
 				growingMain : null,
+				//
+				separator : make_themeGenerator(original_itemSeparator_base, sccm_NULL),
 			},
 			windows10 : {
 				default : make_themeGenerator(win10_base, sccm_win10),
