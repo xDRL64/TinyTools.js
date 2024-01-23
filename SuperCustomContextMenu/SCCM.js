@@ -1068,18 +1068,20 @@ let SuperCustomContextMenu = {}; // API Receiver
 				    + '  display: unset;'
 				    + '}\n'
 				    
-				    + '.item.vrtscrl-insider{'
-				    + '  background-color: #ffff0069;' // debug
-				    + '}\n'
+				    //+ '.item.vrtscrl-insider{'
+				    //+ '  background-color: #ffff0069;' // debug
+				    //+ '}\n'
 				    + '.item.vrtscrl-outsider{'
 				    + '  background-color: #00000069;' // debug
+				    + '  pointer-events: none;'
+				    + '  opacity: 0.3;'
 				    + '}\n'
-				    + '.item.vrtscrl-topsider{'
-				    + '  background-color: #ff00ff69;' // debug
-				    + '}\n'
-				    + '.item.vrtscrl-botsider{'
-				    + '  background-color: #00ff0069;' // debug
-				    + '}\n',
+				    //+ '.item.vrtscrl-topsider{'
+				    //+ '  background-color: #ff00ff69;' // debug
+				    //+ '}\n'
+				    //+ '.item.vrtscrl-botsider{'
+				    //+ '  background-color: #00ff0069;' // debug
+				    //+ '}\n',
 			},
 		};
 
