@@ -640,6 +640,33 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// advanced position [stdFold]
 
+		const stdFold_behav = ()=>{
+			const {CLOSED} = classNames;
+			return {
+				behaviors : {
+					// binders
+					//
+					openMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.remove(CLOSED);
+							menu[TMEM].slidingExtra.overlapping_onmove();
+							const offset = getComputedStyle(menu).getPropertyValue('--posOfst');
+							stdFoldUsingClass_process(menu, uKey, offset);
+							//if(menu[uKey].elems.is_main())
+								menu[uKey].elems.update_itemRects();
+						};
+					},
+					closeMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.add(CLOSED);
+							//menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP', 'TOPWIN');
+							menu[TMEM].slidingExtra.overlapping_onmove();
+						};
+					},
+				},
+			};
+		};
+
 		const stdFold_checkOnly = (menu, uKey, symetricOffset='0px')=>{  // :: // BBB
 			// use it in an openMenu_method
 			const ofst = parseInt(symetricOffset);
@@ -651,7 +678,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const stdFoldUsingClass_process = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
 			// use it in an openMenu_method
-			menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP');
+			menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP', 'TOPWIN');
 
 			const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
 
@@ -845,6 +872,32 @@ let SuperCustomContextMenu = {}; // API Receiver
 			};
 		};
 
+		// overlapping z-index depth positioning
+
+		const overlapInterlacing_additional_inits = ()=>{
+			return {
+				// does not affect brother menus.
+				// z-index [opening/closing] and [open] patern, see :
+				// for(let i=0; i<10; i++) console.log('opening/closing : '+(3 + (i-1)*2 - 1)+'\n'+'open : '+(3 + (i)*2));
+				// orders from main to submenu chain as bg to fg.
+				// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
+				menu : (menu, uKey)=>{
+					menu[TMEM] ||= {};
+					menu[TMEM].slidingExtra = {
+						overlapping_onmove : ()=>{
+							const depth = menu[uKey].elems.get_depth();
+							menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
+						},
+						overlapping_stable : ()=>{
+							const depth = menu[uKey].elems.get_depth();
+							menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
+						},
+					};
+				},
+			};
+		};
+
+
 		// sliding effect
 
 		const class_slidingStartPos_part = ()=>{
@@ -994,7 +1047,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ `  transition : opacity ${time};`
 						+ '}\n'
 						+ `.${CLOSED}{`
-						+ '  opacity : 0.2;'
+						+ '  opacity : 0;'
 						+ '}\n',
 				},
 			};
@@ -1357,6 +1410,21 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 
+
+
+
+
+
+		
+
+		
+
+
+
+
+
+
+
 		// DEFAULT THEME
 		//
 
@@ -1378,14 +1446,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ `.${MENU}{`
 						+ '  background-color : grey;'
 						+ '  gap : 2px;'
-						+ '  top : -2px;'
+						//+ '  top : -2px;'
 						+ '}\n'
-						+ `.${MAIN}{`
-						+ '  top : 0px;'
-						+ '}\n'
-						+ `.${CLOSED}{`
-						+ '  opacity : 0.2;'
-						+ '}\n',
+						//+ `.${MAIN}{`
+						//+ '  top : 0px;'
+						//+ '}\n'
+						//+ `.${CLOSED}{`
+						//+ '  opacity : 0.2;'
+						//+ '}\n',
 				},
 				item  : {
 					class : [GENERAL],
@@ -1404,17 +1472,47 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ '}\n',
 				},
 				behaviors : {
-					
+					// binders
+					//
 				},
 			};
 		};
 
+		// tmp glo var for settings
+		padding = '2px';
+		border  = '0px';
+		total   = '2px';
+		time    = '1s';
+
 		const default_base = mix_base(
-			_base, _behav, withClass_part(), class_sizeFitContent_part(), class_ptrLogic_part(), foldRight_part('2px'), sccm_default_cosmetic()
+			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
+			withClass_part(), class_sizeFitContent_part(),
+			class_ptrLogic_part(), sccm_default_cosmetic(),
+			class_displayLogic_part(), classFading_standard_part(),
+			class_stdFold_part(), stdFold_behav(),
 		);
 		const default_baseMain = mix_base(
-			sccm_NULL, _behavMain, mainMenuClass_part(), openRight_part()
+			sccm_NULL, _behavMain, mainMenuClass_part(),
 		);
+
+		const default_addonInit = stack_addonInit(
+			overlapInterlacing_additional_inits(),
+		);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 		// ORIGINAL GLASS THEME
@@ -1552,28 +1650,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 
-		const overlapInterlacing_additional_inits = ()=>{
-			return {
-				// does not affect brother menus.
-				// z-index [opening/closing] and [open] patern, see :
-				// for(let i=0; i<10; i++) console.log('opening/closing : '+(3 + (i-1)*2 - 1)+'\n'+'open : '+(3 + (i)*2));
-				// orders from main to submenu chain as bg to fg.
-				// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
-				menu : (menu, uKey)=>{
-					menu[TMEM] ||= {};
-					menu[TMEM].slidingExtra = {
-						overlapping_onmove : ()=>{
-							const depth = menu[uKey].elems.get_depth();
-							menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
-						},
-						overlapping_stable : ()=>{
-							const depth = menu[uKey].elems.get_depth();
-							menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
-						},
-					};
-				},
-			};
-		};
+		
 
 
 		const sliding_additional_inits = ()=>{
@@ -1758,7 +1835,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//
 
 		// contains only differences from its base
-		const win10_base = mix_base(class_base, { // win10 style base
+		const win10_base_OLD = mix_base(class_base, { // win10 style base
 			menu : {
 				style : {
 					left : 'calc(100% - 3px)',
@@ -1768,56 +1845,60 @@ let SuperCustomContextMenu = {}; // API Receiver
 		});
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		const sccm_win10 = { // win10 style
-			_all : {
-				css : '\n'
-				    + '.general{'
-				    + '  font-size : 12;'
-				    + '  font-family: "Segoe UI", Arial, sans-serif;'
-				    + '}\n',
-			},
-			root : {},
-			layer : {},
-			menu  : {
-				class : ['general'],
-				css : '\n'
-				    + '.menu{'
-				    + '  background-color : #EEEEEE;'
-					+ '  padding : 2px;'
-					+ '  border : 1px solid #A0A0A0;'
-					+ '  box-sizing : border-box;'
-					+ '  box-shadow: 5px 5px 5px -5px black;'     // respects outside corners shadow pixel offset \ Use a pseudo elem ::before
-					+ '  box-shadow: 5px 5px 4px -3px #00000080;' // respects inside corners shadow pixel offset  / using shadow to get perfect result
-				    + '}\n'
-				    + '.closed{'
-				    + '  opacity : 0;'
-				    + '}\n',
-			},
-			item  : {
-				class : ['general', 'item'],
-				css : '\n'
-				    + '.item{'
-				    + '  background-color : #EEEEEE;'
-					+ '  padding : 4 128 4 32;'
-					//+ '  mix-blend-mode: darken;'
-				    + '}\n'
-				    + '.inPath{'
-				    + '  background-color : white;'
-				    + '}\n'
-				    + '.hovered{'
-				    + '  background-color : white;'
-				    + '}\n'
-				    + '.notAvailable{'
-				    //+ '  color : #6D6D6D;'
-				    + '  color : #6A6A6A;'
-				    + '}\n',
-			},
-			behaviors : {
-				
-			},
+		const win10_cosmetic = ()=>{ // win10 style
+			const {GENERAL, MAIN, MENU, ITEM, CLOSED, HOVERED, INPATH, NOTAVAILABLE, SEPARATOR} = classNames;
+			return {
+				_all : {
+					css : '\n'
+						+ `.${GENERAL}{`
+						+ '  font-size : 12;'
+						+ '  font-family: "Segoe UI", Arial, sans-serif;'
+						+ '}\n',
+				},
+				root : {},
+				layer : {},
+				menu  : {
+					class : [GENERAL],
+					css : '\n'
+						+ `.${MENU}{`
+						+ '  background-color : #EEEEEE;'
+						+ '  padding : 2px;'
+						+ '  border : 1px solid #A0A0A0;'
+						+ '  box-sizing : border-box;'
+						+ '  box-shadow: 5px 5px 5px -5px black;'     // respects outside corners shadow pixel offset \ Use a pseudo elem ::before
+						+ '  box-shadow: 5px 5px 4px -3px #00000080;' // respects inside corners shadow pixel offset  / using shadow to get perfect result
+						+ '}\n'
+						+ `.${CLOSED}{`
+						+ '  opacity : 0;'
+						+ '}\n',
+				},
+				item  : {
+					class : [GENERAL, 'item'], // TODO check if 'item' is required
+					css : '\n'
+						+ `.${ITEM}{`
+						+ '  background-color : #EEEEEE;'
+						+ '  padding : 4 128 4 32;'
+						//+ '  mix-blend-mode: darken;'
+						+ '}\n'
+						+ `.${INPATH}{`
+						+ '  background-color : white;'
+						+ '}\n'
+						+ `.${HOVERED}{`
+						+ '  background-color : white;'
+						+ '}\n'
+						+ `.${NOTAVAILABLE}{`
+						//+ '  color : #6D6D6D;'
+						+ '  color : #6A6A6A;'
+						+ '}\n',
+				},
+				behaviors : {
+					
+				},
+			};
 		};
 
-
+		// win10 style base
+		const win10_base = mix_base(class_base, win10_cosmetic());
 
 
 
@@ -2040,7 +2121,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				withClass : make_themeGenerator(emptyClass_base, sccm_NULL),
 			},
 			sccmOriginal : {
-				default     : make_themeGenerator(default_base, sccm_NULL),
+				default     : make_themeGenerator(default_base, sccm_NULL, default_addonInit),
 				defaultMain : make_themeGenerator(default_base, default_baseMain),
 				glass     : make_themeGenerator(glass_base, sccm_NULL),
 				glassMain : make_themeGenerator(glass_base, default_baseMain),
@@ -2053,7 +2134,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				separator : make_themeGenerator(original_itemSeparator_base, sccm_NULL),
 			},
 			windows10 : {
-				default : make_themeGenerator(win10_base, sccm_win10),
+				default : make_themeGenerator(win10_base, sccm_NULL),
 				noFading : null,
 			},
 			macosx : {
