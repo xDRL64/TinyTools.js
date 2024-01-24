@@ -423,178 +423,219 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const classNames = {
 			itemSeparator : 'asSeparator',
 			// TODO defines the rest
+			GENERAL      : 'general',
+			MAIN         : 'main',
+			SUBMAIN      : 'submain',
+			MENU         : 'menu',
+			ITEM         : 'item',
+			CLOSED       : 'closed',
+			HOVERED      : 'hovered',
+			INPATH       : 'inPath',
+			NOTAVAILABLE : 'notAvailable',
+			SEPARATOR    : 'asSeparator',
+			LOCKED       : 'locked',
+			//
+			OPEN         : 'open',
+			MAIN_ITEM    : 'mainItem',
 		};
 
-		const withClass_part = { // class settings :: +[class.menu/item], *[behav.all-replace]
-			// contains only differences from its base
-			menu : {
-				class : ['menu'],
-			},
-			item : {
-				class : ['item'],
-			},
-			behaviors : {
-				// binders
-				//
-				openMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.remove('closed');
-						menu[uKey].elems.update_itemRects();
-					};
+		const withClass_part = ()=>{ // class settings :: +[class.menu/item], *[behav.all-replace]
+			const {MENU, ITEM, CLOSED, HOVERED, INPATH, NOTAVAILABLE} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					class : [MENU],
 				},
-				closeMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.add('closed');
-					};
+				item : {
+					class : [ITEM],
 				},
-				setClosedMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.add('closed');
-					};
+				behaviors : {
+					// binders
+					//
+					openMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.remove(CLOSED);
+							menu[uKey].elems.update_itemRects();
+						};
+					},
+					closeMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.add(CLOSED);
+						};
+					},
+					setClosedMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.add(CLOSED);
+						};
+					},
+					hoverItem_method : (uKey)=>{
+						return (item)=>{
+							item.classList.add(HOVERED);
+						};
+					},
+					leaveItem_method : (uKey)=>{
+						return (item)=>{
+							item.classList.remove(HOVERED);
+						};
+					},
+					inpathItem_method : (uKey)=>{
+						return (item)=>{
+							item.classList.add(INPATH);
+						};
+					},
+					outpathItem_method : (uKey)=>{
+						return (item)=>{
+							item.classList.remove(INPATH);
+						};
+					},
+					disableItem_method : (uKey)=>{
+						return (item)=>{
+							item.classList.add(NOTAVAILABLE);
+						};
+					},
+					enableItem_method : (uKey)=>{
+						return (item)=>{
+							item.classList.remove(NOTAVAILABLE);
+						};
+					},
+	
+					// replaceLayer_method // not overwrote
 				},
-				hoverItem_method : (uKey)=>{
-					return (item)=>{
-						item.classList.add('hovered');
-					};
-				},
-				leaveItem_method : (uKey)=>{
-					return (item)=>{
-						item.classList.remove('hovered');
-					};
-				},
-				inpathItem_method : (uKey)=>{
-					return (item)=>{
-						item.classList.add('inPath');
-					};
-				},
-				outpathItem_method : (uKey)=>{
-					return (item)=>{
-						item.classList.remove('inPath');
-					};
-				},
-				disableItem_method : (uKey)=>{
-					return (item)=>{
-						item.classList.add('notAvailable');
-					};
-				},
-				enableItem_method : (uKey)=>{
-					return (item)=>{
-						item.classList.remove('notAvailable');
-					};
-				},
-
-				// replaceLayer_method // not overwrote
-			},
+			};
 		};
 
-		const class_ptrLogic_part = { // class use prtEvt :: +[css.menu.auto/css.closed.none]
-			// contains only differences from its base
-			menu : {
-				css : '\n'
-				    + '/* class_ptrLogic_part */\n'
-				    + '.menu{'
-				    + '  pointer-events : auto;'
-				    + '}\n'
-				    + '.closed{'
-				    + '  pointer-events : none;'
-				    + '}\n'
-				    + '.locked{'
-				    + '  pointer-events : none;'
-				    + '}\n',
-			},
+		const class_ptrLogic_part = ()=>{ // class use prtEvt :: +[css.menu.auto/css.closed.none]
+			const {MENU, CLOSED, LOCKED} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					css : '\n'
+						+ '/* class_ptrLogic_part */\n'
+						+ `.${MENU}{`
+						+ '  pointer-events : auto;'
+						+ '}\n'
+						+ `.${CLOSED}{`
+						+ '  pointer-events : none;'
+						+ '}\n'
+						+ `.${LOCKED}{`
+						+ '  pointer-events : none;'
+						+ '}\n',
+				},
+			};
 		};
 
-		const class_displayLogic_part = { // class use opacity :: +[css.menu.opa:1/css.menu.clo.opa:0]
-			// contains only differences from its base
-			menu : {
-				css : '\n'
-				    + '/* class_displayLogic_part */\n'
-				    + '.menu{'
-				    + '  opacity : 1;'
-				    + '}\n'
-				    + '.closed{'
-				    + '  opacity : 0;'
-				    + '}\n',
-			},
+		const class_displayLogic_part = ()=>{ // class use opacity :: +[css.menu.opa:1/css.menu.clo.opa:0]
+			const {MENU, CLOSED} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					css : '\n'
+						+ '/* class_displayLogic_part */\n'
+						+ `.${MENU}{`
+						+ '  opacity : 1;'
+						+ '}\n'
+						+ `.${CLOSED}{`
+						+ '  opacity : 0;'
+						+ '}\n',
+				},
+			};
 		};
 
-		const class_sizeFitContent_part = {
-			menu : {
-				css : '\n'
-				    + '/* class_sizeFitContent_part */\n'
-				    + '.menu{'
-				    + '  width: fit-content;'
-				    + '  height: fit-content;'
-				    + '}\n',
-			},
+		const class_sizeFitContent_part = ()=>{ // ::
+			const {MENU} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					css : '\n'
+						+ '/* class_sizeFitContent_part */\n'
+						+ `.${MENU}{`
+						+ '  width: fit-content;'
+						+ '  height: fit-content;'
+						+ '}\n',
+				},
+			};
 		};
 
-		const expendClass_part = { // add class open :: *[behav.open/close/setclose]
-			// contains only differences from its base
-			behaviors : {
-				
-				// binders
-				//
-				openMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.add('open');
-						menu.classList.remove('closed');
-						menu[uKey].elems.update_itemRects();
-					};
+		const expendClass_part = ()=>{ // add class open :: *[behav.open/close/setclose]
+			const {CLOSED, OPEN} = classNames;
+			return {
+				// contains only differences from its base
+				behaviors : {
+					// binders
+					//
+					openMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.add(OPEN);
+							menu.classList.remove(CLOSED);
+							menu[uKey].elems.update_itemRects();
+						};
+					},
+					closeMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.add(CLOSED);
+							menu.classList.remove(OPEN);
+						};
+					},
+					setClosedMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.add(CLOSED);
+							menu.classList.remove(OPEN);
+						};
+					},
+	
 				},
-				closeMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.add('closed');
-						menu.classList.remove('open');
-					};
-				},
-				setClosedMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.add('closed');
-						menu.classList.remove('open');
-					};
-				},
-
-			},
+			};
 		};
 
 		// classMain
 
-		const mainMenuClass_part = { // add class main :: +[class.menu.main]
-			menu : {
-				class : ['main'],
-			},
+		const mainMenuClass_part = ()=>{ // add class main :: +[class.menu.main]
+			const {MAIN} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					class : [MAIN],
+				},
+			};
 		};
 
 		// class item separator
-		const class_itemSeparator_part = {
-			item : { // use on item
-				class : [classNames.itemSeparator],
-			},
+		const class_itemSeparator_part = ()=>{
+			const {SEPARATOR} = classNames;
+			return {
+				// contains only differences from its base
+				item : { // use on item
+					class : [SEPARATOR],
+				},
+			};
 		};
 
 		// basic position
 
-		const foldRight_part = (offset='0px')=>({ // set submenu position :: +[style.menu.left:100%+offset]
-			// use in submenu case to unfold at right side
-			// contains only differences from its base
-			menu : {
-				style : {
-					left : `calc(100% + ${offset})`,
+		const foldRight_part = (offset='0px')=>{ // set submenu position :: +[style.menu.left:100%+offset]
+			const {} = classNames;
+			return {
+				// contains only differences from its base
+				menu : { // use in submenu case to unfold at right side
+					style : {
+						left : `calc(100% + ${offset})`,
+					},
 				},
-			},
-		});
+			};
+		};
 		
 		// basic position main
 
-		const openRight_part = { // set main menu position :: +[style.menu.left:'']
-			// use in main menu case to overwrite foldRight_part
-			// contains only differences from its base
-			menu : {
-				style : {
-					left : '', // TODO test with '0%' instead
+		const openRight_part = ()=>{ // set main menu position :: +[style.menu.left:'']
+			const {} = classNames;
+			return {
+				// contains only differences from its base
+				menu : { // use in main menu case to overwrite foldRight_part
+					style : {
+						left : '', // TODO test with '0%' instead
+					},
 				},
-			},
+			};
 		};
 
 		// advanced position [stdFold]
@@ -721,68 +762,79 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 		
 
-		const class_stdFold_part = {
-			// use to overwrite [class_slidingStartPos_part / class_slidingStartPosMain_part]
-			// left/top % relative to parent (layer) // translate % relative to menu itself
-			menu : {
-				css : '\n'
-					+ '/* class_stdFold_part */\n'
+		const class_stdFold_part = ()=>{
+			const {MAIN} = classNames;
+			return {
+				// contains only differences from its base
 
-					// main by axes
-					+ '.main.RIGHT{' // main menu (RL)
-					+ `  left : 0%;`
-					+ '}\n'
-					+ '.main.LEFT{'
-					+ `  right : 100%;`
-					+ '}\n'
-
-					+ '.main.DOWN{' // main menu (DT)
-					+ `  top : 0%;`
-					+ '}\n'
-					+ '.main.TOP{'
-					+ `  bottom : 100%;`
-					+ '}\n'
-
-					// submenu by axes
-					+ '.RIGHT{' // submenu (RL)
-					+ `  left : calc(100% + var(--posOfst));`
-					+ '}\n'
-					+ '.LEFT{'
-					+ `  right : calc(100% + var(--posOfst));`
-					+ '}\n'
-
-					+ '.DOWN{' // submenu (DT)
-					+ `  top : var(--negOfst);`
-					+ '}\n'
-					+ '.TOP{'
-					+ `  bottom : var(--negOfst);`
-					+ '}\n'
-
-					+ '.TOPWIN{'
-					+ `  top : var(--topwinOfst);`
-					+ '}\n',
-			},
+				// use to overwrite [class_slidingStartPos_part / class_slidingStartPosMain_part]
+				// left/top % relative to parent (layer) // translate % relative to menu itself
+				menu : {
+					css : '\n'
+						+ '/* class_stdFold_part */\n'
+	
+						// main by axes
+						+ `.${MAIN}.RIGHT{` // main menu (RL)
+						+ `  left : 0%;`
+						+ '}\n'
+						+ `.${MAIN}.LEFT{`
+						+ `  right : 100%;`
+						+ '}\n'
+	
+						+ `.${MAIN}.DOWN{` // main menu (DT)
+						+ `  top : 0%;`
+						+ '}\n'
+						+ `.${MAIN}.TOP{`
+						+ `  bottom : 100%;`
+						+ '}\n'
+	
+						// submenu by axes
+						+ '.RIGHT{' // submenu (RL)
+						+ `  left : calc(100% + var(--posOfst));`
+						+ '}\n'
+						+ '.LEFT{'
+						+ `  right : calc(100% + var(--posOfst));`
+						+ '}\n'
+	
+						+ '.DOWN{' // submenu (DT)
+						+ `  top : var(--negOfst);`
+						+ '}\n'
+						+ '.TOP{'
+						+ `  bottom : var(--negOfst);`
+						+ '}\n'
+	
+						+ '.TOPWIN{'
+						+ `  top : var(--topwinOfst);`
+						+ '}\n',
+				},
+			};
 		};
-		const class_stdFoldClose_part = { // left/top % relative to parent (layer) // translate % relative to menu itself
-			menu : {
-				css : '\n'
-					+ '/* class_stdFoldClose_part */\n'
-					+ '.menu.closed{' // all menu
-					+ `  left : 0%;`
-					+ `  top : 0%;`
-					+ `  translate : 0% 0%;`
-					+ '}\n',
-			},
+		const class_stdFoldClose_part = ()=>{ // left/top % relative to parent (layer) // translate % relative to menu itself
+			const {MENU, CLOSED} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					css : '\n'
+						+ '/* class_stdFoldClose_part */\n'
+						+ `.${MENU}.${CLOSED}{` // all menu
+						+ `  left : 0%;`
+						+ `  top : 0%;`
+						//+ `  translate : 0% 0%;`
+						+ '}\n',
+				},
+			};
 		};
 
-		const class_stdFoldFollowLastSens_additional_inits = {
-			menu : (menu, uKey)=>{
-				menu[TMEM] ||= {};
-				menu[TMEM].stdFold_followLastSens = {};
-			},
+		const class_stdFoldFollowLastSens_additional_inits = ()=>{
+			return {
+				menu : (menu, uKey)=>{
+					menu[TMEM] ||= {};
+					menu[TMEM].stdFold_followLastSens = {};
+				},
+			};
 		};
 
-		const stdFold_windowAsFrameRect_additional_inits_ = ()=>{
+		const stdFold_windowAsFrameRect_additional_inits = ()=>{
 			const get_frameRect__ = get_currentWindowRect__;
 			return {
 				menu : (menu, uKey)=>{
@@ -795,160 +847,186 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// sliding effect
 
-		const class_slidingStartPos_part = {
-			// do not use as alone
-			// left/top % relative to parent (layer) // translate % relative to menu itself
-			menu : {
-				css : '\n'
-					+ '/* class_slidingStartPos_part */\n'
+		const class_slidingStartPos_part = ()=>{
+			const {MAIN} = classNames;
+			return {
+				// contains only differences from its base
 
-					// main by axes
-					+ '.main._RIGHT{' // main menu (RL)
-					+ `  left : 0%;`
-					+ '}\n'
-					+ '.main._LEFT{'
-					+ `  right : 100%;`
-					+ '}\n'
-
-					+ '.main._DOWN{' // main menu (DT)
-					+ `  top : 0%;`
-					+ '}\n'
-					+ '.main._TOP{'
-					+ `  bottom : 100%;`
-					+ '}\n'
-
-					// submenu by axes
-					+ '._RIGHT{' // submenu (RL)
-					+ `  left : calc(0% + var(--negOfst));`
-					+ '}\n'
-					+ '._LEFT{'
-					+ `  right : calc(0% + var(--negOfst));`
-					+ '}\n'
-
-					+ '._DOWN{' // submenu (DT)
-					+ `  top : var(--negOfst);`
-					+ '}\n'
-					+ '._TOP{'
-					+ `  bottom : var(--negOfst);`
-					+ '}\n'
-
-					+ '._TOPWIN{'
-					+ `  top : var(--topwinOfst);`
-					+ '}\n',
-			},
+				// do not use as alone
+				// left/top % relative to parent (layer) // translate % relative to menu itself
+				menu : {
+					css : '\n'
+						+ '/* class_slidingStartPos_part */\n'
+	
+						// main by axes
+						+ `.${MAIN}._RIGHT{` // main menu (RL)
+						+ `  left : 0%;`
+						+ '}\n'
+						+ `.${MAIN}._LEFT{`
+						+ `  right : 100%;`
+						+ '}\n'
+	
+						+ `.${MAIN}._DOWN{` // main menu (DT)
+						+ `  top : 0%;`
+						+ '}\n'
+						+ `.${MAIN}._TOP{`
+						+ `  bottom : 100%;`
+						+ '}\n'
+	
+						// submenu by axes
+						+ '._RIGHT{' // submenu (RL)
+						+ `  left : calc(0% + var(--negOfst));`
+						+ '}\n'
+						+ '._LEFT{'
+						+ `  right : calc(0% + var(--negOfst));`
+						+ '}\n'
+	
+						+ '._DOWN{' // submenu (DT)
+						+ `  top : var(--negOfst);`
+						+ '}\n'
+						+ '._TOP{'
+						+ `  bottom : var(--negOfst);`
+						+ '}\n'
+	
+						+ '._TOPWIN{'
+						+ `  top : var(--topwinOfst);`
+						+ '}\n',
+				},
+			};
 		};
 
 		// sliding main menu (optionals)
 
-		const class_slidingStartPosMain_part = {
-			// do not use as alone
-			// use to overwrite [class_slidingStartPos_part]
-			// left/top % relative to parent (layer) // translate % relative to menu itself
-			menu : {
-				css : '\n'
-					+ '/* class_slidingStartPosMain_part */\n'
+		const class_slidingStartPosMain_part = ()=>{
+			const {MAIN} = classNames;
+			return {
+				// contains only differences from its base
 
-					// main by axes
-					+ '.main._RIGHT{' // main menu (RL)
-					+ `  left : -100%;`
-					+ '}\n'
-					+ '.main._LEFT{'
-					+ `  right : 0%;`
-					+ '}\n'
-
-					+ '.main._DOWN{' // main menu (DT)
-					+ `  top : 0%;`
-					+ '}\n'
-					+ '.main._TOP{'
-					+ `  bottom : 100%;`
-					+ '}\n',
-			},
+				// do not use as alone
+				// use to overwrite [class_slidingStartPos_part]
+				// left/top % relative to parent (layer) // translate % relative to menu itself
+				menu : {
+					css : '\n'
+						+ '/* class_slidingStartPosMain_part */\n'
+	
+						// main by axes
+						+ `.${MAIN}._RIGHT{` // main menu (RL)
+						+ `  left : -100%;`
+						+ '}\n'
+						+ `.${MAIN}._LEFT{`
+						+ `  right : 0%;`
+						+ '}\n'
+	
+						+ `.${MAIN}._DOWN{` // main menu (DT)
+						+ `  top : 0%;`
+						+ '}\n'
+						+ `.${MAIN}._TOP{`
+						+ `  bottom : 100%;`
+						+ '}\n',
+				},
+			};
 		};
 
-		const class_slidingStartPosMain_additional_inits = {
-			menu : (menu, uKey)=>{
-
-				const posTracker = {
-					hasChanged : undefined, // will be 'true' at first time
-					lastPosStr : '',
-					update(){
-						const rect = menu[uKey].elems.get_layer()[uKey].update_rect().get_rect();
-						const newPosStr = '' + rect.x + rect.y;
-						this.hasChanged = (this.lastPosStr !== newPosStr)
-						this.lastPosStr = newPosStr;
-						return this.hasChanged;
-					},
-				};
-
-				menu[TMEM] ||= {};
-				menu[TMEM].stdFold_mainPosTracking = {};
-				menu[TMEM].stdFold_mainPosTracking.has_changed = ()=>posTracker.hasChanged;
-				menu[TMEM].stdFold_mainPosTracking.update = ()=>posTracker.update();
-			},
+		const class_slidingStartPosMain_additional_inits = ()=>{
+			return {
+				menu : (menu, uKey)=>{
+	
+					const posTracker = {
+						hasChanged : undefined, // will be 'true' at first time
+						lastPosStr : '',
+						update(){
+							const rect = menu[uKey].elems.get_layer()[uKey].update_rect().get_rect();
+							const newPosStr = '' + rect.x + rect.y;
+							this.hasChanged = (this.lastPosStr !== newPosStr)
+							this.lastPosStr = newPosStr;
+							return this.hasChanged;
+						},
+					};
+	
+					menu[TMEM] ||= {};
+					menu[TMEM].stdFold_mainPosTracking = {};
+					menu[TMEM].stdFold_mainPosTracking.has_changed = ()=>posTracker.hasChanged;
+					menu[TMEM].stdFold_mainPosTracking.update = ()=>posTracker.update();
+				},
+			};
 		};
 
-		const class_slidingNotLockMain_part = { // does not lock ptrEvt on opening (main menu only)
-			menu : {
-				css : '\n'
-				    + '/* class_slidingNotLockMain_part */\n'
-				    + '.main.locked{'
-				    + '  pointer-events : auto;'
-				    + '}\n',
-			},
+		const class_slidingNotLockMain_part = ()=>{ // does not lock ptrEvt on opening (main menu only)
+			const {MAIN, LOCKED} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					css : '\n'
+						+ '/* class_slidingNotLockMain_part */\n'
+						+ `.${MAIN}.${LOCKED}{`
+						+ '  pointer-events : auto;'
+						+ '}\n',
+				},
+			};
 		};
 
-		const class_slidingNotLockOpen_part = { // does not lock ptrEvt on opening (all menus)
-			menu : {
-				css : '\n'
-				    + '/* class_slidingNotLockOpen_part */\n'
-				    + '.menu.locked{'
-				    + '  pointer-events : auto;'
-				    + '}\n',
-			},
+		const class_slidingNotLockOpen_part = ()=>{ // does not lock ptrEvt on opening (all menus)
+			const {MENU, LOCKED} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					css : '\n'
+						+ '/* class_slidingNotLockOpen_part */\n'
+						+ `.${MENU}.${LOCKED}{`
+						+ '  pointer-events : auto;'
+						+ '}\n',
+				},
+			};
 		};
 
 
 		// fading effect
 
-		const classFading_standard_part_ = (time='var(--animTime)')=> ({
-			// contains only differences from its base
-			menu : {
-				css : '\n'
-				    + '/* classFading_standard_part */\n'
-				    + '.menu{'
-					+ '  opacity : 1;'
-					+ `  transition : opacity ${time};`
-				    + '}\n'
-				    + '.closed{'
-				    + '  opacity : 0.2;'
-				    + '}\n',
-			},
-		});
+		const classFading_standard_part = (time='var(--animTime)')=>{
+			const {MENU, CLOSED} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					css : '\n'
+						+ '/* classFading_standard_part */\n'
+						+ `.${MENU}{`
+						+ '  opacity : 1;'
+						+ `  transition : opacity ${time};`
+						+ '}\n'
+						+ `.${CLOSED}{`
+						+ '  opacity : 0.2;'
+						+ '}\n',
+				},
+			};
+		};
 
-		const classFading_itemBackdrop_part_ = (time='var(--animTime)')=> ({
-			// contains only differences from its base
-			menu : {
-				css : '\n'
-				    + '/* classFading_itemBackdrop_part_ (menu) */\n'
-					+ '.menu{'
-					+ `  transition : background-color ${time};`
-					+ '}\n'
-					+ '.menu.closed{' // closed menus
-					+ '  background-color : #00000000;'
-					+ '}\n',
-			},
-			item : {
-				css : '\n'
-				    + '/* classFading_itemBackdrop_part_ (item) */\n'
-				    + '.item{'
-					+ '  opacity : 1;'
-					+ `  transition : opacity ${time};`
-				    + '}\n'
-				    + '.closed .item{' // items in a closed menu
-				    + '  opacity : 0;'
-				    + '}\n',
-			},
-		});
+		const classFading_itemBackdrop_part = (time='var(--animTime)')=>{
+			const {MENU, ITEM, CLOSED} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					css : '\n'
+						+ '/* classFading_itemBackdrop_part (menu) */\n'
+						+ `.${MENU}{`
+						+ `  transition : background-color ${time};`
+						+ '}\n'
+						+ `.${MENU}.${CLOSED}{` // closed menus
+						+ '  background-color : #00000000;'
+						+ '}\n',
+				},
+				item : {
+					css : '\n'
+						+ '/* classFading_itemBackdrop_part (item) */\n'
+						+ `.${ITEM}{`
+						+ '  opacity : 1;'
+						+ `  transition : opacity ${time};`
+						+ '}\n'
+						+ `.${CLOSED} .${ITEM}{` // items in a closed menu
+						+ '  opacity : 0;'
+						+ '}\n',
+				},
+			};
+		};
 
 
 
@@ -956,269 +1034,288 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// merge effect
 
-		const onlySliding_additional_inits_ = (time='var(--animTime)')=>({
-			menu : (menu, uKey)=>{
-				menu[TMEM] ||= {};
-				menu[TMEM].stdFold_transitionProps = ['left','right'];
-				//menu[TMEM].stdFold_transitionFull = `left ${time}, right ${time}`;
-				//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
-				menu[TMEM].stdFold_startPosLock = 'none'; // remove transition that affect position
-				menu[TMEM].stdFold_transitionings = {'left':false,'right':false};
-				menu[TMEM].stdFold_isTransition = false;
-				menu[TMEM].stdFold_transitionUpdate = function(propName, transitioning){
-					this.stdFold_transitionings[propName] = transitioning;
-					this.stdFold_isTransition = Object.values(this.stdFold_transitionings).some(e=>e);
-				};
-			},
-		});
+		const onlySliding_additional_inits = (time='var(--animTime)')=>{
+			return {
+				menu : (menu, uKey)=>{
+					menu[TMEM] ||= {};
+					menu[TMEM].stdFold_transitionProps = ['left','right'];
+					//menu[TMEM].stdFold_transitionFull = `left ${time}, right ${time}`;
+					//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
+					menu[TMEM].stdFold_startPosLock = 'none'; // remove transition that affect position
+					menu[TMEM].stdFold_transitionings = {'left':false,'right':false};
+					menu[TMEM].stdFold_isTransition = false;
+					menu[TMEM].stdFold_transitionUpdate = function(propName, transitioning){
+						this.stdFold_transitionings[propName] = transitioning;
+						this.stdFold_isTransition = Object.values(this.stdFold_transitionings).some(e=>e);
+					};
+				},
+			};
+		};
 
-		const merge_stdFadingWithSliding = (time='1s')=>({
-			menu : {
-				/* style : {
-					transition : `opacity ${time}, left ${time}, translate ${time}`,
-				}, */
-				css : '\n'
-				+ '/* merge_stdFadingWithSliding */\n'
+		const merge_stdFadingWithSliding = (time='var(--animTime)')=>{
+			const {MENU} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					/* style : {
+						transition : `opacity ${time}, left ${time}, translate ${time}`,
+					}, */
+					css : '\n'
+					+ '/* merge_stdFadingWithSliding */\n'
+					+ `.${MENU}{`
+					+ `  transition : opacity ${time}, left ${time}, right ${time};`
+					+ '}\n',
+				},
+			};
+		};
 
-				+ '.menu{'
-				+ `  transition : opacity ${time}, left ${time}, right ${time};`
-				+ '}\n',
-			},
-		});
+		const stdFadingWithSliding_additional_inits = (time='var(--animTime)')=>{
+			return {
+				menu : (menu, uKey)=>{
+					menu[TMEM] ||= {};
+					menu[TMEM].stdFold_transitionProps = ['left','right','opacity'];
+					//menu[TMEM].stdFold_transitionFull = `opacity ${time}, left ${time}, right ${time}`;
+					//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
+					menu[TMEM].stdFold_startPosLock = `opacity ${time}`; // remove transition that affect position
+					menu[TMEM].stdFold_transitionings = {'left':false,'right':false,'opacity':false};
+					menu[TMEM].stdFold_isTransition = false;
+					menu[TMEM].stdFold_transitionUpdate = function(propName, transitioning){
+						this.stdFold_transitionings[propName] = transitioning;
+						this.stdFold_isTransition = Object.values(this.stdFold_transitionings).some(e=>e);
+					};
+				},
+			};
+		};
 
-		const stdFadingWithSliding_additional_inits_ = (time='1s')=>({
-			menu : (menu, uKey)=>{
-				menu[TMEM] ||= {};
-				menu[TMEM].stdFold_transitionProps = ['left','right','opacity'];
-				//menu[TMEM].stdFold_transitionFull = `opacity ${time}, left ${time}, right ${time}`;
-				//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
-				menu[TMEM].stdFold_startPosLock = `opacity ${time}`; // remove transition that affect position
-				menu[TMEM].stdFold_transitionings = {'left':false,'right':false,'opacity':false};
-				menu[TMEM].stdFold_isTransition = false;
-				menu[TMEM].stdFold_transitionUpdate = function(propName, transitioning){
-					this.stdFold_transitionings[propName] = transitioning;
-					this.stdFold_isTransition = Object.values(this.stdFold_transitionings).some(e=>e);
-				};
-			},
-		});
+		const merge_itmbdropFadingWithSliding = (time='var(--animTime)')=>{
+			const {MENU} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					/* style : {
+						transition : `background-color ${time}, left ${time}, translate ${time}`,
+					}, */
+					css : '\n'
+					+ '/* merge_itmbdropFadingWithSliding */\n'
+					+ `.${MENU}{`
+					+ `  transition : background-color ${time}, left ${time}, right ${time};`
+					+ '}\n',
+				},
+			};
+		};
 
-		const merge_itmbdropFadingWithSliding_ = (time='var(--animTime)')=>({
-			menu : {
-				/* style : {
-					transition : `background-color ${time}, left ${time}, translate ${time}`,
-				}, */
-				css : '\n'
-				+ '/* merge_itmbdropFadingWithSliding_ */\n'
-
-				+ '.menu{'
-				+ `  transition : background-color ${time}, left ${time}, right ${time};`
-				+ '}\n',
-			},
-		});
-
-		const itmbdropFadingWithSliding_additional_inits_ = (time='var(--animTime)')=>({
-			menu : (menu, uKey)=>{
-				menu[TMEM] ||= {};
-				menu[TMEM].stdFold_transitionProps = ['left','right','background-color'];
-				//menu[TMEM].stdFold_transitionFull = `background-color ${time}, left ${time}, right ${time}`;
-				//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
-				menu[TMEM].stdFold_startPosLock = `background-color ${time}`; // remove transition that affect position
-				menu[TMEM].stdFold_transitionings = {'left':false,'right':false,'background-color':false};
-				menu[TMEM].stdFold_isTransition = false;
-				menu[TMEM].stdFold_transitionUpdate = function(propName, transitioning){
-					this.stdFold_transitionings[propName] = transitioning;
-					this.stdFold_isTransition = Object.values(this.stdFold_transitionings).some(e=>e);
-				};
-			},
-		});
+		const itmbdropFadingWithSliding_additional_inits = (time='var(--animTime)')=>{
+			return {
+				menu : (menu, uKey)=>{
+					menu[TMEM] ||= {};
+					menu[TMEM].stdFold_transitionProps = ['left','right','background-color'];
+					//menu[TMEM].stdFold_transitionFull = `background-color ${time}, left ${time}, right ${time}`;
+					//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
+					menu[TMEM].stdFold_startPosLock = `background-color ${time}`; // remove transition that affect position
+					menu[TMEM].stdFold_transitionings = {'left':false,'right':false,'background-color':false};
+					menu[TMEM].stdFold_isTransition = false;
+					menu[TMEM].stdFold_transitionUpdate = function(propName, transitioning){
+						this.stdFold_transitionings[propName] = transitioning;
+						this.stdFold_isTransition = Object.values(this.stdFold_transitionings).some(e=>e);
+					};
+				},
+			};
+		};
 
 
 		// AAA
 
 		// rescale + scrollable
-		const class_scrollable_part = {
-			menu : {
-				css : '\n'
-				    + '/* class_scrollable_part (menu)*/\n'
-				    + '.menu.scrollable{'
-				    + '  height: var(--verticalScroll);'
-				    + '  overflow-y: hidden;'
-				    + '}\n'
-			},
-			item : {
-				css : '\n'
-				    + '/* class_scrollable_part (item)*/\n'
-				    + '.item.scrollControl{'
-				    + '  background-color: #00fd5769;'
-				    + '  text-align: center;'
-				    + '  width: 100%;'        // \
-				    + '  padding-left: 0px;'  //  | work together
-				    + '  padding-right: 0px;' // /
-				    + '  position: sticky;'
-				    + '  z-index: 1;'
-				    + '  display: none;'
-				    + '}\n'
-				    + '.item.scrollControl.above{'
-				    + '  top: 0px;'
-				    + '}\n'
-				    + '.item.scrollControl.below{'
-				    + '  bottom: 0px;'
-				    + '}\n'
-				    + '.scrollable .item.scrollControl{'
-				    + '  display: unset;'
-				    + '}\n'
-				    
-				    //+ '.item.vrtscrl-insider{'
-				    //+ '  background-color: #ffff0069;' // debug
-				    //+ '}\n'
-				    + '.item.vrtscrl-outsider{'
-				    + '  background-color: #00000069;' // debug
-				    + '  pointer-events: none;'
-				    + '  opacity: 0.3;'
-				    + '}\n'
-				    //+ '.item.vrtscrl-topsider{'
-				    //+ '  background-color: #ff00ff69;' // debug
-				    //+ '}\n'
-				    //+ '.item.vrtscrl-botsider{'
-				    //+ '  background-color: #00ff0069;' // debug
-				    //+ '}\n',
-			},
+		const class_scrollable_part = ()=>{
+			const {MENU, ITEM} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					css : '\n'
+						+ '/* class_scrollable_part (menu)*/\n'
+						+ `.${MENU}.scrollable{`
+						+ '  height: var(--verticalScroll);'
+						+ '  overflow-y: hidden;'
+						+ '}\n'
+				},
+				item : {
+					css : '\n'
+						+ '/* class_scrollable_part (item)*/\n'
+						+ `.${ITEM}.scrollControl{`
+						+ '  background-color: #00fd5769;'
+						+ '  text-align: center;'
+						+ '  width: 100%;'        // \
+						+ '  padding-left: 0px;'  //  | work together
+						+ '  padding-right: 0px;' // /
+						+ '  position: sticky;'
+						+ '  z-index: 1;'
+						+ '  display: none;'
+						+ '}\n'
+						+ `.${ITEM}.scrollControl.above{`
+						+ '  top: 0px;'
+						+ '}\n'
+						+ `.${ITEM}.scrollControl.below{`
+						+ '  bottom: 0px;'
+						+ '}\n'
+						+ `.scrollable .${ITEM}.scrollControl{`
+						+ '  display: unset;'
+						+ '}\n'
+						
+						//+ `.${ITEM}.vrtscrl-insider{`
+						//+ '  background-color: #ffff0069;' // debug
+						//+ '}\n'
+						+ `.${ITEM}.vrtscrl-outsider{`
+						+ '  background-color: #00000069;' // debug
+						+ '  pointer-events: none;'
+						+ '  opacity: 0.3;'
+						+ '}\n'
+						//+ `.${ITEM}.vrtscrl-topsider{`
+						//+ '  background-color: #ff00ff69;' // debug
+						//+ '}\n'
+						//+ `.${ITEM}.vrtscrl-botsider{`
+						//+ '  background-color: #00ff0069;' // debug
+						//+ '}\n',
+				},
+			};
 		};
 
-		const stdScrollable_additional_inits = {
-			menu : (menu, uKey)=>{
-
-				// html elements
-				//
-				const aboveElem = document.createElement('div');
-				const belowElem = document.createElement('div');
-				aboveElem.className = 'item scrollControl above';
-				belowElem.className = 'item scrollControl below';
-				aboveElem.textContent = '◢◣';
-				belowElem.textContent = '◥◤';
-
-				aboveElem.onclick = (e)=>{
-					scroll_up();
-				};
-				belowElem.onclick = (e)=>{
-					scroll_down();
-				};
-
-				menu.onmousewheel = (e)=>{
-					e.preventDefault();
-					if(e.deltaY < 0) scroll_up();
-					if(e.deltaY > 0) scroll_down();
-				};
-
-				let items = menu[uKey].elems.get_items();
-				items[0].insertAdjacentElement('beforebegin', aboveElem);
-				items.at(-1).insertAdjacentElement('afterend', belowElem);
-
-				const update_itemsList = ()=>{ // uses this process in limiter.init()
-					items = items.filter(      // because all menus' init run before all items' init
-						item=>!item.classList.contains(classNames.itemSeparator)
-					);
-				};
-
-				// logic
-				//
-
-				const scroll_up = ()=>{
-					if(menu[TMEM].stdScroll.isDownscaled){
-						menu.scrollTop -= limiter.get_topsiderOffset();
-						limiter.check_itemInLimit();
-						menu[uKey].elems.close_submenus();
-					}
-				};
-				const scroll_down = ()=>{
-					if(menu[TMEM].stdScroll.isDownscaled){
-						menu.scrollTop -= limiter.get_botsiderOffset();
-						limiter.check_itemInLimit();
-						menu[uKey].elems.close_submenus();
-					}
-				};
-
-				const limiter = {
-					insiders:null, topsiders:null, botsiders:null, // items arrays
-					limits : null, // vertical rect
-					init(){
-						update_itemsList();
-						this.update_vrtLimit();
-						this.check_itemInLimit();
-					},
-					update_vrtLimit(){
-						const aboveRect = aboveElem.getBoundingClientRect();
-						const belowRect = belowElem.getBoundingClientRect();
-						this.limits = {t:aboveRect.bottom, b:belowRect.top};
-					},
-					check_itemInLimit(){
-						const {t:topLimit, b:downLimit} = this.limits;
-						this.insiders = [], this.topsiders = [], this.botsiders = [];
-						let inside = false;
-						items.forEach(item=>{
-							this.remove_siderClass(item);
-							const itemRect = item[uKey].update_rect().get_rect();
-							const current = (topLimit <= itemRect.t && downLimit >= itemRect.b);
-							inside ||= current;
-							if(current){
-								this.insiders.push(item); // inside scroll view
-								item.classList.add('vrtscrl-insider');
-							}else if(!inside){
-								this.topsiders.push(item); // top outside scroll view
-								item.classList.add('vrtscrl-topsider', 'vrtscrl-outsider');
-							}else{
-								this.botsiders.push(item); // bottom outside scroll view
-								item.classList.add('vrtscrl-botsider', 'vrtscrl-outsider');
-							}
-						});
-					},
-					get_topsiderOffset(){
-						const yItem = this.topsiders.at(-1)?.[uKey].get_rect().t;
-						const yLimit = this.limits.t;
-						return yItem ? yLimit - yItem : 0;
-					},
-					get_botsiderOffset(){
-						const yItem = this.botsiders[0]?.[uKey].get_rect().b;
-						const yLimit = this.limits.b;
-						return yItem ? yLimit - yItem : 0;
-					},
-					remove_siderClass(elem){ // for one item
-						const prfx = 'vrtscrl-';
-						const names = ['insider', 'outsider', 'topsider', 'botsider'];
-						names.forEach(name=>elem.classList.remove(prfx+name))
-					},
-					reset_siderClass(){ // for all items
-						items.forEach(item=>this.remove_siderClass(item));
-					},
-				};
-
-				menu[TMEM] ||= {};
-				menu[TMEM].stdScroll = {};
-				menu[TMEM].stdScroll.isDownscaled = false;
-				menu[TMEM].stdScroll.rescale_height = (newHeight)=>{
-					menu.style.setProperty('--verticalScroll', newHeight);
-					menu.classList.add('scrollable');
-					const menuRect = menu[uKey].update_rect().get_rect();
-					if(menuRect.h < menu.scrollHeight){
-						menu[TMEM].stdScroll.isDownscaled = true;
-						limiter.init();
-					}else{
-						menu[TMEM].stdScroll.isDownscaled = false;
-						menu.classList.remove('scrollable');
-						limiter.reset_siderClass();
-					}
-					if(menu[uKey].elems.is_main()) menu[uKey].elems.update_layerPos();
-				};
-				menu[TMEM].stdScroll.reset_height = ()=>{
-					if(menu[TMEM].stdScroll.isDownscaled){
-						menu[TMEM].stdScroll.isDownscaled = false;
-						menu.classList.remove('scrollable');
-						limiter.reset_siderClass();
+		const stdScrollable_additional_inits = ()=>{
+			const {SEPARATOR} = classNames;
+			return {
+				menu : (menu, uKey)=>{
+	
+					// html elements
+					//
+					const aboveElem = document.createElement('div');
+					const belowElem = document.createElement('div');
+					aboveElem.className = 'item scrollControl above';
+					belowElem.className = 'item scrollControl below';
+					aboveElem.textContent = '◢◣';
+					belowElem.textContent = '◥◤';
+	
+					aboveElem.onclick = (e)=>{
+						scroll_up();
+					};
+					belowElem.onclick = (e)=>{
+						scroll_down();
+					};
+	
+					menu.onmousewheel = (e)=>{
+						e.preventDefault();
+						if(e.deltaY < 0) scroll_up();
+						if(e.deltaY > 0) scroll_down();
+					};
+	
+					let items = menu[uKey].elems.get_items();
+					items[0].insertAdjacentElement('beforebegin', aboveElem);
+					items.at(-1).insertAdjacentElement('afterend', belowElem);
+	
+					const update_itemsList = ()=>{ // uses this process in limiter.init()
+						items = items.filter(      // because all menus' init run before all items' init
+							item=>!item.classList.contains(SEPARATOR)
+						);
+					};
+	
+					// logic
+					//
+	
+					const scroll_up = ()=>{
+						if(menu[TMEM].stdScroll.isDownscaled){
+							menu.scrollTop -= limiter.get_topsiderOffset();
+							limiter.check_itemInLimit();
+							menu[uKey].elems.close_submenus();
+						}
+					};
+					const scroll_down = ()=>{
+						if(menu[TMEM].stdScroll.isDownscaled){
+							menu.scrollTop -= limiter.get_botsiderOffset();
+							limiter.check_itemInLimit();
+							menu[uKey].elems.close_submenus();
+						}
+					};
+	
+					const limiter = {
+						insiders:null, topsiders:null, botsiders:null, // items arrays
+						limits : null, // vertical rect
+						init(){
+							update_itemsList();
+							this.update_vrtLimit();
+							this.check_itemInLimit();
+						},
+						update_vrtLimit(){
+							const aboveRect = aboveElem.getBoundingClientRect();
+							const belowRect = belowElem.getBoundingClientRect();
+							this.limits = {t:aboveRect.bottom, b:belowRect.top};
+						},
+						check_itemInLimit(){
+							const {t:topLimit, b:downLimit} = this.limits;
+							this.insiders = [], this.topsiders = [], this.botsiders = [];
+							let inside = false;
+							items.forEach(item=>{
+								this.remove_siderClass(item);
+								const itemRect = item[uKey].update_rect().get_rect();
+								const current = (topLimit <= itemRect.t && downLimit >= itemRect.b);
+								inside ||= current;
+								if(current){
+									this.insiders.push(item); // inside scroll view
+									item.classList.add('vrtscrl-insider');
+								}else if(!inside){
+									this.topsiders.push(item); // top outside scroll view
+									item.classList.add('vrtscrl-topsider', 'vrtscrl-outsider');
+								}else{
+									this.botsiders.push(item); // bottom outside scroll view
+									item.classList.add('vrtscrl-botsider', 'vrtscrl-outsider');
+								}
+							});
+						},
+						get_topsiderOffset(){
+							const yItem = this.topsiders.at(-1)?.[uKey].get_rect().t;
+							const yLimit = this.limits.t;
+							return yItem ? yLimit - yItem : 0;
+						},
+						get_botsiderOffset(){
+							const yItem = this.botsiders[0]?.[uKey].get_rect().b;
+							const yLimit = this.limits.b;
+							return yItem ? yLimit - yItem : 0;
+						},
+						remove_siderClass(elem){ // for one item
+							const prfx = 'vrtscrl-';
+							const names = ['insider', 'outsider', 'topsider', 'botsider'];
+							names.forEach(name=>elem.classList.remove(prfx+name))
+						},
+						reset_siderClass(){ // for all items
+							items.forEach(item=>this.remove_siderClass(item));
+						},
+					};
+	
+					menu[TMEM] ||= {};
+					menu[TMEM].stdScroll = {};
+					menu[TMEM].stdScroll.isDownscaled = false;
+					menu[TMEM].stdScroll.rescale_height = (newHeight)=>{
+						menu.style.setProperty('--verticalScroll', newHeight);
+						menu.classList.add('scrollable');
+						const menuRect = menu[uKey].update_rect().get_rect();
+						if(menuRect.h < menu.scrollHeight){
+							menu[TMEM].stdScroll.isDownscaled = true;
+							limiter.init();
+						}else{
+							menu[TMEM].stdScroll.isDownscaled = false;
+							menu.classList.remove('scrollable');
+							limiter.reset_siderClass();
+						}
 						if(menu[uKey].elems.is_main()) menu[uKey].elems.update_layerPos();
-					}
-				};
-
-			},
+					};
+					menu[TMEM].stdScroll.reset_height = ()=>{
+						if(menu[TMEM].stdScroll.isDownscaled){
+							menu[TMEM].stdScroll.isDownscaled = false;
+							menu.classList.remove('scrollable');
+							limiter.reset_siderClass();
+							if(menu[uKey].elems.is_main()) menu[uKey].elems.update_layerPos();
+						}
+					};
+	
+				},
+			};
 		};
 
 
@@ -1231,7 +1328,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//const _baseMain = mix_base(_base, _behavMain);
 
 
-		const class_base = mix_base(_base, _behav, withClass_part, class_sizeFitContent_part);
+		const class_base = mix_base(_base, _behav, withClass_part(), class_sizeFitContent_part());
 
 
 
@@ -1255,7 +1352,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 		// ORIGNAL THEMES [ITEM SEPARATOR]
-		const original_itemSeparator_base = mix_base(sccm_NULL, class_itemSeparator_part);
+		const original_itemSeparator_base = mix_base(sccm_NULL, class_itemSeparator_part());
 
 
 
@@ -1264,56 +1361,59 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		const sccm_default_cosmetic = { // SCCM original default style
-			_all : {
-				css : '\n'
-				    + '.general{'
-				    + '  padding : var(--padding);'
-				    + '}\n',
-			},
-			root : {},
-			layer : {},
-			menu  : {
-				class : ['general'],
-				css : '\n'
-				    + '.menu{'
-				    + '  background-color : grey;'
-				    + '  gap : 2px;'
-				    + '  top : -2px;'
-				    + '}\n'
-				    + '.main{'
-				    + '  top : 0px;'
-				    + '}\n'
-				    + '.closed{'
-				    + '  opacity : 0.2;'
-				    + '}\n',
-			},
-			item  : {
-				class : ['general'],
-				css : '\n'
-				    + '.item{'
-				    + '  background-color : lightgrey;'
-				    + '}\n'
-				    + '.inPath{'
-				    + '  background-color : orange;'
-				    + '}\n'
-				    + '.hovered{'
-				    + '  background-color : crimson;'
-				    + '}\n'
-				    + '.notAvailable{'
-				    + '  color : green;'
-				    + '}\n',
-			},
-			behaviors : {
-				
-			},
+		const sccm_default_cosmetic = ()=>{ // SCCM original default style
+			const {GENERAL, MAIN, MENU, ITEM, CLOSED, HOVERED, INPATH, NOTAVAILABLE} = classNames;
+			return {
+				_all : {
+					css : '\n'
+						+ `.${GENERAL}{`
+						+ '  padding : var(--padding);'
+						+ '}\n',
+				},
+				root : {},
+				layer : {},
+				menu  : {
+					class : [GENERAL],
+					css : '\n'
+						+ `.${MENU}{`
+						+ '  background-color : grey;'
+						+ '  gap : 2px;'
+						+ '  top : -2px;'
+						+ '}\n'
+						+ `.${MAIN}{`
+						+ '  top : 0px;'
+						+ '}\n'
+						+ `.${CLOSED}{`
+						+ '  opacity : 0.2;'
+						+ '}\n',
+				},
+				item  : {
+					class : [GENERAL],
+					css : '\n'
+						+ `.${ITEM}{`
+						+ '  background-color : lightgrey;'
+						+ '}\n'
+						+ `.${INPATH}{`
+						+ '  background-color : orange;'
+						+ '}\n'
+						+ `.${HOVERED}{`
+						+ '  background-color : crimson;'
+						+ '}\n'
+						+ `.${NOTAVAILABLE}{`
+						+ '  color : green;'
+						+ '}\n',
+				},
+				behaviors : {
+					
+				},
+			};
 		};
 
 		const default_base = mix_base(
-			_base, _behav, withClass_part, class_sizeFitContent_part, class_ptrLogic_part, foldRight_part('2px'), sccm_default_cosmetic
+			_base, _behav, withClass_part(), class_sizeFitContent_part(), class_ptrLogic_part(), foldRight_part('2px'), sccm_default_cosmetic()
 		);
 		const default_baseMain = mix_base(
-			sccm_NULL, _behavMain, mainMenuClass_part, openRight_part
+			sccm_NULL, _behavMain, mainMenuClass_part(), openRight_part()
 		);
 
 
@@ -1321,70 +1421,74 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		const sccm_glass_cosmetic = { // SCCM original glass style
-			_all : {
-				css : '\n'
-				    + '/* sccm_glass_cosmetic (_all) */\n'
-				    + '.general{'
-				    + '  padding : var(--padding);'
-					+ '  font-size : 20px;'
-				    + '}\n'
-			},
-			root : {},
-			layer : {
-				style:{
-					boxShadow:'inset 0px 0px 0px 6px rgba(34, 136, 255, 0.533)',
-					zIndex : 0,
-				}}, // debug
-			menu  : {
-				class : ['general'],
-				css : '\n'
-				    + '/* sccm_glass_cosmetic (menu) */\n'
-				    + '.menu{'
-				    + '  background-color : #00000060;'
-				    + '  gap : 2px;'
-				    + '}\n'
-			},
-			item  : {
-				class : ['general', 'item'],
-				css : '\n'
-				    + '/* sccm_glass_cosmetic (item) */\n'
-				    + '.item{'
-				    + '  padding : 4px 128px 4px 24px;'
-				    + '  border-radius: 2px;'
-				    + '  box-shadow: inset -3px -2px 9px 0px white;'
-				    + '  background: linear-gradient(to top, #00000000 0%, #FFFFFF88 100%);'
-					+ '  backdrop-filter: blur(25px);'
-					//+ '  text-shadow: -1px 0px 0px white, 1px 1px 1px black, 1px 1px 5px white;'
-					+ '  text-shadow: 1px 1px 0px white, 2px 2px 1px black;'
-					+ '  color : #00817540;'
-					+ '  font-family: Poppins, sans-serif;'
-				    + '}\n'
-				    + '.inPath{'
-				    + '  background-color : orange;'
-				    + '}\n'
-				    + '.hovered{'
-				    + '  background-color : #006dfd69;'
-				    + '}\n'
-				    + '.notAvailable{'
-				    + '  color : green;'
-				    + '}\n',
-			},
-			behaviors : {
-				
-				// AAA
-				openMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.remove('closed');
-
-						//stdFold_process(menu, uKey, '2px') // px : equal to padding
-						stdFoldUsingClass_process(menu, uKey, '2px') // 2 : equal to padding
-
-						menu[uKey].elems.update_itemRects();
-					};
+		const sccm_glass_cosmetic = ()=>{ // SCCM original glass style
+			const {GENERAL, MENU, ITEM, CLOSED, HOVERED, INPATH, NOTAVAILABLE} = classNames;
+			return {
+				_all : {
+					css : '\n'
+						+ '/* sccm_glass_cosmetic (_all) */\n'
+						+ `.${GENERAL}{`
+						+ '  padding : var(--padding);'
+						+ '  font-size : 20px;'
+						+ '}\n'
 				},
-				
-			},
+				root : {},
+				layer : {
+					style:{
+						boxShadow:'inset 0px 0px 0px 6px rgba(34, 136, 255, 0.533)',
+						zIndex : 0,
+					}}, // debug
+				menu  : {
+					class : [GENERAL],
+					css : '\n'
+						+ '/* sccm_glass_cosmetic (menu) */\n'
+						+ `.${MENU}{`
+						+ '  background-color : #00000060;'
+						+ '  gap : 2px;'
+						+ '}\n'
+				},
+				item  : {
+					class : [GENERAL, 'item'], // TODO check if 'item' is required
+					css : '\n'
+						+ '/* sccm_glass_cosmetic (item) */\n'
+						+ `.${ITEM}{`
+						+ '  padding : 4px 128px 4px 24px;'
+						+ '  border-radius: 2px;'
+						+ '  box-shadow: inset -3px -2px 9px 0px white;'
+						+ '  background: linear-gradient(to top, #00000000 0%, #FFFFFF88 100%);'
+						+ '  backdrop-filter: blur(25px);'
+						//+ '  text-shadow: -1px 0px 0px white, 1px 1px 1px black, 1px 1px 5px white;'
+						+ '  text-shadow: 1px 1px 0px white, 2px 2px 1px black;'
+						+ '  color : #00817540;'
+						+ '  font-family: Poppins, sans-serif;'
+						+ '}\n'
+						+ `.${INPATH}{`
+						+ '  background-color : orange;'
+						+ '}\n'
+						+ `.${HOVERED}{`
+						+ '  background-color : #006dfd69;'
+						+ '}\n'
+						+ `.${NOTAVAILABLE}{`
+						+ '  color : green;'
+						+ '}\n',
+				},
+				behaviors : {
+					
+					// AAA
+					openMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.remove(CLOSED);
+	
+							//stdFold_process(menu, uKey, '2px') // px : equal to padding
+							stdFoldUsingClass_process(menu, uKey, '2px') // 2 : equal to padding
+	
+							menu[uKey].elems.update_itemRects();
+						};
+					},
+					
+				},
+
+			};
 		};
 
 		// tmp glo var for settings
@@ -1395,12 +1499,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const glass_base = mix_base(
 			_base, _behav, _cssvar_(padding,border,total,time),
-			withClass_part,
-			class_sizeFitContent_part,
-			class_ptrLogic_part,
+			withClass_part(),
+			class_sizeFitContent_part(),
+			class_ptrLogic_part(),
 			//foldRight_part('2px'),
-			class_stdFold_part, // 2 px :  equal to padding
-			classFading_itemBackdrop_part_(), sccm_glass_cosmetic,
+			class_stdFold_part(), // 2 px :  equal to padding
+			classFading_itemBackdrop_part(), sccm_glass_cosmetic(),
 		);
 		const glass_baseMain = mix_base(
 
@@ -1419,150 +1523,162 @@ let SuperCustomContextMenu = {}; // API Receiver
 		
 
 
-		const sliding_behav = { // SCCM sliding style
-			// contains only differences from its base
-			behaviors : {
-				// binders
-				//
-				openMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.remove('closed');
-						menu[TMEM].slidingExtra.overlapping_onmove();
-						const offset = getComputedStyle(menu).getPropertyValue('--posOfst');
-						stdFoldUsingClassStartPos_process(menu, uKey, offset);
-						if(menu[uKey].elems.is_main()) menu[uKey].elems.update_itemRects();
+		const sliding_behav = ()=>{ // SCCM sliding style
+			const {CLOSED} = classNames;
+			return {
+				// contains only differences from its base
+				behaviors : {
+					// binders
+					//
+					openMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.remove(CLOSED);
+							menu[TMEM].slidingExtra.overlapping_onmove();
+							const offset = getComputedStyle(menu).getPropertyValue('--posOfst');
+							stdFoldUsingClassStartPos_process(menu, uKey, offset);
+							if(menu[uKey].elems.is_main()) menu[uKey].elems.update_itemRects();
+						};
+					},
+					closeMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.add(CLOSED);
+							menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP', 'TOPWIN');
+							menu[TMEM].slidingExtra.overlapping_onmove();
+						};
+					},
+				},
+			};
+		};
+
+
+
+		const overlapInterlacing_additional_inits = ()=>{
+			return {
+				// does not affect brother menus.
+				// z-index [opening/closing] and [open] patern, see :
+				// for(let i=0; i<10; i++) console.log('opening/closing : '+(3 + (i-1)*2 - 1)+'\n'+'open : '+(3 + (i)*2));
+				// orders from main to submenu chain as bg to fg.
+				// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
+				menu : (menu, uKey)=>{
+					menu[TMEM] ||= {};
+					menu[TMEM].slidingExtra = {
+						overlapping_onmove : ()=>{
+							const depth = menu[uKey].elems.get_depth();
+							menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
+						},
+						overlapping_stable : ()=>{
+							const depth = menu[uKey].elems.get_depth();
+							menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
+						},
 					};
 				},
-				closeMenu_method : (uKey)=>{
-					return (menu)=>{
-						menu.classList.add('closed');
-						menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP', 'TOPWIN');
-						menu[TMEM].slidingExtra.overlapping_onmove();
+			};
+		};
+
+
+		const sliding_additional_inits = ()=>{
+			const {CLOSED, LOCKED} = classNames;
+			return {
+				// everything optional (root/layer/menu/item)
+				menu : (menu, uKey)=>{
+	
+					const check_transitionProps = (menu,evt)=>{
+						const propList = menu[TMEM].stdFold_transitionProps;
+						if(menu === evt.composedPath().shift())
+						if(propList.includes(evt.propertyName))
+							return true;
+						return false;
 					};
+	
+					menu.addEventListener('transitionstart',e=>{
+						if(check_transitionProps(menu,e)){
+							menu[TMEM].stdFold_transitionUpdate(e.propertyName, true);
+							if(menu.classList.contains(CLOSED)){
+							}else{
+								menu.classList.add(LOCKED);
+							}
+						}
+					});
+	
+					menu.addEventListener('transitionend',e=>{
+						if(check_transitionProps(menu,e)){
+							menu[TMEM].stdFold_transitionUpdate(e.propertyName, false);
+							if(menu.classList.contains(CLOSED)){
+								if(!menu[TMEM].stdFold_isTransition)
+									menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP', '_TOPWIN');
+							}else{
+								menu[uKey].elems.update_itemRects();
+	
+								menu[TMEM].slidingExtra.overlapping_stable();
+	
+								menu.classList.remove(LOCKED);
+							}
+						}
+					});
+	
 				},
-			},
+			};
 		};
 
-
-
-		const overlapInterlacing_additional_inits = {
-			// does not affect brother menus.
-			// z-index [opening/closing] and [open] patern, see :
-			// for(let i=0; i<10; i++) console.log('opening/closing : '+(3 + (i-1)*2 - 1)+'\n'+'open : '+(3 + (i)*2));
-			// orders from main to submenu chain as bg to fg.
-			// allows interlacing without falling under zero. (zIndex<0 locks ptr event)
-			menu : (menu, uKey)=>{
-				menu[TMEM] ||= {};
-				menu[TMEM].slidingExtra = {
-					overlapping_onmove : ()=>{
+		const overlapInvertDepth_additional_inits = ()=>{
+			return {
+				// uses 2 levels of z-index by menu chain depth.
+				// opening menu z-index : its depth * 2
+				// all its brothers z-index : (its depth * 2) - 1
+				// orders from main to submenu chain as fg to bg.
+				// allows z-index logic without falling under zero. (zIndex<0 locks ptr event)
+				menu : (menu, uKey)=>{
+					const overlapping_method = ()=>{
 						const depth = menu[uKey].elems.get_depth();
-						menu[uKey].elems.get_layer().style.zIndex = 3 + (depth-1)*2 - 1;
-					},
-					overlapping_stable : ()=>{
-						const depth = menu[uKey].elems.get_depth();
-						menu[uKey].elems.get_layer().style.zIndex = 3 + depth*2;
-					},
-				};
-			},
+						const max = menu[uKey].elems.get_maxDepth();
+						const final = (max - depth) * 2;
+						menu[uKey].elems.get_upMenu()?.[uKey].elems.get_items().forEach(
+							item=>{
+								const submenu = item[uKey].elems.get_submenu();
+								if(submenu) submenu[uKey].elems.get_layer().style.zIndex = final - 1;
+							}
+						);
+						menu[uKey].elems.get_layer().style.zIndex = final;
+					};
+	
+					menu[TMEM] ||= {};
+					menu[TMEM].slidingExtra = {
+						overlapping_onmove : overlapping_method,
+						overlapping_stable : overlapping_method,
+					};
+	
+				},
+			};
 		};
 
-
-		const sliding_additional_inits = {
-			// everything optional (root/layer/menu/item)
-			menu : (menu, uKey)=>{
-
-				const check_transitionProps = (menu,evt)=>{
-					const propList = menu[TMEM].stdFold_transitionProps;
-					if(menu === evt.composedPath().shift())
-					if(propList.includes(evt.propertyName))
-						return true;
-					return false;
-				};
-
-				menu.addEventListener('transitionstart',e=>{
-					if(check_transitionProps(menu,e)){
-						menu[TMEM].stdFold_transitionUpdate(e.propertyName, true);
-						if(menu.classList.contains('closed')){
-						}else{
-							menu.classList.add('locked');
+		const slidingFollowMove_additional_inits = ()=>{
+			return {
+				// everything optional (root/layer/menu/item)
+				menu : (menu, uKey)=>{
+	
+					const check_transitionProps = (menu,evt)=>{
+						const propList = ['left','right'];
+						if(menu === evt.composedPath().shift())
+						if(propList.includes(evt.propertyName))
+							return true;
+						return false;
+					};
+	
+					const followMove = ()=>{
+						if(menu[uKey].elems.is_sub()){
+							menu[uKey].elems.get_upItem()[uKey].update_rect();
+							menu[uKey].elems.update_layerPos();
+							if(menu[TMEM].stdFold_isTransition) requestAnimationFrame( followMove );
 						}
-					}
-				});
-
-				menu.addEventListener('transitionend',e=>{
-					if(check_transitionProps(menu,e)){
-						menu[TMEM].stdFold_transitionUpdate(e.propertyName, false);
-						if(menu.classList.contains('closed')){
-							if(!menu[TMEM].stdFold_isTransition)
-								menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP', '_TOPWIN');
-						}else{
-							menu[uKey].elems.update_itemRects();
-
-							menu[TMEM].slidingExtra.overlapping_stable();
-
-							menu.classList.remove('locked');
+					};
+	
+					menu.addEventListener('transitionstart',e=>{
+						if(check_transitionProps(menu,e)){
+							followMove();
 						}
-					}
-				});
-
-			},
-		};
-
-		const overlapInvertDepth_additional_inits = {
-			// uses 2 levels of z-index by menu chain depth.
-			// opening menu z-index : its depth * 2
-			// all its brothers z-index : (its depth * 2) - 1
-			// orders from main to submenu chain as fg to bg.
-			// allows z-index logic without falling under zero. (zIndex<0 locks ptr event)
-			menu : (menu, uKey)=>{
-				const overlapping_method = ()=>{
-					const depth = menu[uKey].elems.get_depth();
-					const max = menu[uKey].elems.get_maxDepth();
-					const final = (max - depth) * 2;
-					menu[uKey].elems.get_upMenu()?.[uKey].elems.get_items().forEach(
-						item=>{
-							const submenu = item[uKey].elems.get_submenu();
-							if(submenu) submenu[uKey].elems.get_layer().style.zIndex = final - 1;
-						}
-					);
-					menu[uKey].elems.get_layer().style.zIndex = final;
-				};
-
-				menu[TMEM] ||= {};
-				menu[TMEM].slidingExtra = {
-					overlapping_onmove : overlapping_method,
-					overlapping_stable : overlapping_method,
-				};
-
-			},
-		};
-
-		const slidingFollowMove_additional_inits = {
-			// everything optional (root/layer/menu/item)
-			menu : (menu, uKey)=>{
-
-				const check_transitionProps = (menu,evt)=>{
-					const propList = ['left','right'];
-					if(menu === evt.composedPath().shift())
-					if(propList.includes(evt.propertyName))
-						return true;
-					return false;
-				};
-
-				const followMove = ()=>{
-					if(menu[uKey].elems.is_sub()){
-						menu[uKey].elems.get_upItem()[uKey].update_rect();
-						menu[uKey].elems.update_layerPos();
-						if(menu[TMEM].stdFold_isTransition) requestAnimationFrame( followMove );
-					}
-				};
-
-				menu.addEventListener('transitionstart',e=>{
-					if(check_transitionProps(menu,e)){
-						followMove();
-					}
-				});
-			},
+					});
+				},
+			};
 		};
 
 
@@ -1587,9 +1703,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// optional add : slidingFollowMove_additional_inits
 
-		// always add : onlySliding_additional_inits_ XOR
-		//              merge_stdFadingWithSliding AND stdFadingWithSliding_additional_inits_ XOR
-		//              merge_itmbdropFadingWithSliding_ AND itmbdropFadingWithSliding_additional_inits_
+		// always add : onlySliding_additional_inits XOR
+		//              merge_stdFadingWithSliding AND stdFadingWithSliding_additional_inits XOR
+		//              merge_itmbdropFadingWithSliding AND itmbdropFadingWithSliding_additional_inits
 
 
 		// tmp glo var for settings
@@ -1600,36 +1716,36 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const sliding_base = mix_base(
 			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
-			withClass_part,
-			class_sizeFitContent_part,
-			class_ptrLogic_part,
-			class_slidingStartPos_part, class_slidingStartPosMain_part, class_stdFold_part,
-			classFading_itemBackdrop_part_(), sccm_glass_cosmetic,
-			sliding_behav, merge_itmbdropFadingWithSliding_(),
-			//class_stdFoldClose_part
-			class_slidingNotLockOpen_part,
+			withClass_part(),
+			class_sizeFitContent_part(),
+			class_ptrLogic_part(),
+			class_slidingStartPos_part(), class_slidingStartPosMain_part(), class_stdFold_part(),
+			classFading_itemBackdrop_part(), sccm_glass_cosmetic(),
+			sliding_behav(), merge_itmbdropFadingWithSliding(),
+			//class_stdFoldClose_part(),
+			class_slidingNotLockOpen_part(),
 
-			class_scrollable_part, // in dev
+			class_scrollable_part(),
 		);
 
 		const sliding_baseMain = mix_base(
-			sccm_NULL, _behavMain, mainMenuClass_part,
+			sccm_NULL, _behavMain, mainMenuClass_part(),
 		);
 
 		const sliding_addonInit = stack_addonInit(
-			class_stdFoldFollowLastSens_additional_inits,
-			overlapInvertDepth_additional_inits,
-			sliding_additional_inits,
-			slidingFollowMove_additional_inits,
-			itmbdropFadingWithSliding_additional_inits_(),
+			class_stdFoldFollowLastSens_additional_inits(),
+			overlapInvertDepth_additional_inits(),
+			sliding_additional_inits(),
+			slidingFollowMove_additional_inits(),
+			itmbdropFadingWithSliding_additional_inits(),
 
 
-			stdScrollable_additional_inits, // in dev
-			stdFold_windowAsFrameRect_additional_inits_(), // in dev
+			stdScrollable_additional_inits(),
+			stdFold_windowAsFrameRect_additional_inits(), // in dev
 		);
 
 		const slidingMain_addonInit = stack_addonInit(
-			class_slidingStartPosMain_additional_inits,
+			class_slidingStartPosMain_additional_inits(),
 		);
 
 
@@ -1715,62 +1831,65 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//
 
 		// contains only differences from its base
-		const sccm_macosx_cosmetic = { // macosx style base
-			_all : {
-				css : '\n'
-				    + '.general{'
-				    + '  font-size : 15;'
-				    + '  font-family: "SF Pro", Arial, sans-serif;'
-				    + '}\n',
-			},
-			menu  : {
-				class : ['general'],
-				css : '\n'
-				    + '.menu{'
-				    + '  left : calc(100% - 1px);'
-				    + '  top : -5px;' // border 1 + padding 4
-				    + '  background-color: rgba(230, 230, 230, 0.6);'
-				    + '  backdrop-filter: blur(50px);'
-					+ '  padding : 4px 0px;'
-					+ '  border : 1px solid rgba(150, 150, 150, 0.5);'
-					+ '  border-radius : 4px;'
-					+ '  box-sizing : border-box;'
-					+ '  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.35);' // web ref
-					+ '  box-shadow: 4px 6px 12px -4px rgba(0, 0, 0, 0.35);' // my ajustement
-				    + '}\n'
-				    + '.main{'
-				    + '  left : 0px;'
-				    + '  top : 0px;'
-				    + '}\n'
-				    + '.closed{'
-				    + '  opacity : 0;'
-				    + '}\n',
-			},
-			item  : {
-				class : ['general', 'item'],
-				css : '\n'
-				    + '.item{'
-				    //+ '  background-color: rgba(230, 230, 230, 0.9);'
-				    + '  padding : 4px 128px 4px 24px;'
-				    + '}\n'
-				    + '.inPath{'
-				    + '  background-color : rgba(73, 154, 251, 1);'
-				    + '  color : white;'
-				    + '}\n'
-				    + '.hovered{'
-				    + '  background-color : rgba(73, 154, 251, 1);'
-				    + '  color : white;'
-				    + '}\n'
-				    + '.notAvailable{'
-				    + '  color : #6A6A6A;'
-				    + '}\n'
-				    + '.asSeparator{'
-				    + '  margin : 4px 0px;'
-				    + '  padding : 0px;'
-				    + '  height : 2px;'
-				    + '  background-color : rgba(150, 150, 150, 0.3);'
-				    + '}\n',
-			},
+		const sccm_macosx_cosmetic = ()=>{ // macosx style base
+			const {GENERAL, MAIN, MENU, ITEM, CLOSED, HOVERED, INPATH, NOTAVAILABLE, SEPARATOR} = classNames;
+			return {
+				_all : {
+					css : '\n'
+						+ `.${GENERAL}{`
+						+ '  font-size : 15;'
+						+ '  font-family: "SF Pro", Arial, sans-serif;'
+						+ '}\n',
+				},
+				menu  : {
+					class : [GENERAL],
+					css : '\n'
+						+ `.${MENU}{`
+						+ '  left : calc(100% - 1px);'
+						+ '  top : -5px;' // border 1 + padding 4
+						+ '  background-color: rgba(230, 230, 230, 0.6);'
+						+ '  backdrop-filter: blur(50px);'
+						+ '  padding : 4px 0px;'
+						+ '  border : 1px solid rgba(150, 150, 150, 0.5);'
+						+ '  border-radius : 4px;'
+						+ '  box-sizing : border-box;'
+						+ '  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.35);' // web ref
+						+ '  box-shadow: 4px 6px 12px -4px rgba(0, 0, 0, 0.35);' // my ajustement
+						+ '}\n'
+						+ `.${MAIN}{`
+						+ '  left : 0px;'
+						+ '  top : 0px;'
+						+ '}\n'
+						+ `.${CLOSED}{`
+						+ '  opacity : 0;'
+						+ '}\n',
+				},
+				item  : {
+					class : [GENERAL, 'item'], // TODO check if 'item' is required
+					css : '\n'
+						+ `.${ITEM}{`
+						//+ '  background-color: rgba(230, 230, 230, 0.9);'
+						+ '  padding : 4px 128px 4px 24px;'
+						+ '}\n'
+						+ `.${INPATH}{`
+						+ '  background-color : rgba(73, 154, 251, 1);'
+						+ '  color : white;'
+						+ '}\n'
+						+ `.${HOVERED}{`
+						+ '  background-color : rgba(73, 154, 251, 1);'
+						+ '  color : white;'
+						+ '}\n'
+						+ `.${NOTAVAILABLE}{`
+						+ '  color : #6A6A6A;'
+						+ '}\n'
+						+ `.${SEPARATOR}{`
+						+ '  margin : 4px 0px;'
+						+ '  padding : 0px;'
+						+ '  height : 2px;'
+						+ '  background-color : rgba(150, 150, 150, 0.3);'
+						+ '}\n',
+				},
+			};
 		};
 
 
@@ -1779,12 +1898,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const macosx_base = mix_base(
-			_base, _behav, withClass_part, class_sizeFitContent_part, class_ptrLogic_part, sccm_macosx_cosmetic
+			_base, _behav, withClass_part(), class_sizeFitContent_part(), class_ptrLogic_part(), sccm_macosx_cosmetic()
 		);
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const macosx_baseMain = mix_base(
-			sccm_NULL, _behavMain, mainMenuClass_part
+			sccm_NULL, _behavMain, mainMenuClass_part()
 		);
 
 
@@ -1792,74 +1911,84 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//
 
 		// contains only differences from its base
-		const macosxHrz_cosmetic = {
-			
-			menu : {
-				
-				css : '\n'
-				    + '.main{'
-				    + '  width : 100%;'
-				    + '  grid-auto-flow : column;'
-				    + '  justify-content : start;'
-				    + '  align-items : center;'
-				    + '  padding : 0px 16px;'
-				    + '  border-radius : 0px;'
-				    + '}\n'
-					+ '.submain{'
-				    + '  left : 0px;'
-				    + '  top : 100%;'
-				    + '}\n',
-			},
-			item : {
-				css : '\n'
-				    + '.item.mainItem{'
-				    + '  padding : 4px 12px;'
-				    + '}\n',
-			},
+		const macosxHrz_cosmetic = ()=>{
+			const {MAIN, SUBMAIN, ITEM, MAIN_ITEM} = classNames;
+			return {
+				menu : {
+					
+					css : '\n'
+						+ `.${MAIN}{`
+						+ '  width : 100%;'
+						+ '  grid-auto-flow : column;'
+						+ '  justify-content : start;'
+						+ '  align-items : center;'
+						+ '  padding : 0px 16px;'
+						+ '  border-radius : 0px;'
+						+ '}\n'
+						+ `.${SUBMAIN}{`
+						+ '  left : 0px;'
+						+ '  top : 100%;'
+						+ '}\n',
+				},
+				item : {
+					css : '\n'
+						+ `.${ITEM}.${MAIN_ITEM}{`
+						+ '  padding : 4px 12px;'
+						+ '}\n',
+				},
+			};
 		};
 
 		// contains only differences from its base
-		const macosxHrz_rectLogic = {
-			root : {
-				style : {
-					position : '', // reset from _base
+		const macosxHrz_rectLogic = ()=>{
+			return {
+				root : {
+					style : {
+						position : '', // reset from _base
+					},
 				},
-			},
+			};
 		};
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		const macosxHrz_base = mix_base(macosx_base, macosxHrz_cosmetic, macosxHrz_rectLogic);
+		const macosxHrz_base = mix_base(macosx_base, macosxHrz_cosmetic(), macosxHrz_rectLogic());
 
 		// main menu
 		//
 
-		// contains only differences from its base
-		const macosxHrz_partMain = {
-			layer : {
-				style : {
-					minWidth : '100%',
+		const macosxHrz_partMain = ()=>{
+			const {MAIN_ITEM} = classNames;
+			return {
+				// contains only differences from its base
+				layer : {
+					style : {
+						minWidth : '100%',
+					},
 				},
-			},
-			item : {
-				class : ['mainItem'],
-			},
+				item : {
+					class : [MAIN_ITEM],
+				},
+			};
 		};
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		const macosxHrz_baseMain = mix_base(macosx_baseMain, macosxHrz_partMain);
+		const macosxHrz_baseMain = mix_base(macosx_baseMain, macosxHrz_partMain());
 
 		// submain menu
 		//
 	
-		// contains only differences from its base
-		const macosxHrz_partSubmain = {
-			menu : {
-				class : ['submain']
-			},
+		const macosxHrz_partSubmain = ()=>{
+			const {SUBMAIN} = classNames;
+			return {
+				// contains only differences from its base
+				menu : {
+					class : [SUBMAIN],
+				},
+			};
 		};
 		
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
-		const macosxHrz_baseSubmain = mix_base(sccm_NULL, macosxHrz_partSubmain);
+		const macosxHrz_baseSubmain = mix_base(sccm_NULL, macosxHrz_partSubmain());
 
 
 		/*
@@ -1870,25 +1999,27 @@ let SuperCustomContextMenu = {}; // API Receiver
 		    handle.style.left     =   '0px' ;
 		    handle.style.top      =   '0px' ;
 		*/
-		const macosxHrz_setHandleConfig_part = {
+		const macosxHrz_setHandleConfig_part = ()=>{
 			// use on handle, like that :
 			//   providing.theme.macosx.get_horizontalSetHandleConfig('handle').init(handle)
-			root : {
-				style : {
-					position : 'fixed',
-					width    : '100%',
-					left     : '0px',
-					top      : '0px',
+			return {
+				root : {
+					style : {
+						position : 'fixed',
+						width    : '100%',
+						left     : '0px',
+						top      : '0px',
+					},
 				},
-			},
+			};
 		};
 
-		const macosxHrz_setHandleConfig = mix_base(sccm_NULL, macosxHrz_setHandleConfig_part);
+		const macosxHrz_setHandleConfig = mix_base(sccm_NULL, macosxHrz_setHandleConfig_part());
 
 		// macosx item separator
 		//
 
-		const macosx_setSeparatorClass = mix_base(sccm_NULL, class_itemSeparator_part);
+		const macosx_setSeparatorClass = mix_base(sccm_NULL, class_itemSeparator_part());
 		
 
 
