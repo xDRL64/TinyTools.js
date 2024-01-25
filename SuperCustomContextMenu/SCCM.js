@@ -680,12 +680,14 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// use it in an openMenu_method
 			menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP', 'TOPWIN');
 
-			const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
+			//const {RL_result,DT_result} = stdFold_checkOnly(menu, uKey, symetricOffset);
+			const {RL_result,DT_result} = stdFoldFollowLastSens_process(menu, uKey, symetricOffset);
 
 			if(RL_result.status) menu.classList.add(RL_result.sideName);
 			if(DT_result.status) menu.classList.add(DT_result.sideName);
-			// TODO manage fail case (hrz set pos 0,0 window; vrt resize and make rollable)
-			// TODO add follow last sens sys
+			else // vertical fold fail : last resort placing (downscales and makes scrollable)
+				stdFold_vrtLastResort(menu, uKey, DT_result, false);
+			// TODO manage fail case (hrz set pos 0,0 window)
 		};
 
 		const stdFoldUsingClass_processWithTransition = (menu, uKey, symetricOffset='0px')=>{  // :: left/top
@@ -705,16 +707,19 @@ let SuperCustomContextMenu = {}; // API Receiver
 			// TODO add follow last sens sys
 		};
 
-		const stdFoldUsingClassStartPos_vrtLastResort = (menu, uKey, DT_result)=>{
+		const stdFold_vrtLastResort = (menu, uKey, DT_result, startPosClass)=>{
 			const {lastResort} = DT_result;
 			const {status, sideName, cssVar} = lastResort;
 
 			menu.style.setProperty(cssVar.name, cssVar.value);
-			menu.classList.add(sideName, '_'+sideName);
+			menu.classList.add(sideName,);
+			if(startPosClass) menu.classList.add('_'+sideName);
 
 			if(!status){ // last resort is not enough : then downscaling process
-				const frameHeight = menu[TMEM].stdFold_frameRect.get().h;
-				menu[TMEM].stdScroll?.rescale_height(frameHeight + -16 + 'px');
+				if(menu[TMEM].stdScroll){
+					const frameHeight = menu[TMEM].stdFold_frameRect.get().h;
+					menu[TMEM].stdScroll.rescale_height(frameHeight + -16 + 'px');
+				}
 			}
 		};
 
@@ -747,7 +752,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				else{} // TODO manage fail case (hrz set pos 0,0 window)
 				if(DT_result.status) menu.classList.add('_'+DT_result.sideName);
 				else // vertical fold fail : last resort placing (downscales and makes scrollable)
-					stdFoldUsingClassStartPos_vrtLastResort(menu, uKey, DT_result);
+					stdFold_vrtLastResort(menu, uKey, DT_result, true);
 				
 				core.atNextLoop(_apply);
 				
@@ -1605,6 +1610,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			class_ptrLogic_part(), sccm_default_cosmetic(),
 			class_displayLogic_part(), classFading_standard_part(),
 			class_stdFold_part(), stdFold_behav(),
+
+			class_scrollable_part(),
 		);
 		const default_baseMain = mix_base(
 			sccm_NULL, _behavMain, mainMenuClass_part(),
@@ -1612,6 +1619,10 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const default_addonInit = stack_addonInit(
 			overlapInterlacing_additional_inits(),
+			class_stdFoldFollowLastSens_additional_inits(),
+
+			stdScrollable_additional_inits(),
+			stdFold_windowAsFrameRect_additional_inits(),
 		);
 
 
@@ -1760,6 +1771,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//              merge_stdFadingWithSliding AND stdFadingWithSliding_additional_inits XOR
 		//              merge_itmbdropFadingWithSliding AND itmbdropFadingWithSliding_additional_inits
 
+		// optional add : stdScrollable_additional_inits AND stdFold_windowAsFrameRect_additional_inits
 
 		// tmp glo var for settings
 		padding = '2px';
@@ -1794,7 +1806,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 
 			stdScrollable_additional_inits(),
-			stdFold_windowAsFrameRect_additional_inits(), // in dev
+			stdFold_windowAsFrameRect_additional_inits(),
 		);
 
 		const slidingMain_addonInit = stack_addonInit(
