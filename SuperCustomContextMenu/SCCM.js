@@ -897,6 +897,37 @@ let SuperCustomContextMenu = {}; // API Receiver
 			};
 		};
 
+		const overlapInvertDepth_additional_inits = ()=>{
+			return {
+				// uses 2 levels of z-index by menu chain depth.
+				// opening menu z-index : its depth * 2
+				// all its brothers z-index : (its depth * 2) - 1
+				// orders from main to submenu chain as fg to bg.
+				// allows z-index logic without falling under zero. (zIndex<0 locks ptr event)
+				menu : (menu, uKey)=>{
+					const overlapping_method = ()=>{
+						const depth = menu[uKey].elems.get_depth();
+						const max = menu[uKey].elems.get_maxDepth();
+						const final = (max - depth) * 2;
+						menu[uKey].elems.get_upMenu()?.[uKey].elems.get_items().forEach(
+							item=>{
+								const submenu = item[uKey].elems.get_submenu();
+								if(submenu) submenu[uKey].elems.get_layer().style.zIndex = final - 1;
+							}
+						);
+						menu[uKey].elems.get_layer().style.zIndex = final;
+					};
+	
+					menu[TMEM] ||= {};
+					menu[TMEM].slidingExtra = {
+						overlapping_onmove : overlapping_method,
+						overlapping_stable : overlapping_method,
+					};
+	
+				},
+			};
+		};
+
 
 		// sliding effect
 
@@ -944,6 +975,109 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ '._TOPWIN{'
 						+ `  top : var(--topwinOfst);`
 						+ '}\n',
+				},
+			};
+		};
+
+		const sliding_behav = ()=>{ // SCCM sliding style
+			const {CLOSED} = classNames;
+			return {
+				// contains only differences from its base
+				behaviors : {
+					// binders
+					//
+					openMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.remove(CLOSED);
+							menu[TMEM].slidingExtra.overlapping_onmove();
+							const offset = getComputedStyle(menu).getPropertyValue('--posOfst');
+							stdFoldUsingClassStartPos_process(menu, uKey, offset);
+							if(menu[uKey].elems.is_main()) menu[uKey].elems.update_itemRects();
+						};
+					},
+					closeMenu_method : (uKey)=>{
+						return (menu)=>{
+							menu.classList.add(CLOSED);
+							menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP', 'TOPWIN');
+							menu[TMEM].slidingExtra.overlapping_onmove();
+						};
+					},
+				},
+			};
+		};
+
+		const sliding_additional_inits = ()=>{
+			const {CLOSED, LOCKED} = classNames;
+			return {
+				// everything optional (root/layer/menu/item)
+				menu : (menu, uKey)=>{
+	
+					const check_transitionProps = (menu,evt)=>{
+						const propList = menu[TMEM].stdFold_transitionProps;
+						if(menu === evt.composedPath().shift())
+						if(propList.includes(evt.propertyName))
+							return true;
+						return false;
+					};
+	
+					menu.addEventListener('transitionstart',e=>{
+						if(check_transitionProps(menu,e)){
+							menu[TMEM].stdFold_transitionUpdate(e.propertyName, true);
+							if(menu.classList.contains(CLOSED)){
+							}else{
+								menu.classList.add(LOCKED);
+							}
+						}
+					});
+	
+					menu.addEventListener('transitionend',e=>{
+						if(check_transitionProps(menu,e)){
+							menu[TMEM].stdFold_transitionUpdate(e.propertyName, false);
+							if(menu.classList.contains(CLOSED)){
+								if(!menu[TMEM].stdFold_isTransition)
+									menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP', '_TOPWIN');
+							}else{
+								menu[uKey].elems.update_itemRects();
+	
+								menu[TMEM].slidingExtra.overlapping_stable();
+	
+								menu.classList.remove(LOCKED);
+							}
+						}
+					});
+	
+				},
+			};
+		};
+
+		// sliding submenus (optional)
+
+		const slidingFollowMove_additional_inits = ()=>{ // submenus follow upmenu moves
+			return {
+				// everything optional (root/layer/menu/item)
+				menu : (menu, uKey)=>{
+	
+					const check_transitionProps = (menu,evt)=>{
+						const propList = ['left','right'];
+						if(menu === evt.composedPath().shift())
+						if(propList.includes(evt.propertyName))
+							return true;
+						return false;
+					};
+	
+					const followMove = ()=>{
+						if(menu[uKey].elems.is_sub()){
+							menu[uKey].elems.get_upItem()[uKey].update_rect();
+							menu[uKey].elems.update_layerPos();
+							if(menu[TMEM].stdFold_isTransition) requestAnimationFrame( followMove );
+						}
+					};
+	
+					menu.addEventListener('transitionstart',e=>{
+						if(check_transitionProps(menu,e)){
+							followMove();
+						}
+					});
 				},
 			};
 		};
@@ -1571,19 +1705,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ '}\n',
 				},
 				behaviors : {
-					
-					// AAA
-					openMenu_method : (uKey)=>{
-						return (menu)=>{
-							menu.classList.remove(CLOSED);
-	
-							//stdFold_process(menu, uKey, '2px') // px : equal to padding
-							stdFoldUsingClass_process(menu, uKey, '2px') // 2 : equal to padding
-	
-							menu[uKey].elems.update_itemRects();
-						};
-					},
-					
 				},
 
 			};
@@ -1601,7 +1722,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			class_sizeFitContent_part(),
 			class_ptrLogic_part(),
 			//foldRight_part('2px'),
-			class_stdFold_part(), // 2 px :  equal to padding
+			stdFold_behav(), class_stdFold_part(), // 2 px :  equal to padding
 			classFading_itemBackdrop_part(), sccm_glass_cosmetic(),
 		);
 		const glass_baseMain = mix_base(
@@ -1621,142 +1742,16 @@ let SuperCustomContextMenu = {}; // API Receiver
 		
 
 
-		const sliding_behav = ()=>{ // SCCM sliding style
-			const {CLOSED} = classNames;
-			return {
-				// contains only differences from its base
-				behaviors : {
-					// binders
-					//
-					openMenu_method : (uKey)=>{
-						return (menu)=>{
-							menu.classList.remove(CLOSED);
-							menu[TMEM].slidingExtra.overlapping_onmove();
-							const offset = getComputedStyle(menu).getPropertyValue('--posOfst');
-							stdFoldUsingClassStartPos_process(menu, uKey, offset);
-							if(menu[uKey].elems.is_main()) menu[uKey].elems.update_itemRects();
-						};
-					},
-					closeMenu_method : (uKey)=>{
-						return (menu)=>{
-							menu.classList.add(CLOSED);
-							menu.classList.remove('RIGHT', 'LEFT', 'DOWN', 'TOP', 'TOPWIN');
-							menu[TMEM].slidingExtra.overlapping_onmove();
-						};
-					},
-				},
-			};
-		};
+		
 
 
 
 		
 
 
-		const sliding_additional_inits = ()=>{
-			const {CLOSED, LOCKED} = classNames;
-			return {
-				// everything optional (root/layer/menu/item)
-				menu : (menu, uKey)=>{
-	
-					const check_transitionProps = (menu,evt)=>{
-						const propList = menu[TMEM].stdFold_transitionProps;
-						if(menu === evt.composedPath().shift())
-						if(propList.includes(evt.propertyName))
-							return true;
-						return false;
-					};
-	
-					menu.addEventListener('transitionstart',e=>{
-						if(check_transitionProps(menu,e)){
-							menu[TMEM].stdFold_transitionUpdate(e.propertyName, true);
-							if(menu.classList.contains(CLOSED)){
-							}else{
-								menu.classList.add(LOCKED);
-							}
-						}
-					});
-	
-					menu.addEventListener('transitionend',e=>{
-						if(check_transitionProps(menu,e)){
-							menu[TMEM].stdFold_transitionUpdate(e.propertyName, false);
-							if(menu.classList.contains(CLOSED)){
-								if(!menu[TMEM].stdFold_isTransition)
-									menu.classList.remove('_RIGHT', '_LEFT', '_DOWN', '_TOP', '_TOPWIN');
-							}else{
-								menu[uKey].elems.update_itemRects();
-	
-								menu[TMEM].slidingExtra.overlapping_stable();
-	
-								menu.classList.remove(LOCKED);
-							}
-						}
-					});
-	
-				},
-			};
-		};
+		
 
-		const overlapInvertDepth_additional_inits = ()=>{
-			return {
-				// uses 2 levels of z-index by menu chain depth.
-				// opening menu z-index : its depth * 2
-				// all its brothers z-index : (its depth * 2) - 1
-				// orders from main to submenu chain as fg to bg.
-				// allows z-index logic without falling under zero. (zIndex<0 locks ptr event)
-				menu : (menu, uKey)=>{
-					const overlapping_method = ()=>{
-						const depth = menu[uKey].elems.get_depth();
-						const max = menu[uKey].elems.get_maxDepth();
-						const final = (max - depth) * 2;
-						menu[uKey].elems.get_upMenu()?.[uKey].elems.get_items().forEach(
-							item=>{
-								const submenu = item[uKey].elems.get_submenu();
-								if(submenu) submenu[uKey].elems.get_layer().style.zIndex = final - 1;
-							}
-						);
-						menu[uKey].elems.get_layer().style.zIndex = final;
-					};
-	
-					menu[TMEM] ||= {};
-					menu[TMEM].slidingExtra = {
-						overlapping_onmove : overlapping_method,
-						overlapping_stable : overlapping_method,
-					};
-	
-				},
-			};
-		};
-
-		const slidingFollowMove_additional_inits = ()=>{
-			return {
-				// everything optional (root/layer/menu/item)
-				menu : (menu, uKey)=>{
-	
-					const check_transitionProps = (menu,evt)=>{
-						const propList = ['left','right'];
-						if(menu === evt.composedPath().shift())
-						if(propList.includes(evt.propertyName))
-							return true;
-						return false;
-					};
-	
-					const followMove = ()=>{
-						if(menu[uKey].elems.is_sub()){
-							menu[uKey].elems.get_upItem()[uKey].update_rect();
-							menu[uKey].elems.update_layerPos();
-							if(menu[TMEM].stdFold_isTransition) requestAnimationFrame( followMove );
-						}
-					};
-	
-					menu.addEventListener('transitionstart',e=>{
-						if(check_transitionProps(menu,e)){
-							followMove();
-						}
-					});
-				},
-			};
-		};
+		
 
 
 
