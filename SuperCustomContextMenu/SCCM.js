@@ -1226,8 +1226,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 				menu : (menu, uKey)=>{
 					menu[TMEM] ||= {};
 					menu[TMEM].stdFold_transitionProps = ['left','right'];
-					//menu[TMEM].stdFold_transitionFull = `left ${time}, right ${time}`;
-					//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
 					menu[TMEM].stdFold_startPosLock = 'none'; // remove transition that affect position
 					menu[TMEM].stdFold_transitionings = {'left':false,'right':false};
 					menu[TMEM].stdFold_isTransition = false;
@@ -1244,9 +1242,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return {
 				// contains only differences from its base
 				menu : {
-					/* style : {
-						transition : `opacity ${time}, left ${time}, translate ${time}`,
-					}, */
 					css : '\n'
 					+ '/* merge_stdFadingWithSliding */\n'
 					+ `.${MENU}{`
@@ -1261,8 +1256,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 				menu : (menu, uKey)=>{
 					menu[TMEM] ||= {};
 					menu[TMEM].stdFold_transitionProps = ['left','right','opacity'];
-					//menu[TMEM].stdFold_transitionFull = `opacity ${time}, left ${time}, right ${time}`;
-					//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
 					menu[TMEM].stdFold_startPosLock = `opacity ${time}`; // remove transition that affect position
 					menu[TMEM].stdFold_transitionings = {'left':false,'right':false,'opacity':false};
 					menu[TMEM].stdFold_isTransition = false;
@@ -1279,9 +1272,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 			return {
 				// contains only differences from its base
 				menu : {
-					/* style : {
-						transition : `background-color ${time}, left ${time}, translate ${time}`,
-					}, */
 					css : '\n'
 					+ '/* merge_itmbdropFadingWithSliding */\n'
 					+ `.${MENU}{`
@@ -1296,8 +1286,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 				menu : (menu, uKey)=>{
 					menu[TMEM] ||= {};
 					menu[TMEM].stdFold_transitionProps = ['left','right','background-color'];
-					//menu[TMEM].stdFold_transitionFull = `background-color ${time}, left ${time}, right ${time}`;
-					//menu[TMEM].stdFold_transitionSlide = `left ${time}, right ${time}`;
 					menu[TMEM].stdFold_startPosLock = `background-color ${time}`; // remove transition that affect position
 					menu[TMEM].stdFold_transitionings = {'left':false,'right':false,'background-color':false};
 					menu[TMEM].stdFold_isTransition = false;
@@ -1580,14 +1568,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ `.${MENU}{`
 						+ '  background-color : grey;'
 						+ '  gap : 2px;'
-						//+ '  top : -2px;'
-						+ '}\n'
-						//+ `.${MAIN}{`
-						//+ '  top : 0px;'
-						//+ '}\n'
-						//+ `.${CLOSED}{`
-						//+ '  opacity : 0.2;'
-						//+ '}\n',
+						+ '}\n',
 				},
 				item  : {
 					class : [GENERAL],
@@ -1864,7 +1845,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ '  box-shadow: 5px 5px 4px -3px #00000080;' // respects inside corners shadow pixel offset  / using shadow to get perfect result
 						+ '}\n'
 						+ `.${CLOSED}{`
-						+ '  opacity : 0;'
+						+ '  opacity : 0;' // TODO remove it and update base
 						+ '}\n',
 				},
 				item  : {
