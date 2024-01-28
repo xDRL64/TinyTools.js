@@ -439,8 +439,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 			MAIN_ITEM    : 'mainItem',
 		};
 
-		const withClass_part = ()=>{ // class settings :: +[class.menu/item], *[behav.all-replace]
-			const {MENU, ITEM, CLOSED, HOVERED, INPATH, NOTAVAILABLE} = classNames;
+		const class_base = ()=>{ // class settings :: +[class.menu/item]
+			const {MENU, ITEM} = classNames;
 			return {
 				// contains only differences from its base
 				menu : {
@@ -449,6 +449,12 @@ let SuperCustomContextMenu = {}; // API Receiver
 				item : {
 					class : [ITEM],
 				},
+			};
+		};
+		const class_behav = ()=>{ // class settings :: *[behav.all-replace]
+			const {CLOSED, HOVERED, INPATH, NOTAVAILABLE} = classNames;
+			return {
+				// contains only differences from its base
 				behaviors : {
 					// binders
 					//
@@ -1508,7 +1514,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//const _baseMain = mix_base(_base, _behavMain);
 
 
-		const class_base = mix_base(_base, _behav, withClass_part(), class_sizeFitContent_part());
+		const _class_base = mix_base(
+			_base, _behav, class_base(), class_behav(), class_sizeFitContent_part()
+		);
 
 
 
@@ -1520,7 +1528,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		
 		const empty_base = mix_base(_base, _behav, foldRight_part());
 
-		const emptyClass_base = mix_base(class_base, foldRight_part());
+		const emptyClass_base = mix_base(_class_base, foldRight_part());
 
 		
 
@@ -1606,7 +1614,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const default_base = mix_base(
 			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
-			withClass_part(), class_sizeFitContent_part(),
+			class_base(), class_behav(), class_sizeFitContent_part(),
 			class_ptrLogic_part(), sccm_default_cosmetic(),
 			class_displayLogic_part(), classFading_standard_part(),
 			class_stdFold_part(), stdFold_behav(),
@@ -1710,7 +1718,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const glass_base = mix_base(
 			_base, _behav, _cssvar_(padding,border,total,time),
-			withClass_part(),
+			class_base(), class_behav(),
 			class_sizeFitContent_part(),
 			class_ptrLogic_part(),
 			//foldRight_part('2px'),
@@ -1749,7 +1757,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// sliding possible conf :
 
-		// base add : _base AND _behav AND _cssvar_ AND withClass_part AND class_ptrLogic_part AND class_sizeFitContent_part
+		// base add : _base AND _behav AND _cssvar_ AND class_base AND class_behav AND class_ptrLogic_part AND class_sizeFitContent_part
 
 		// always add : class_stdFold_part AND class_slidingStartPos_part
 
@@ -1781,7 +1789,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		const sliding_base = mix_base(
 			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
-			withClass_part(),
+			class_base(), class_behav(),
 			class_sizeFitContent_part(),
 			class_ptrLogic_part(),
 			class_slidingStartPos_part(), class_slidingStartPosMain_part(), class_stdFold_part(),
@@ -1823,7 +1831,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//
 
 		// contains only differences from its base
-		const win10_base_OLD = mix_base(class_base, { // win10 style base
+		const win10_base_OLD = mix_base(_class_base, { // win10 style base
 			menu : {
 				style : {
 					left : 'calc(100% - 3px)',
@@ -1886,7 +1894,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		};
 
 		// win10 style base
-		const win10_base = mix_base(class_base, win10_cosmetic());
+		const win10_base = mix_base(_class_base, win10_cosmetic());
 
 
 
@@ -1967,7 +1975,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const macosx_base = mix_base(
-			_base, _behav, withClass_part(), class_sizeFitContent_part(), class_ptrLogic_part(), sccm_macosx_cosmetic()
+			_base, _behav, class_base(), class_behav(), class_sizeFitContent_part(), class_ptrLogic_part(), sccm_macosx_cosmetic()
 		);
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
