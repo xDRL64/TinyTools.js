@@ -595,7 +595,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// classMain
 
-		const mainMenuClass_part = ()=>{ // add class main :: +[class.menu.main]
+		const class_baseMain = ()=>{ // add class main :: +[class.menu.main]
 			const {MAIN} = classNames;
 			return {
 				// contains only differences from its base
@@ -1622,7 +1622,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			class_scrollable_part(),
 		);
 		const default_baseMain = mix_base(
-			sccm_NULL, _behavMain, mainMenuClass_part(),
+			sccm_NULL, _behavMain, class_baseMain(),
 		);
 
 		const default_addonInit = stack_addonInit(
@@ -1801,7 +1801,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		);
 
 		const sliding_baseMain = mix_base(
-			sccm_NULL, _behavMain, mainMenuClass_part(),
+			sccm_NULL, _behavMain, class_baseMain(),
 		);
 
 		const sliding_addonInit = stack_addonInit(
@@ -1979,7 +1979,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const macosx_baseMain = mix_base(
-			sccm_NULL, _behavMain, mainMenuClass_part()
+			sccm_NULL, _behavMain, class_baseMain()
 		);
 
 
