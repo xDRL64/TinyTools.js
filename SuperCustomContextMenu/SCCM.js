@@ -424,6 +424,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			itemSeparator : 'asSeparator',
 			// TODO defines the rest
 			GENERAL      : 'general',
+			HORIZONTAL   : 'horizontal',
 			MAIN         : 'main',
 			SUBMAIN      : 'submain',
 			MENU         : 'menu',
@@ -436,7 +437,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 			LOCKED       : 'locked',
 			//
 			OPEN         : 'open',
-			MAIN_ITEM    : 'mainItem',
 		};
 
 		const class_base = ()=>{ // class settings :: +[class.menu/item]
@@ -1219,7 +1219,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ '  opacity : 1;'
 						+ `  transition : opacity ${time};`
 						+ '}\n'
-						+ `.${CLOSED} .${ITEM}{` // items in a closed menu
+						+ `.${CLOSED} .${ITEM}{` // items in a closed menu // TODO : maybe use '>' instead ' ' selector constraint
 						+ '  opacity : 0;'
 						+ '}\n',
 				},
@@ -1343,7 +1343,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ `.${ITEM}.scrollControl.below{`
 						+ '  bottom: 0px;'
 						+ '}\n'
-						+ `.scrollable .${ITEM}.scrollControl{`
+						+ `.scrollable .${ITEM}.scrollControl{` // TODO : maybe use '>' instead ' ' selector constraint
 						+ '  display: unset;'
 						+ '}\n'
 						
@@ -1907,7 +1907,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//
 
 		// contains only differences from its base
-		const sccm_macosx_cosmetic = ()=>{ // macosx style base
+		const macosx_cosmetic = ()=>{ // macosx style base
 			const {GENERAL, MAIN, MENU, ITEM, CLOSED, HOVERED, INPATH, NOTAVAILABLE, SEPARATOR} = classNames;
 			return {
 				_all : {
@@ -1941,7 +1941,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ '}\n',
 				},
 				item  : {
-					class : [GENERAL, 'item'], // TODO check if 'item' is required
+					class : [GENERAL],
 					css : '\n'
 						+ `.${ITEM}{`
 						//+ '  background-color: rgba(230, 230, 230, 0.9);'
@@ -1974,7 +1974,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const macosx_base = mix_base(
-			_base, _behav, class_base(), class_behav(), class_sizeFitContent_part(), class_ptrLogic_part(), sccm_macosx_cosmetic()
+			_base, _behav, class_base(), class_behav(),
+			class_sizeFitContent_part(), class_ptrLogic_part(), macosx_cosmetic()
 		);
 
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
@@ -1988,7 +1989,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// contains only differences from its base
 		const macosxHrz_cosmetic = ()=>{
-			const {MAIN, SUBMAIN, ITEM, MAIN_ITEM} = classNames;
+			const {MAIN, SUBMAIN, ITEM, HORIZONTAL} = classNames;
 			return {
 				menu : {
 					
@@ -2008,7 +2009,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 				},
 				item : {
 					css : '\n'
-						+ `.${ITEM}.${MAIN_ITEM}{`
+						+ `.${HORIZONTAL}>.${ITEM}{`
 						+ '  padding : 4px 12px;'
 						+ '}\n',
 				},
@@ -2033,7 +2034,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		//
 
 		const macosxHrz_partMain = ()=>{
-			const {MAIN_ITEM} = classNames;
+			const {HORIZONTAL} = classNames;
 			return {
 				// contains only differences from its base
 				layer : {
@@ -2041,8 +2042,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 						minWidth : '100%',
 					},
 				},
-				item : {
-					class : [MAIN_ITEM],
+				menu : {
+					class : [HORIZONTAL],
 				},
 			};
 		};
