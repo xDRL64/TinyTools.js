@@ -618,7 +618,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// basic position
 
-		const foldRight_part = (offset='0px')=>{ // set submenu position :: +[style.menu.left:100%+offset]
+		const openRight_part = (offset='0px')=>{ // set submenu position :: +[style.menu.left:100%+offset]
 			const {} = classNames;
 			return {
 				// contains only differences from its base
@@ -632,11 +632,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 		
 		// basic position main
 
-		const openRight_part = ()=>{ // set main menu position :: +[style.menu.left:'']
+		const openRight_partMain = ()=>{ // set main menu position :: +[style.menu.left:'']
 			const {} = classNames;
 			return {
 				// contains only differences from its base
-				menu : { // use in main menu case to overwrite foldRight_part
+				menu : { // use in main menu case to overwrite openRight_part
 					style : {
 						left : '', // TODO test with '0%' instead
 					},
@@ -1526,9 +1526,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 		// EMPTY THEME
 		//
 		
-		const empty_base = mix_base(_base, _behav, foldRight_part());
+		const empty_base = mix_base(_base, _behav, openRight_part());
 
-		const emptyClass_base = mix_base(_class_base, foldRight_part());
+		const emptyClass_base = mix_base(_class_base, openRight_part());
 
 		
 
@@ -1721,7 +1721,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 			class_base(), class_behav(),
 			class_sizeFitContent_part(),
 			class_ptrLogic_part(),
-			//foldRight_part('2px'),
 			stdFold_behav(), class_stdFold_part(), // 2 px :  equal to padding
 			classFading_itemBackdrop_part(), sccm_glass_cosmetic(),
 		);
