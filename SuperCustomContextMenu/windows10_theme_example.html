@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>sccm original default theme example</title>
+	<title>windows 10 theme example</title>
 	<script src="SCCM.js"></script>
 	<style>
 		html{
@@ -38,12 +38,12 @@
 	const theme = SCCM.providing.theme;
 
 	// context menu theme
-	theme.sccmOriginal.set_default(api_key);
-	theme.sccmOriginal.set_defaultMain(api_key);
+	theme.windows10.set_default(api_key);
+	theme.windows10.set_defaultMain(api_key);
 
 
-	const _default = theme.sccmOriginal.get_default();
-	const _defaultMain = theme.sccmOriginal.get_defaultMain('menu');
+	const win10 = theme.windows10.get_default();
+	const win10Main = theme.windows10.get_defaultMain('menu');
 
 	//const {css,  initELEM, behavior      } = theme.group.get_[themeName]();
 	//const {init, behavior, layerInit:null} = theme.group.get_[themeName](specifyElem);
@@ -51,14 +51,19 @@
 	//const {init,                         } = theme.group.get_[themeName]('handle');
 
 
+	// item separator
+	//
+	
+	theme.windows10.set_separator(api_key);
+	const themeSeparator = theme.windows10.get_separator('separator');
 	const separator = {
-		 settings:{init:e=>e.classList.add('asSeparator'), check}, content:()=>{}, 
+		 settings:{...themeSeparator, check}, content:()=>{}, 
 	};
 
 	const sccmTemplate = {
-		settings : _default,
+		settings : win10,
 		mainMenu : {
-			settings:{id:'main', ..._defaultMain},
+			settings:{id:'main', ...win10Main},
 			items : [
 				// settings{id, txt, check, update, init, behavior}
 				{ settings:{id:'a1',txt:'item'}, content:()=>{}, },

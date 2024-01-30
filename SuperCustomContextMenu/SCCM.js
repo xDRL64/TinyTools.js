@@ -1839,6 +1839,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		});
 
+		// WIN10 THEMES [ITEM SEPARATOR]
+		const win10_itemSeparator_base = mix_base(sccm_NULL, class_itemSeparator_part());
+
 		// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 		const win10_cosmetic = ()=>{ // win10 style
 			const {GENERAL, MAIN, MENU, ITEM, CLOSED, HOVERED, INPATH, NOTAVAILABLE, SEPARATOR} = classNames;
@@ -1846,7 +1849,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 				_all : {
 					css : '\n'
 						+ `.${GENERAL}{`
-						+ '  font-size : 12;'
+						+ '  padding : var(--padding);'
+						+ '  font-size : 12px;'
 						+ '  font-family: "Segoe UI", Arial, sans-serif;'
 						+ '}\n',
 				},
@@ -1857,22 +1861,22 @@ let SuperCustomContextMenu = {}; // API Receiver
 					css : '\n'
 						+ `.${MENU}{`
 						+ '  background-color : #EEEEEE;'
-						+ '  padding : 2px;'
+						//+ '  padding : 2px;'
 						+ '  border : 1px solid #A0A0A0;'
 						+ '  box-sizing : border-box;'
 						+ '  box-shadow: 5px 5px 5px -5px black;'     // respects outside corners shadow pixel offset \ Use a pseudo elem ::before
 						+ '  box-shadow: 5px 5px 4px -3px #00000080;' // respects inside corners shadow pixel offset  / using shadow to get perfect result
-						+ '}\n'
-						+ `.${CLOSED}{`
-						+ '  opacity : 0;' // TODO remove it and update base
 						+ '}\n',
+						/* + `.${CLOSED}{`
+						+ '  opacity : 0;' // TODO remove it and update base
+						+ '}\n', */
 				},
 				item  : {
-					class : [GENERAL, 'item'], // TODO check if 'item' is required
+					class : [GENERAL],
 					css : '\n'
 						+ `.${ITEM}{`
 						+ '  background-color : #EEEEEE;'
-						+ '  padding : 4 128 4 32;'
+						+ '  padding : 4px 128px 4px 32px;'
 						//+ '  mix-blend-mode: darken;'
 						+ '}\n'
 						+ `.${INPATH}{`
@@ -1884,7 +1888,13 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ `.${NOTAVAILABLE}{`
 						//+ '  color : #6D6D6D;'
 						+ '  color : #6A6A6A;'
-						+ '}\n',
+						+ '}\n'
+						+ `.${SEPARATOR}{`
+						+ '  background-color : #A0A0A0;'
+						+ '  margin: 4px 10px;'
+						+ '  height : 1px;'
+						+ '  padding : 0px;'
+						+ '}\n'
 				},
 				behaviors : {
 					
@@ -1892,8 +1902,31 @@ let SuperCustomContextMenu = {}; // API Receiver
 			};
 		};
 
+		// tmp glo var for settings
+		padding = '2px';
+		border  = '0px';
+		total   = '2px';
+		time    = '1s';
+
 		// win10 style base
-		const win10_base = mix_base(_class_base, win10_cosmetic());
+		//const win10_base = mix_base(_class_base, win10_cosmetic());
+
+		const win10_base = mix_base(
+			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
+			class_base(), class_behav(), class_sizeFitContent_part(),
+			class_ptrLogic_part(), win10_cosmetic(),
+			class_displayLogic_part(),
+			class_stdFold_part(), stdFold_behav(),
+		);
+
+		const win10_baseMain = mix_base(
+			sccm_NULL, _behavMain, class_baseMain(),
+		);
+
+		const win10_addonInit = stack_addonInit(
+			overlapInterlacing_additional_inits(),
+			class_stdFoldFollowLastSens_additional_inits(),
+		);
 
 
 
@@ -2009,7 +2042,8 @@ let SuperCustomContextMenu = {}; // API Receiver
 				},
 				item : {
 					css : '\n'
-						+ `.${HORIZONTAL}>.${ITEM}{`
+						//+ `.${HORIZONTAL}>.${ITEM}{`
+						+ `.${HORIZONTAL}.${ITEM}{`
 						+ '  padding : 4px 12px;'
 						+ '}\n',
 				},
@@ -2043,6 +2077,9 @@ let SuperCustomContextMenu = {}; // API Receiver
 					},
 				},
 				menu : {
+					class : [HORIZONTAL],
+				},
+				item : {
 					class : [HORIZONTAL],
 				},
 			};
@@ -2130,8 +2167,11 @@ let SuperCustomContextMenu = {}; // API Receiver
 				separator : make_themeGenerator(original_itemSeparator_base, sccm_NULL),
 			},
 			windows10 : {
-				default : make_themeGenerator(win10_base, sccm_NULL),
+				default : make_themeGenerator(win10_base, sccm_NULL, win10_addonInit),
+				defaultMain : make_themeGenerator(win10_base, win10_baseMain),
 				noFading : null,
+				//
+				separator : make_themeGenerator(win10_itemSeparator_base, sccm_NULL),
 			},
 			macosx : {
 				default     : make_themeGenerator(macosx_base, sccm_NULL),
