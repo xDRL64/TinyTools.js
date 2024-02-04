@@ -394,7 +394,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			},
 		};
 
-		const _cssvar_ = (sympetricPadding, symetricBorder, totalOffset, transitionTime)=>({
+		const _cssvar = (sympetricPadding, symetricBorder, totalOffset, transitionTime)=>({
 			// args : css expression/value (accepts units and functions)
 			// MUST HAVE AT LEAST ALL TYPES (_all/root/layer/menu/item/behaviors) EVENT IF ARE EMPTY
 			_all  : {
@@ -403,7 +403,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			root  : {
 				class : ['sccmRoot'],
 				css : '\n'
-				    + '/* _cssvar_ (_all) */\n'
+				    + '/* _cssvar (_all) */\n'
 				    + '.sccmRoot{'
 				    + `  --padding : ${sympetricPadding||'0px'};`
 					+ `  --border : ${symetricBorder||'0px'};`
@@ -718,7 +718,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 			const {status, sideName, cssVar} = lastResort;
 
 			menu.style.setProperty(cssVar.name, cssVar.value);
-			menu.classList.add(sideName,);
+			menu.classList.add(sideName);
 			if(startPosClass) menu.classList.add('_'+sideName);
 
 			if(!status){ // last resort is not enough : then downscaling process
@@ -799,7 +799,6 @@ let SuperCustomContextMenu = {}; // API Receiver
 			if(hrzRes.status) menu[TMEM].stdFold_followLastSens.current = hrzRes.sideName;
 		};
 		
-
 		const class_stdFold_part = ()=>{
 			const {MAIN} = classNames;
 			return {
@@ -1613,7 +1612,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		time    = '1s';
 
 		const default_base = mix_base(
-			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
+			_base, _behav, _cssvar(padding,border,total,time), // padd/bord/total
 			class_base(), class_behav(), class_sizeFitContent_part(),
 			class_ptrLogic_part(), sccm_default_cosmetic(),
 			class_displayLogic_part(), classFading_standard_part(),
@@ -1717,7 +1716,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		time    = '1s';
 
 		const glass_base = mix_base(
-			_base, _behav, _cssvar_(padding,border,total,time),
+			_base, _behav, _cssvar(padding,border,total,time),
 			class_base(), class_behav(),
 			class_sizeFitContent_part(),
 			class_ptrLogic_part(),
@@ -1756,7 +1755,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 
 		// sliding possible conf :
 
-		// base add : _base AND _behav AND _cssvar_ AND class_base AND class_behav AND class_ptrLogic_part AND class_sizeFitContent_part
+		// base add : _base AND _behav AND _cssvar AND class_base AND class_behav AND class_ptrLogic_part AND class_sizeFitContent_part
 
 		// always add : class_stdFold_part AND class_slidingStartPos_part
 
@@ -1787,7 +1786,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		time    = '1s';
 
 		const sliding_base = mix_base(
-			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
+			_base, _behav, _cssvar(padding,border,total,time), // padd/bord/total
 			class_base(), class_behav(),
 			class_sizeFitContent_part(),
 			class_ptrLogic_part(),
@@ -1862,7 +1861,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 						+ `.${MENU}{`
 						+ '  background-color : #EEEEEE;'
 						//+ '  padding : 2px;'
-						+ '  border : 1px solid #A0A0A0;'
+						+ `  border : var(--border) solid #A0A0A0;`
 						+ '  box-sizing : border-box;'
 						+ '  box-shadow: 5px 5px 5px -5px black;'     // respects outside corners shadow pixel offset \ Use a pseudo elem ::before
 						+ '  box-shadow: 5px 5px 4px -3px #00000080;' // respects inside corners shadow pixel offset  / using shadow to get perfect result
@@ -1902,17 +1901,19 @@ let SuperCustomContextMenu = {}; // API Receiver
 			};
 		};
 
+
+
 		// tmp glo var for settings
 		padding = '2px';
-		border  = '0px';
-		total   = '2px';
+		border  = '1px';
+		total   = '-3px';
 		time    = '1s';
 
 		// win10 style base
 		//const win10_base = mix_base(_class_base, win10_cosmetic());
 
 		const win10_base = mix_base(
-			_base, _behav, _cssvar_(padding,border,total,time), // padd/bord/total
+			_base, _behav, _cssvar(padding,border,total,time), // padd/bord/total
 			class_base(), class_behav(), class_sizeFitContent_part(),
 			class_ptrLogic_part(), win10_cosmetic(),
 			class_displayLogic_part(),
