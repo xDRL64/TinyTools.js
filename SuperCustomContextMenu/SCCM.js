@@ -3616,7 +3616,7 @@ let SuperCustomContextMenu = {}; // API Receiver
 		const uKey = usrMemKey;
 
 
-		// default theme
+		// default theme (instance structure : menus/items/etc)
 		core.theme.sccmOriginal.default.set(uKey);
 		const { 
 			css      : default_css,
@@ -3624,10 +3624,23 @@ let SuperCustomContextMenu = {}; // API Receiver
 			behavior : defaultBehavior,
 		} = core.theme.sccmOriginal.default.get();
 
-		// final theme
+		// default theme (main menu only)
+		core.theme.sccmOriginal.defaultMain.set(uKey);
+		const { 
+			css      : defMain_css,
+			initELEM : defMainInit,
+			behavior : defMainBehav,
+		} = core.theme.sccmOriginal.defaultMain.get();
+
+		// check user default main menu theme. (add sccm default main menu theme if user did not set it)
+		usrTemplate.mainMenu.settings = {
+			init:defMainInit.menu, behavior:defMainBehav, ...usrTemplate.mainMenu.settings
+		};
+
+		// get final theme (sccm default OR from user)
 		const mainInit = {...defaultInit, ...(usrTemplate.settings?.initELEM||{})};
 		const mainBehavior = {...defaultBehavior, ...(usrTemplate.settings?.behavior||{})};
-		const mainCSS = usrTemplate.settings?.css || default_css;
+		const mainCSS = usrTemplate.settings?.css || (default_css+defMain_css);
 
 		// sccm instance (definition)
 		let instance = {
