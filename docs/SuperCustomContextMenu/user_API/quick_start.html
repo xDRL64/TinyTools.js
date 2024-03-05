@@ -19,6 +19,8 @@
 	
 	<iframe class="code" style="display: none;">
 		<head>
+			<!-- Imports the main API Object as 'SuperCustomContextMenu' property of app's global Object,
+			in web browser case, that will be the Object 'window'. -->
 			<script src="SCCM.js"></script>
 		</head>
 	
@@ -35,22 +37,24 @@
 				const ukey = Symbol('dev user key for sccm api');
 	
 				// Create the template for main structure of your context menu :
-				// To keep simplest this first approch, we generate a menu containing only executable features on click.
+				// To keep simplest this first approch, we generate a menu containing only executable features on click,
+				// which will not produce any effect as mentioned before this example.
 				// We will see how to add submenu instead feature, in next example.
-				const my_context_menu = {
+				const menu_template = {
 					settings : {},
 					mainMenu : {
 						settings:{},
 						items : [
-							{ settings:{txt:'Feature A'}, content:()=>{}, },
-							{ settings:{txt:'Feature B'}, content:()=>{}, },
-							{ settings:{txt:'Feature C'}, content:()=>{}, },
+							// Use settings.txt to set item names
+							{ settings:{txt:'Feature A'}, content:()=>{}, }, // Content of each item is a feature.
+							{ settings:{txt:'Feature B'}, content:()=>{}, }, // If item content is a feature, then use a function.
+							{ settings:{txt:'Feature C'}, content:()=>{}, }, // Here our features do nothing : ()=>{}
 						],
 					},
 				};
 	
 				// Generate your context menu
-				const handle = SCCM.create_menu(my_context_menu, ukey);
+				const handle = SCCM.create_menu(menu_template, ukey);
 	
 				// Add your menu to the html page
 				handle[ukey].set_parent(document.body);
