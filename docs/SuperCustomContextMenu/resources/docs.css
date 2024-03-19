@@ -1,0 +1,22 @@
+.txt{ /* normal docs text (breakable space) */
+	white-space: pre-wrap;
+	--indent-value : 4em;
+}
+
+.lst{ /* docs listing (unbreakable space) */
+	white-space: pre;
+	--indent-value : 4em;
+}
+
+/* indentation class */
+.i-1{
+	margin-left: calc( var(--indent-value) * 1 );
+}
+
+.i-2{
+	margin-left: calc( var(--indent-value) * 2 );
+}
+
+.i-3{
+	margin-left: calc( var(--indent-value) * 3 );
+}

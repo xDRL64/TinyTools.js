@@ -1,6 +1,8 @@
 (()=>{
     let s;
-    let c = `(C) [free licience] - All Code Examples are highlighted with Prism.js`;
+    let c = ` - `;
+    const SCCM_licence = '© [free licence] SCCM';
+    const extlib_credit = 'All Code Examples are highlighted with Prism.js';
     const {body} = document;
 
     // footer elem
@@ -8,7 +10,7 @@
     s = footer.style;
     s.position = 'fixed';
     s.display = 'flex';
-    s.flexDirection = 'row-reverse';
+    s.justifyContent = 'space-between';
     s.bottom = '0px';
     s.width = '100%';
     s.left = '0px';
@@ -16,13 +18,19 @@
     s.borderTop = '1px solid black';
 
     // footer content elem
-    const content = document.createElement('span');
-    s = content.style;
-    s.padding = '2px 16px';
+    const make_footelem = (content)=>{
+        const elem = document.createElement('span');
+        s = elem.style;
+        s.padding = '2px 16px';
+        elem.textContent = content;
+        return elem;
+    };
+    const leftElem = make_footelem(SCCM_licence);
+    const rightElem = make_footelem(extlib_credit);
 
     // add footer to page
-    content.textContent = c;
-    footer.appendChild(content);
+    footer.appendChild(leftElem);
+    footer.appendChild(rightElem);
     body.appendChild(footer);
 
     // generate footer's bounding space
