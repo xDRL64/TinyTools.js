@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>SCCM Docs - Quick Start - Intro</title>
+	<link rel="stylesheet" href="./../../resources/docs.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/xDRL64/TinyTools.js@master/docs/resources/prism.css" />
+	<script src="https://cdn.jsdelivr.net/gh/xDRL64/TinyTools.js@master/docs/resources/prism.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/xDRL64/TinyTools.js@master/docs/resources/run_highlighter.js"></script>
+</head>
+<body>
+	
+<h1>How to make features :</h1>
+<pre class="txt i-1">
+This takes the previous code example "most basic" and only changes the "Feature A" into "Display args in console" which will display in web browser console, the arguments that 'content()' function receives when we click on the feauture.
+See the live result of this code example : : <a href="../../examples/quick_start/basic_features.html">here</a>
+</pre>
+	
+	<iframe class="code" style="display: none;">
+		<head>
+			<script src="SCCM.js"></script>
+		</head>
+	
+		<body>
+			<script>
+	
+				const SCCM = SuperCustomContextMenu;
+	
+				const ukey = Symbol('dev user key for sccm api');
+	
+				const menu_template = {
+					settings : {},
+					mainMenu : {
+						settings:{},
+						items : [
+							{ settings:{txt:'Display args in console'}, content:(...arg)=>{console.log(arg);}, },
+							{ settings:{txt:'Feature B'}, content:()=>{}, },
+							{ settings:{txt:'Feature C'}, content:()=>{}, },
+						],
+					},
+				};
+	
+				const handle = SCCM.create_menu(menu_template, ukey);
+	
+				handle[ukey].set_parent(document.body);
+	
+				handle[ukey].open();
+	
+			</script>
+		</body>
+	</iframe>
+
+<pre class="txt i-1">
+By clicking on the feature "Display args in console", the menu generated with SCCM will call the function 'content()' of this feature by passing it one argument.
+In this example we just display it with console.log() .
+By reading the log in console we can see that the argument is an Object, containing the following properties :
+</pre>
+
+<pre class="lst i-2">
+- allowedEventProps, Type : {buttons: number, shiftKey: boolean, ctrlKey: boolean, altKey: boolean}
+- contextData,       Type : Any
+- forced,            Type : Boolean
+- item,              Type : HTMLElement
+</pre>
+
+<pre class="txt i-1">
+The property <b>allowedEventProps</b> is present if 'content()' function was been called from a "standard click" of SCCM, which can be triggered by simple click on a any feature.
+"standard click" can be disabled, see the precise doc pages about menu settings (out of "quick start" section).
+If it is present, this property contains an Object which contains some js nativ MouseEvent's properties directly transfered from internal SCCM js Event.
+It provides : mouse buttons' state as bit flags in a "1byte value", and keyboard flags for CTRL, SHIFT, ALT as booleans.
+
+The property <b>contextData</b> is always present and its state depends on you. If you do not set it, it will be 'null'.
+It is the most important data used when we click on a feature beause in major cases it is supposed to be the data repsenting the right-clicked element calling our context menu, and so, to be short it is the main data we wish interact with when we are clicking on a feature.
+To set it, use <b>handle[ukey].set_contextData(data)</b> just after a right click but before opening/dispaying the context menu.
+To reset it, use <b>handle[ukey].remove_contextData()</b>, or <b>handle[ukey].set_contextData(null)</b> which are totaly equivalent.
+</pre>
+	
+	<script defer>run_highlighter();</script>
+	
+	<script src="./../../resources/footer.js"></script>
+
+</body>
+</html>
+
+
+	
