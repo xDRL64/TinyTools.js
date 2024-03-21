@@ -8,6 +8,10 @@
 	--indent-value : 4em;
 }
 
+.uln{ /* docs underlined */
+	text-decoration: underline;
+}
+
 /* indentation class */
 .i-1{
 	margin-left: calc( var(--indent-value) * 1 );

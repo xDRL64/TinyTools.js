@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>SCCM Docs - Quick Start - Intro</title>
+	<title>SCCM Docs - Quick Start - Make Feature</title>
 	<link rel="stylesheet" href="./../../resources/docs.css" />
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/xDRL64/TinyTools.js@master/docs/resources/prism.css" />
 	<script src="https://cdn.jsdelivr.net/gh/xDRL64/TinyTools.js@master/docs/resources/prism.js"></script>
@@ -52,33 +52,59 @@ See the live result of this code example : : <a href="../../examples/quick_start
 	</iframe>
 
 <pre class="txt i-1">
-By clicking on the feature "Display args in console", the menu generated with SCCM will call the function 'content()' of this feature by passing it one argument.
+By clicking on the feature "Display args in console", the generated menu by using SCCM will call the function 'content()' of this feature by passing it one argument.
 In this example we just display it with console.log() .
-By reading the log in console we can see that the argument is an Object, containing the following properties :
+By reading the log in console we can see that the argument is an Object, containing the following properties : <b>allowedEventProps, contextData, forced, item, [ukey]</b>.
 </pre>
 
+<pre class="lst i-1 uln">Quick overview on properties of <b>content()</b> function's argument :</pre>
 <pre class="lst i-2">
 - allowedEventProps, Type : {buttons: number, shiftKey: boolean, ctrlKey: boolean, altKey: boolean}
 - contextData,       Type : Any
 - forced,            Type : Boolean
 - item,              Type : HTMLElement
+- [ukey],            Type : Any
 </pre>
 
-<pre class="txt i-1">
-The property <b>allowedEventProps</b> is present if 'content()' function was been called from a "standard click" of SCCM, which can be triggered by simple click on a any feature.
+<pre class="lst i-1 uln">Details of these properties and their purposes :</pre>
+<pre class="txt i-2">
+The property <b>allowedEventProps</b> :
+
+is present if 'content()' function was been called from a "standard click" of SCCM, which can be triggered by a simple click on any feature.
 "standard click" can be disabled, see the precise doc pages about menu settings (out of "quick start" section).
-If it is present, this property contains an Object which contains some js nativ MouseEvent's properties directly transfered from internal SCCM js Event.
+If it is present, this property contains an Object which contains some js nativ MouseEvent's properties, directly transfered from internal SCCM js Event.
 It provides : mouse buttons' state as bit flags in a "1byte value", and keyboard flags for CTRL, SHIFT, ALT as booleans.
+The main idea with this property, is to give quick access to the most common input states, to control feature reaction by according the inputs. SCCM provides allowedEventProps property but of course you can manange input states from your side. In this case, just declare <b>content()</b> in a scope where it can access to your input state management.
 
-The property <b>contextData</b> is always present and its state depends on you. If you do not set it, it will be 'null'.
-It is the most important data used when we click on a feature beause in major cases it is supposed to be the data repsenting the right-clicked element calling our context menu, and so, to be short it is the main data we wish interact with when we are clicking on a feature.
-To set it, use <b>handle[ukey].set_contextData(data)</b> just after a right click but before opening/dispaying the context menu.
-To reset it, use <b>handle[ukey].remove_contextData()</b>, or <b>handle[ukey].set_contextData(null)</b> which are totaly equivalent.
+The property <b>contextData</b> :
+
+is always present and its state depends on you. If you do not set it, it will be 'null'.
+It is the most important used data when we click on a feature because in major cases it is supposed to be the data repsenting the right-clicked element calling our context menu, and so, to be short it is the main data we wish interact with when we are clicking on a feature.
+To set it, use <b>handle[ukey].set_contextData(data)</b>, in general context menu cases, set it just after a right click and before opening/dispaying the context menu.
+To reset it, use <b>handle[ukey].remove_contextData()</b>, or <b>handle[ukey].set_contextData(null)</b> which are totally equivalent.
+
+The property <b>forced</b> :
+
+is always present but in common cases it will be at <b>false</b>. It is an advenced property.
+As evocated in allowedEventProps section just above, a feature <b>content()</b> function can be called from a "standard click" on a feature when menu is open but, the feature is clickable only if it has past the <b>check()</b> test function, which is a notion that we have not seen until now in this quick start chapter, and which is supposed to make features available or not while the context data connexion.
+So, for now, just know that it is possible to bypass your own check() test function making a feature available or not, and to force its using even if the context data are not appropriated and that visually the feature seems to be not available in menu.
+In cases where you use the forced mode, then when <b>content()</b> will be call, it receives <b>forced</b> property at <b>true</b>, and your <b>content()</b> body has to start with a 'if(forced){}' structure which must contain all code execution.
+In summary, when you trigger <b>content()</b> with forced mode, it is also necessary to allow this behavior in <b>content()</b> itself. In this first approach it is advised to ignore this mode and its associate property too.
+
+The property <b>item</b> :
+
+is always present. It is the menu's html element of clicked feature itself.
+You are allowed to interact with, but keep in mind that major style changes having to react to menu's interactions can be achived via multiple different ways to manage menu's visual themes. So this property is available for very specific customization, and it is preferable to resort to it as last plan if ways to manage themes provided by SCCM turn out not enough.
+Try to keep clean your <b>content()</b> bodies for the code of features, the SCCM api provides some other function bodies that are dedicated to every major possible interactions with a menu, for example such as highlighting of feature's menu item while mouse pointer is on it.
+
+The property <b>[ukey]</b> :
+
+is only present if <b>content()</b> is triggered from another way than by a simple click, with the forced mode for example. Therefore we are not seeing it in our basic approach of features and also it is not visible by the <b>console.log(arg)</b> instruction in <b>content()</b> because effectivly it is not there. For now just know that there some ways to run menu's feature without explicit click and that in these cases you can provide custom data, which will be stored under this property name. If it was present we could access it like this : <b>arg[ukey]</b> . There where the other properties are accessible normally via the dot character '.' like <b>arg.allowedEventProps</b> or <b>arg.contextData</b> <b>arg.forced</b> or <b>arg.item</b>, well it is not the case for <b>[ukey]</b> property if you have used a <b>Symbol</b> type as "SCCM API dev user key" like advised previously in this docs.
 </pre>
 	
-	<script defer>run_highlighter();</script>
-	
-	<script src="./../../resources/footer.js"></script>
+<script defer>run_highlighter();</script>
+
+<script src="./../../resources/footer.js"></script>
 
 </body>
 </html>
