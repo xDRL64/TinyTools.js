@@ -18,3 +18,9 @@ summary :
 
 https://cdn.jsdelivr.net/gh/<username>/<repository@branch>/<path/file> // specific branch
 https://cdn.jsdelivr.net/gh/<username>/<repository>/<path/file>        // main branch
+
+more :
+
+https://www.jsdelivr.com/package/gh/xDRL64/TinyTools.js?tab=files
+
+https://stackoverflow.com/questions/68954361/jsdelivr-doesnt-update-github-commits
