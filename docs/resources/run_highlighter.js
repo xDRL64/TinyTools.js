@@ -18,7 +18,7 @@ const run_highlighter = (()=>{
 			CODE.textContent = codeElem.textContent.slice(1);
 			CODE.classList = CODE_CLASSNAME + ' ' + classNames;
 			PRE.append(CODE);
-			document.body.replaceChild(PRE, codeElem);
+			codeElem.parentElement.replaceChild(PRE, codeElem);
 		});
 	};
 
