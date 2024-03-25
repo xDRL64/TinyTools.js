@@ -10,12 +10,23 @@ const run_highlighter = (()=>{
 	const HTML_CODE_QUERY_SELECTOR = "iframe."+CODE_CLASSNAME;
 	const PRISM_HTML_CLASS = "language-html match-braces rainbow-braces";
 
+	const cut_docScope = (codeContent)=>{
+		const regex = /^(\(\)=>{)(.*)(};)$/gs; // startpat : '()=>{'      // endpat : '};' 
+		const result = [...codeContent.matchAll(regex)][0]; // [fullsample, startpat, codebody, endpat] size 4
+		let output = (result?.length === 4) ? result[2] : codeContent;
+		return output.slice(1,-1); // excludes first and last line returns
+	};
+
 	const convert = (selector, classNames)=>{
 		let codeElems = document.querySelectorAll(selector);
 		[...codeElems].forEach(codeElem=>{
 			const PRE = document.createElement("pre");
 			const CODE = document.createElement("code");
-			CODE.textContent = codeElem.textContent.slice(1);
+
+			//CODE.textContent = codeElem.textContent//.slice(1);
+			CODE.textContent = cut_docScope(codeElem.textContent);
+
+
 			CODE.classList = CODE_CLASSNAME + ' ' + classNames;
 			PRE.append(CODE);
 			codeElem.parentElement.replaceChild(PRE, codeElem);
