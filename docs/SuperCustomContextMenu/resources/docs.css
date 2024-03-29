@@ -24,3 +24,13 @@
 .i-3{
 	margin-left: calc( var(--indent-value) * 3 );
 }
+
+/* Prism one line */
+span>pre[class*=language-]{
+	display : inline;
+	padding: 0px;
+	font-family: unset;
+}
+pre>code[class*=language-]{
+	font-family: unset;
+}
