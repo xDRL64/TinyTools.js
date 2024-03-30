@@ -8,6 +8,10 @@
 	--indent-value : 4em;
 }
 
+.txt,.lst{ /* docs elements minimum top margin */
+	margin-top: 2em;
+}
+
 .uln{ /* docs underlined */
 	text-decoration: underline;
 }
@@ -25,7 +29,7 @@
 	margin-left: calc( var(--indent-value) * 3 );
 }
 
-/* Prism one line */
+/* Prism one line */ /* USING : <span><script src="" class="code"> ... </script></span> */
 span>pre[class*=language-]{
 	display : inline;
 	padding: 0px;
