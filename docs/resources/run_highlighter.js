@@ -23,9 +23,7 @@ const run_highlighter = (()=>{
 			const PRE = document.createElement("pre");
 			const CODE = document.createElement("code");
 
-			//CODE.textContent = codeElem.textContent//.slice(1);
 			CODE.textContent = cut_docScope(codeElem.textContent);
-
 
 			CODE.classList = CODE_CLASSNAME + ' ' + classNames;
 			PRE.append(CODE);
@@ -40,6 +38,9 @@ const run_highlighter = (()=>{
 		convert(CSS_CODE_QUERY_SELECTOR, PRISM_CSS_CLASS);
 		// html code
 		convert(HTML_CODE_QUERY_SELECTOR, PRISM_HTML_CLASS);
+
+		// run highlighter
+		Prism.highlightAll();
 	};
 
 	return process;
