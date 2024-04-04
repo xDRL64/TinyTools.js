@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>page name</title>
+	<script async="false">(async()=>{ // FILES IMPORTER WRAPPER
+		// configurable :
+			const urlBase = 'https://raw.githubusercontent.com/xDRL64/TinyTools.js/';
+			const filePath = 'master/docs/SuperCustomContextMenu/resources/importer.js';
+		// process :
+			const url = urlBase + filePath;
+			const importer = document.createElement('script');
+			importer.src = 'data:text/javascript;base64,' + btoa(await(await(fetch(url))).text());
+			importer.async = false;
+			document.head.appendChild(importer);
+	})().then();</script>
+</head>
+<body>
+
+<!-- DOCS SPACE START -->
+	
+<h1>TEXT TITLE :</h1>
+<pre class="txt i-1">
+text content ...
+</pre>
+
+<!-- html example -->
+<iframe class="code" style="display: none;">
+	<head>
+        <!-- css example -->
+		<style>
+            .css_class{
+                /* css comment */
+                css_property_name : css_property_value;
+            }
+        </style>
+	</head>
+	<body>
+        <!-- javascript example -->
+		<script>
+            // javascript comment
+            const javascript_function = ()=>{
+                const javascript_variable = 'string_value';
+            };
+		</script>
+	</body>
+</iframe>
+
+<!-- DOCS SPACE END -->
+
+<script>
+	// configurable :
+		const finalize_page = ()=>{
+			run_highlighter();
+			append_footer();
+		};
+	// process :
+		const waitfor_docsResources = ()=>{
+			if(window.xDRL64_docsResourcesImporter_ends) finalize_page();
+			else requestAnimationFrame(waitfor_docsResources);
+		};
+		waitfor_docsResources();
+</script>
+
+</body>
+</html>
+
+
+	

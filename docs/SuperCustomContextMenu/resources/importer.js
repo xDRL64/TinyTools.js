@@ -68,12 +68,8 @@
 
 	list.forEach( ({type,url})=>document.head.appendChild(elemMaker[type](url)) );
 	
-	console.log('importer.js END');
-	const code = `//let b=document.body;
-	              //let c=[...document.body.children];
-				  //c.forEach(e=>b.removeChild(e));
-				  //c.forEach(e=>b.appendChild(e));
-				  window.xDRL64_docsResourcesImporter_ends = true;`;
-	const custScriptURL = await to_blobDataURL('js', code);
-	document.head.appendChild(elemMaker['js'](custScriptURL))
+	// ends importer
+	const processDoneCode = `window.xDRL64_docsResourcesImporter_ends = true;`;
+	const processDoneScript = await to_blobDataURL('js', processDoneCode);
+	document.head.appendChild(elemMaker['js'](processDoneScript));
 })().then();
