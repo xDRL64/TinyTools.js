@@ -1,4 +1,4 @@
-(()=>{
+const append_footer = ()=>{
     let s;
     let c = ` - `;
     const SCCM_licence = '© [free licence] SCCM';
@@ -44,4 +44,4 @@
     s.inset = 'auto 0px 0px 0px';
     s.height = boundHeight + 'px';
     body.appendChild(heightBound);
-})();
+};
