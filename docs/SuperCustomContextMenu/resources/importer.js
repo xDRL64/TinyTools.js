@@ -9,7 +9,7 @@
 
 	const prism_js        = 'docs/resources/prism.js';
 	const runHighlight_js = 'docs/resources/run_highlighter.js';
-	const footer_js       = 'docs/SuperCustomContextMenu/resources/footer-new.js';
+	const footer_js       = 'docs/SuperCustomContextMenu/resources/footer.js';
 
 	const list = [
 		{type:'css', url:repo_base+docs_css},
@@ -53,7 +53,6 @@
 	elemMaker.js = (url)=>{
 		const elem = document.createElement('script');
 		elem.src = url;
-		//elem.blocking="render"
 		elem.async = false;
 		elem.type = mime['js'];
 		return elem;
@@ -64,12 +63,6 @@
 	for(const item of list){ // convert url to dataURL
 		const {type, url} = item;
 		let data = await get_content(url);
-
-		/*debug*/
-		// const signature=(type==='js'?`\nconsole.log("${url}");\n`:'');
-		// data = signature+data+signature;
-		/*debug*/
-
 		item.url = await to_blobDataURL(type, data);
 	}
 
