@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>SCCM Base of Features 3 - Live Example</title>
+	<script src="https://cdn.jsdelivr.net/gh/xDRL64/TinyTools.js@master/SuperCustomContextMenu/SCCM.js"></script>
+</head>
+<body>
+	<script>
+
+		const SCCM = SuperCustomContextMenu;
+
+		const ukey = Symbol('dev user key for sccm api');
+
+		const update_A = (...args)=>{
+			console.log('update_A() args : ', args);
+		};
+
+		const update_B = (...args)=>{
+			console.log('update_B() args : ', args);
+		};
+
+		const check = ()=>{
+			return false;
+		};
+
+		const content = ({item})=>{ 
+			console.log(item.textContent);
+		};
+
+		const menu_template = {
+			settings : {},
+			mainMenu : {
+				settings:{},
+				items : [
+					{ settings:{txt:'Feature A', check, update:update_A}, content, },
+					{ settings:{txt:'Feature B',        update:update_B}, content, },
+					{ settings:{txt:'Feature C',                       }, content, },
+				],
+			},
+		};
+
+		const handle = SCCM.create_menu(menu_template, ukey);
+
+		handle[ukey].set_parent(document.body);
+
+		let data = 'the current connected data to the context menu';
+
+		handle[ukey].set_contextData(data);
+
+		handle[ukey].open();
+
+	</script>
+</body>
+</html>

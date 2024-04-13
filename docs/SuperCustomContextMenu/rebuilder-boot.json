@@ -1,0 +1,36 @@
+{
+	"pageStart_mark" : "<!-- DOCS SPACE START -->",
+	"pageEnd_mark"   : "<!-- DOCS SPACE END -->",
+
+	"titleStart_mark" : "<title>",
+	"titleEnd_mark"   : "</title>",
+
+	"mainFolder_name" : "SuperCustomContextMenu",
+
+	"docsTree_list" : [
+		{"path":"docs3.html", "type":"copy"},
+		{"path":"docsx.html", "type":"copy"},
+		{"path":"docs.html", "type":"copy"},
+
+		{"path":"resources/docs.css", "type":"copy"},
+		{"path":"resources/footer.js", "type":"copy"},
+		{"path":"resources/importer.js", "type":"copy"},
+		{"path":"resources/NEW_DOCS_PAGE_TEMPLATE.html", "type":"model"},
+		{"path":"resources/readme.txt", "type":"copy"},
+
+		{"path":"user_API/quick_start/intro_most_basic/page.html", "type":"rebuild"},
+		{"path":"user_API/quick_start/intro_most_basic/live_example.html", "type":"copy"},
+
+		{"path":"user_API/quick_start/how_make_features/set_content/page.html", "type":"rebuild"},
+		{"path":"user_API/quick_start/how_make_features/set_content/live_example.html", "type":"copy"},
+
+		{"path":"user_API/quick_start/how_make_features/set_check/page.html", "type":"rebuild"},
+		{"path":"user_API/quick_start/how_make_features/set_check/live_example.html", "type":"copy"},
+		
+		{"path":"user_API/quick_start/how_make_features/set_update/page.html", "type":"rebuild"},
+		{"path":"user_API/quick_start/how_make_features/set_update/live_example.html", "type":"copy"},
+
+		{"path":"rebuilder/webdocs-rebuilder.html", "type":"copy"},
+		{"path":"rebuilder-boot.json", "type":"copy"}
+	]
+}

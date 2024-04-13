@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>SCCM Docs - Quick Start - Make Feature - Set update()</title>
+	<script async="false">(async()=>{ // FILES IMPORTER WRAPPER
+		// configurable :
+			const urlBase = 'https://raw.githubusercontent.com/xDRL64/TinyTools.js/';
+			const filePath = 'master/docs/SuperCustomContextMenu/resources/importer.js';
+		// process :
+			const url = urlBase + filePath;
+			const importer = document.createElement('script');
+			importer.src = 'data:text/javascript;base64,' + btoa(await(await(fetch(url))).text());
+			importer.async = false;
+			document.head.appendChild(importer);
+	})().then();</script>
+</head>
+<body>
+
+<!-- DOCS SPACE START -->
+	
+<h1>How to make features - 3. Set the update() function :</h1>
+<pre class="txt i-1">
+The function <b>update()</b> is used as callback, you declare it, but it is SCCM that will call it for you while connecting some data to menu.
+
+This full code example takes the previous code example "intro - most basic" and mainly adds on the two first features, an update process which will, (like in previous examples of the section "How to make features",) only display arguments that <b>update()</b> receives
+
+
+
+
+modify text label of these two features be according the content of <b>update()</b> function. Here, it will simply add the mention " - available with this context data" or " - not available with this context data" at the end of text labels.
+
+Like <b>check()</b>, the function <b>update()</b> is implicitly called when <b>handle[ukey].set_contextData()</b> is running.
+
+See the live result of this code example : <a href="./live_example.html">here</a>
+</pre>
+	
+<iframe class="code" style="display: none;">
+	<head>
+		<script src="SCCM.js"></script>
+	</head>
+
+	<body>
+		<script>
+
+			const SCCM = SuperCustomContextMenu;
+
+			const ukey = Symbol('dev user key for sccm api');
+
+			// The update() function declarations :
+
+			const update_A = (...args)=>{
+
+				console.log('update_A() args : ', args); // Displays function's arguments in console.
+
+			};
+
+			const update_B = (...args)=>{
+
+				console.log('update_B() args : ', args); // Displays function's arguments in console.
+
+			};
+
+			// Forces a feature to be not available
+
+			const check = ()=>{
+
+				return false;
+
+			};
+
+			// Displays in console, the 'textContent' property of feature's menu's item's HTMLElement
+
+			const content = ({item})=>{ 
+
+				console.log(item.textContent);
+
+			};
+
+			const menu_template = {
+				settings : {},
+				mainMenu : {
+					settings:{},
+					items : [
+						// Set the update() function in item's settings
+						{ settings:{txt:'Feature A', check, update:update_A}, content, },
+						{ settings:{txt:'Feature B',        update:update_B}, content, },
+						{ settings:{txt:'Feature C',                       }, content, },
+					],
+				},
+			};
+
+			const handle = SCCM.create_menu(menu_template, ukey);
+
+			handle[ukey].set_parent(document.body);
+
+			let data = 'the current connected data to the context menu';
+
+			handle[ukey].set_contextData(data); // Runs update() process function of each menu's item
+
+			handle[ukey].open();
+
+		</script>
+	</body>
+</iframe>
+
+
+<pre class="txt i-1">
+By running this example we can see in the console that <b>update()</b> has received 3 arguments :
+
+ - <b>available</b> : is the first one, it is the result of <b>check()</b> test for the corresponding menu's item.
+ - <b>contextData</b> : is the second one, it is the data that are currently connected to all menu's feature.
+ - <b>item</b> : is the last one, it is the menu item's <b>HTMLElement</b> for the corresponding <b>update()</b> process.
+
+Log in console :
+
+<div style="border: 1px solid black; background-color: lightgray;">
+  update_A() args :  Array(3)
+    0 : false
+    1 : "the current connected data to the context menu"
+    2 : div.item.general.notAvailable
+    length : 3
+  
+  update_B() args :  Array(3)
+    0 : true
+    1 : "the current connected data to the context menu"
+    2 : div.item.general
+    length : 3
+ </div>
+</pre>
+
+<pre class="lst i-1 uln">title :</pre>
+<pre class="txt i-2">
+txt
+...
+</pre>
+
+<pre class="lst i-1 uln">Piece of example for <b>check()</b> declaclarion and using, a little bit more concret :</pre>
+<pre class="txt i-2">
+
+Here if we wanted a simple menu with only 2 features :
+- One feature to add the value <b>7</b> to another number value in the data connected to the menu.
+- And one feature to add the "<b>bye</b>" word at the end of a string value that is connected to the menu.
+
+
+We would start by creating 2 <b>check()</b> functions, one for each specific case :
+- The first to check if data are a <b>number</b>.
+- The second to check if data are a <b>string</b>.
+
+<script src="" class="code">()=>{
+	const check_number = (contextData)=>{
+		return (typeof contextData.theData === 'number')
+	};
+	const check_string = (contextData)=>{
+		return (typeof contextData.theData === 'string')
+	};
+};</script>
+
+
+Then, we would create the 2 feature <b>content()</b> functions :
+
+<script src="" class="code">()=>{
+	const adds_7_to_number = ({contextData})=>{
+		contextData.theData += 7;
+	};
+	const adds_bye_to_string = ({contextData})=>{
+		contextData.theData += "bye";
+	};
+};</script>
+
+
+Next, we would set the menu's item of each feature with our <b>check()</b> and <b>content()</b> functions :
+
+<script src="" class="code">()=>{
+	const menu_template = {
+		settings : {},
+		mainMenu : {
+			settings:{},
+			items : [
+				{ settings:{txt:'add 7 to a value',           check:check_valueType}, content:adds_7_to_number, },
+				{ settings:{txt:'add "bye" at end of string', check:check_string},    content:adds_bye_to_string, },
+			],
+		},
+	};
+};</script>
+
+
+Now we choose either to connect an object containing a <b>number</b> to the menu,
+
+<script src="" class="code">()=>{
+	const myDataSpace = { theData : 3 };
+
+	handle[ukey].set_contextData(myDataSpace);
+};</script>
+
+or to connect an object containing a <b>string</b> to the menu
+
+<script src="" class="code">()=>{
+	const myDataSpace = { theData : "Hello, " };
+
+	handle[ukey].set_contextData(myDataSpace);
+};</script>
+
+If we choose the number, then feature to add 7 should be available and this one to add 'bye' should not be.
+If we choose the string, then feature to add 'bye' should be available and this one to add 7 should not be.
+
+Of course if a feature is available, when we click on it, this will modify data and as we worked with Object reference of data, we can access to the result of features in <b>myDataSpace.theData</b> .
+</pre>
+
+<!-- DOCS SPACE END -->
+
+<script>
+	// configurable :
+		const finalize_page = ()=>{
+			run_highlighter();
+			append_footer();
+		};
+	// process :
+		const waitfor_docsResources = ()=>{
+			if(window.xDRL64_docsResourcesImporter_ends) finalize_page();
+			else requestAnimationFrame(waitfor_docsResources);
+		};
+		waitfor_docsResources();
+</script>
+
+</body>
+</html>
+
+
+	

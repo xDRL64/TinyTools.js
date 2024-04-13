@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>SCCM Base of Features 2 - Live Example</title>
+	<script src="https://cdn.jsdelivr.net/gh/xDRL64/TinyTools.js@master/SuperCustomContextMenu/SCCM.js"></script>
+</head>
+<body>
+	<script>
+
+		const SCCM = SuperCustomContextMenu;
+
+		const ukey = Symbol('dev user key for sccm api');
+
+		const example_of_check = (...args)=>{
+			console.log('check() args : ', args);
+			return false;
+		};
+
+		const menu_template = {
+			settings : {},
+			mainMenu : {
+				settings:{},
+				items : [
+					{ settings:{txt:'Feature A', check:example_of_check}, content:()=>console.log('Feature A'), },
+					{ settings:{txt:'Feature B',                       }, content:()=>console.log('Feature B'), },
+					{ settings:{txt:'Feature C',                       }, content:()=>console.log('Feature C'), },
+				],
+			},
+		};
+
+		const handle = SCCM.create_menu(menu_template, ukey);
+
+		handle[ukey].set_parent(document.body);
+
+		let data = 'the data we want the menu interacts with, which will pass thought the check() test function';
+
+		handle[ukey].set_contextData(data);
+
+		handle[ukey].open();
+
+	</script>
+</body>
+</html>

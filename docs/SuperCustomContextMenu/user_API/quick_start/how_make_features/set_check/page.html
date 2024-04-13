@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>SCCM Docs - Quick Start - Make Feature - Set check()</title>
+	<script async="false">(async()=>{ // FILES IMPORTER WRAPPER
+		// configurable :
+			const urlBase = 'https://raw.githubusercontent.com/xDRL64/TinyTools.js/';
+			const filePath = 'master/docs/SuperCustomContextMenu/resources/importer.js';
+		// process :
+			const url = urlBase + filePath;
+			const importer = document.createElement('script');
+			importer.src = 'data:text/javascript;base64,' + btoa(await(await(fetch(url))).text());
+			importer.async = false;
+			document.head.appendChild(importer);
+	})().then();</script>
+</head>
+<body>
+
+<!-- DOCS SPACE START -->
+	
+<h1>How to make features - 2. Set the check() function :</h1>
+<pre class="txt i-1">
+The function <b>check()</b> is used as callback, you declare it, but it is SCCM that will call it for you while connecting some data to menu.
+
+This full code example takes the previous code example "intro - most basic" and mainly adds on the first item's feature, a check test in which it does not really do a test to define if the feature of this menu's item is available or not. Instead, just we write a <b>console.log()</b> instruction to display the arguments that <b>check()</b> receives and we force to make the menu's item not available by returning <b>false</b> value. And before opening the menu, we do not forget to run <b>handle[ukey].set_contextData()</b> which will call <b>check()</b> .
+
+See the live result of this code example : <a href="./live_example.html">here</a>
+</pre>
+	
+<iframe class="code" style="display: none;">
+	<head>
+		<script src="SCCM.js"></script>
+	</head>
+
+	<body>
+		<script>
+
+			const SCCM = SuperCustomContextMenu;
+
+			const ukey = Symbol('dev user key for sccm api');
+
+			// The check() function declaration :
+
+			const example_of_check = (...args)=>{
+
+				console.log('check() args : ', args); // Displays function's arguments in console.
+
+				return false; // Forces to make feature not available for using
+
+			};
+
+			const menu_template = {
+				settings : {},
+				mainMenu : {
+					settings:{},
+					items : [
+						// Set the check() function in item's settings
+						{ settings:{txt:'Feature A', check:example_of_check}, content:()=>console.log('Feature A'), },
+						{ settings:{txt:'Feature B',                       }, content:()=>console.log('Feature B'), },
+						{ settings:{txt:'Feature C',                       }, content:()=>console.log('Feature C'), },
+					],
+				},
+			};
+
+			const handle = SCCM.create_menu(menu_template, ukey);
+
+			handle[ukey].set_parent(document.body);
+
+			let data = 'the data we want the menu interacts with, which will pass thought the check() test function';
+
+			handle[ukey].set_contextData(data); // Runs check() test function of each menu's item
+
+			handle[ukey].open();
+
+		</script>
+	</body>
+</iframe>
+
+
+<pre class="txt i-1">
+By running this example we can see the first feature in menu is not available, and when we inspect the console we can see the data we have passed as arguments to <b>handle[ukey].set_contextData()</b> are displayed in log. So, we observe that <b>check()</b> is waitting for only one argument, which is the data that are provided to <b>handle[ukey].set_contextData()</b> while calling it. Implicitly we also understand that if a feature has no <b>check()</b> its corresponding item in menu will be always available.
+</pre>
+
+<pre class="lst i-1 uln">Pieces of example for <b>check()</b> declaclarion and using, a little bit more concret :</pre>
+<pre class="txt i-2">
+Here if we wanted a simple menu with only 2 features :
+- One feature to add the value <b>7</b> to another number value in the data connected to the menu.
+- And one feature to add the "<b>bye</b>" word at the end of a string value that is connected to the menu.
+
+
+We would start by creating 2 <b>check()</b> functions, one for each specific case :
+- The first to check if data are a <b>number</b>.
+- The second to check if data are a <b>string</b>.
+
+<script src="" class="code">()=>{
+	const check_number = (contextData)=>{
+		return (typeof contextData.theData === 'number')
+	};
+	const check_string = (contextData)=>{
+		return (typeof contextData.theData === 'string')
+	};
+};</script>
+
+
+Then, we would create the 2 feature <b>content()</b> functions :
+
+<script src="" class="code">()=>{
+	const adds_7_to_number = ({contextData})=>{
+		contextData.theData += 7;
+	};
+	const adds_bye_to_string = ({contextData})=>{
+		contextData.theData += "bye";
+	};
+};</script>
+
+
+Next, we would set the menu's item of each feature with our <b>check()</b> and <b>content()</b> functions :
+
+<script src="" class="code">()=>{
+	const menu_template = {
+		settings : {},
+		mainMenu : {
+			settings:{},
+			items : [
+				{ settings:{txt:'add 7 to a value',           check:check_valueType}, content:adds_7_to_number, },
+				{ settings:{txt:'add "bye" at end of string', check:check_string},    content:adds_bye_to_string, },
+			],
+		},
+	};
+};</script>
+
+
+Now we choose either to connect an <b>Object</b> containing a <b>number</b> to the menu,
+
+<script src="" class="code">()=>{
+	const myDataSpace = { theData : 3 };
+
+	handle[ukey].set_contextData(myDataSpace);
+};</script>
+
+or to connect an <b>Object</b> containing a <b>string</b> to the menu
+
+<script src="" class="code">()=>{
+	const myDataSpace = { theData : "Hello, " };
+
+	handle[ukey].set_contextData(myDataSpace);
+};</script>
+
+If we choose the number, then feature to add 7 should be available and this one to add 'bye' should not be.
+If we choose the string, then feature to add 'bye' should be available and this one to add 7 should not be.
+
+Of course if a feature is available, when we click on it, this will modify data and as we worked with Object reference of data, we can access to the result of features in <b>myDataSpace.theData</b> .
+</pre>
+
+<!-- DOCS SPACE END -->
+
+<script>
+	// configurable :
+		const finalize_page = ()=>{
+			run_highlighter();
+			append_footer();
+		};
+	// process :
+		const waitfor_docsResources = ()=>{
+			if(window.xDRL64_docsResourcesImporter_ends) finalize_page();
+			else requestAnimationFrame(waitfor_docsResources);
+		};
+		waitfor_docsResources();
+</script>
+
+</body>
+</html>
+
+
+	

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>SCCM Docs - Quick Start - Base of Features - Live Example</title>
+	<script src="https://cdn.jsdelivr.net/gh/xDRL64/TinyTools.js@master/SuperCustomContextMenu/SCCM.js"></script>
+</head>
+<body>
+	<script>
+
+		const SCCM = SuperCustomContextMenu;
+
+		const ukey = Symbol('dev user key for sccm api');
+
+		const example_of_content = (...args)=>{
+			console.log(args);
+		};
+
+		const menu_template = {
+			settings : {},
+			mainMenu : {
+				settings:{},
+				items : [
+					{ settings:{txt:'Display args in console'}, content:example_of_content, },
+					{ settings:{txt:'Feature B'}, content:()=>{}, },
+					{ settings:{txt:'Feature C'}, content:()=>{}, },
+				],
+			},
+		};
+
+		const handle = SCCM.create_menu(menu_template, ukey);
+
+		handle[ukey].set_parent(document.body);
+
+		handle[ukey].open();
+
+	</script>
+</body>
+</html>

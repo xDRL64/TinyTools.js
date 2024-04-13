@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>webdocs-rebuilder-app</title>
+
+	
+
+</head>
+<body>
+	<script>
+		const rebuild = true;
+		const pageStart_mark = '<!-- DOCS SPACE START -->';
+		const pageEnd_mark = '<!-- DOCS SPACE END -->';
+		const titleStart_mark = '<title>';
+		const titleEnd_mark = '</title>';
+		const mainFolder_name = 'SuperCustomContextMenu';
+		const relRoot_path = './..';
+		const docsTree_list = [
+			{path:'docs3.html',},
+			{path:'docs.html',},
+			{path:'resources/docs.css',},
+			{path:'resources/footer.js',},
+			{path:'resources/importer.js',},
+			{path:'resources/NEW_DOCS_PAGE_TEMPLATE.html', model:'page'},
+			{path:'resources/readme.txt',},
+			{path:'user_API/quick_start/intro_most_basic/page.html', rebuild},
+			{path:'user_API/quick_start/intro_most_basic/live_example.html',},
+			{path:'user_API/quick_start/how_make_features/set_content/page.html', rebuild},
+			{path:'user_API/quick_start/how_make_features/set_content/live_example.html',},
+			{path:'user_API/quick_start/how_make_features/set_check/page.html', rebuild},
+			{path:'user_API/quick_start/how_make_features/set_check/live_example.html',},
+			{path:'user_API/quick_start/how_make_features/set_update/page.html', rebuild},
+			{path:'user_API/quick_start/how_make_features/set_update/live_example.html',},
+			{path:'rebuilder/webdocs-rebuilder.html',}
+		];
+/////////////////////////////////////////////////////////////
+
+		// config
+		//
+
+		const bootFile_path = 'rebuilder-boot.json';
+
+		// element
+		//
+
+		let disable_dropEffect = function(e){
+			e.stopPropagation();
+			e.preventDefault();
+		};
+		
+		let enable_dropEffect = function(e){
+			e.stopPropagation();
+			e.preventDefault();
+			e.dataTransfer.dropEffect = 'copy';
+		};
+
+		let drop_file = function(e){
+			e.stopPropagation();
+			e.preventDefault();
+			let file = e.dataTransfer.files[0];
+			if(file) main(file);
+		};
+
+		let dropArea = document.createElement("div");
+		dropArea.innerHTML = "Drop toRebuild.zip here";
+		dropArea.style.width = '256px';
+		dropArea.style.height = '256px';
+		dropArea.style.borderStyle = "dashed";
+		dropArea.style.borderRadius = "16px";
+		dropArea.style.backgroundColor = "#CCDDFF";
+		dropArea.style.display = "flex";
+		dropArea.style.justifyContent = "center";
+		dropArea.style.alignItems = "center";
+
+		const {body} = document;
+		body.appendChild(dropArea);
+
+		body.addEventListener("dragover", disable_dropEffect);
+		body.addEventListener("drop", disable_dropEffect);
+
+		dropArea.addEventListener("dragover", enable_dropEffect);
+		dropArea.addEventListener("drop", drop_file);
+
+		const errorThrower = (message)=>{
+			body.innerHTML += `<div>Error : ${message}</div>`;
+			throw new Error(message);
+		};
+
+		const warningThrower = (message)=>{
+			body.innerHTML += `<div>Warning : ${message}</div>`;
+			console.warn(message);
+		};
+
+		let settings = null;
+		let pageTemplate = null;
+		const toRebuild = [];
+
+		const main = (zipFile)=>{
+			
+			var reader = new FileReader();
+			reader.addEventListener("load", function(){
+				const bytes = reader.result;
+				// process
+				(async()=>{
+					const folder = await unzip(bytes);
+					const bootFile = await folder.file(bootFile_path)?.async("string");
+					if(!bootFile) errorThrower(`Boot file : ${bootFile_path} not found in : ${zipFile.name}`);
+					settings = JSON.parse(bootFile);
+					await parse_fileList(folder);
+					rebuild_process();
+					zipAndDownload();
+				})().then();
+			});
+			reader.readAsArrayBuffer(zipFile);
+		};
+
+		const unzip = async (bytes)=>{
+			const JSZ = new JSZip();
+			return await JSZ.loadAsync(bytes);
+		};
+
+		const parse_fileList = async (folder)=>{
+			const {docsTree_list} = settings;
+
+			for(const file of docsTree_list){
+
+				const {path} = file;
+
+				const entity = folder.file(path);
+
+				file.status = !!entity;
+
+				if(!file.status)
+					warningThrower(`File : ${path} (listed in boot file) not found in .zip folder`);
+				else
+					file.content = await entity.async("string");
+
+				if(file.type === 'model') pageTemplate = file;
+
+				if(file.type === 'rebuild') toRebuild.push(file);				
+			}
+
+			if(!pageTemplate)
+				errorThrower('page template not defined in "docsTree_list".');
+			if(!pageTemplate.status)
+				errorThrower(`page template not found. Provided path is : \n${pageTemplate.path}`);
+		};
+
+		const rebuild_process = ()=>{
+
+			//
+			//
+				const {
+					titleStart_mark, titleEnd_mark,
+					pageStart_mark, pageEnd_mark,
+				} = settings;
+
+			// string lib
+			//
+				//const r = /<title>(.*?)<\/title>/gsi
+				const pageTitle_reg = new RegExp(`${titleStart_mark}(.*)${titleEnd_mark}`,'gsi');
+
+				//const r = /^(.*)(<!-- DOCS SPACE START -->)(.*)(<!-- DOCS SPACE END -->)(.*)$/gs;
+				const docsSpace_reg = new RegExp(`^(.*)(${pageStart_mark})(.*)(${pageEnd_mark})(.*)$`,'gs');
+
+				const splitByReg = (data, exp) => ([...data.matchAll(exp)])[0];
+
+				// splits page template :: 0:sample, 1:any, 2:startPat, 3:data, 4:endPat, 5:any
+				const pageTemplate_split = splitByReg(pageTemplate.content, docsSpace_reg);
+
+			// page lib
+			//
+				const make_title = (data) => titleStart_mark + data + titleEnd_mark;
+				const replace_title = (ttl) => pageTemplate_split[1].replace(pageTitle_reg, make_title(ttl));
+
+				const make_pageStart = (title) => replace_title(title) + pageStart_mark;
+				const make_pageEnd = () => pageEnd_mark + pageTemplate_split[5];
+
+				const rebuild_page = (title, content) => make_pageStart(title) + content + make_pageEnd();
+
+			// process (rebuilds pages)
+			//
+				toRebuild.forEach(file=>{
+
+					// gets file data
+					//
+
+						// splits page :: 0:sample, 1:any, 2:startPat, 3:data, 4:endPat, 5:any
+						const page_split = splitByReg(file.content, docsSpace_reg);
+						
+						// gets page title
+						//
+							const head_sample = page_split[1]; // 1:any : containing <head> and <title>
+
+							// splits head :: 0:sample, 1:pageTitle
+							const head_split = splitByReg(head_sample, pageTitle_reg);
+
+							const pageTitle_data = head_split[1]; // 1 : first captured group (page title)
+
+						// gets docs data
+						const docsSpace_data = page_split[3]; // 3:data : containing "docs space content"
+
+					// rebuilds file
+					//
+						//file.content = pageStart_model + docsSpace_data + pageEnd_model;
+						file.content = rebuild_page(pageTitle_data, docsSpace_data);
+				});
+
+		};
+
+		const zipAndDownload = ()=>{
+
+			const {docsTree_list, mainFolder_name} = settings;
+
+			const z = new JSZip();
+
+			// make zip
+			docsTree_list.forEach(file=>{
+				z.file(mainFolder_name+'/'+file.path, file.content);
+			});
+
+			// download making
+			z.generateAsync({ type: 'blob' }).then(function (content) {
+				const reader = new FileReader();
+					reader.readAsDataURL(content); // data url (base64)
+					reader.onload = ()=>{
+						window.open(reader.result);
+					};
+			});
+		};
+
+	</script>
+
+	<script src="https://cdn.jsdelivr.net/npm/jszip-sync@3.1.3-sync/dist/jszip.min.js"></script>
+
+	<script async="false">(async()=>{
+
+		return;
+
+		const z = new JSZip();
+		let pageTemplate = null;
+		const toRebuild = [];
+
+		for(const file of docsTree_list){
+			console.log(file.path);
+			const url = relRoot_path + '/' + file.path;
+
+			let o = {headers: new Headers({'content-type': 'text/plain'})}
+
+			const response = await fetch(url, o);
+			file.status = response.status;
+
+			file.content = await response.text();
+			//let bytes = await response.arrayBuffer();debugger
+
+			if(file.model === 'page') pageTemplate = file;
+
+			if(file.rebuild) toRebuild.push(file);
+
+			
+		}
+		
+		//const r = /<title>(.*?)<\/title>/gsi
+		const pageTitle_reg = new RegExp(`${titleStart_mark}(.*)${titleEnd_mark}`,'gsi');
+
+		//const r = /^(.*)(<!-- DOCS SPACE START -->)(.*)(<!-- DOCS SPACE END -->)(.*)$/gs;
+		const docsSpace_reg = new RegExp(`^(.*)(${pageStart_mark})(.*)(${pageEnd_mark})(.*)$`,'gs');
+
+		if(pageTemplate === null)
+			throw new Error('page template not defined in "docsTree_list".');
+		if(pageTemplate.status === 404)
+			throw new Error(`page template not found. Provided path is : \n${pageTemplate.path}`);
+
+		const splitByReg = (data, exp) => ([...data.matchAll(exp)])[0];
+
+		// splits page template :: 0:sample, 1:any, 2:startPat, 3:data, 4:endPat, 5:any
+		const pageTemplate_split = splitByReg(pageTemplate.content, docsSpace_reg);
+
+		// page model
+		//const pageStart_model = pageTemplate_split[1] + pageStart_mark;
+		//const pageEnd_model = pageTemplate_split[4] + pageEnd_mark;
+
+		const make_title = (data) => titleStart_mark + data + titleEnd_mark;
+		const replace_title = (ttl) => pageTemplate_split[1].replace(pageTitle_reg, make_title(ttl));
+
+		const make_pageStart = (title) => replace_title(title) + pageStart_mark;
+		const make_pageEnd = () => pageTemplate_split[4] + pageEnd_mark;
+
+		const rebuild_page = (title, content) => make_pageStart(title) + content + make_pageEnd();
+
+		// rebuild page
+		toRebuild.forEach(file=>{
+
+			// gets file data
+			//
+
+				// splits page :: 0:sample, 1:any, 2:startPat, 3:data, 4:endPat, 5:any
+				const page_split = splitByReg(file.content, docsSpace_reg);
+				
+				// gets page title
+				//
+					const head_sample = page_split[1]; // 1:any : containing <head> and <title>
+
+					// splits head :: 0:sample, 1:titlePage
+					const head_split = splitByReg(head_sample, pageTitle_reg);
+
+					const pageTitle_data = head_split[1]; // 1 : first captured group (page title)
+
+				// gets docs data
+				const docsSpace_data = page_split[3]; // 3:data : containing "docs space content"
+
+			// rebuilds file
+			//
+				//file.content = pageStart_model + docsSpace_data + pageEnd_model;
+				file.content = rebuild_page(pageTitle_data, docsSpace_data);
+		});
+
+		// make zip
+		docsTree_list.forEach(file=>{
+			z.file(mainFolder_name+'/'+file.path, file.content);
+		});
+
+		// download making
+		z.generateAsync({ type: 'blob' }).then(function (content) {
+			const reader = new FileReader();
+				reader.readAsDataURL(content); // data url (base64)
+				reader.onload = ()=>{
+					window.open(reader.result);
+				};
+		});
+	})().then();</script>
+</body>
+</html>

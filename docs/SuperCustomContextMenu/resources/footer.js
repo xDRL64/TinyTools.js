@@ -1,6 +1,5 @@
 const append_footer = ()=>{
     let s;
-    let c = ` - `;
     const SCCM_licence = '© [free licence] SCCM';
     const extlib_credit = 'All Code Examples are highlighted with Prism.js';
     const {body} = document;
