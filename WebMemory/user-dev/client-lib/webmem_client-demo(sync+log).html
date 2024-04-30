@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>webmem-client.js Demo</title>
+	<script src="./webmem-client.js"></script>
+</head>
+<body style="background-color: aliceblue;">
+
+	<pre>
+		<style>h1,h2,h3,h4,h5,h6{display: inline;}</style>
+		<h1>webmem-client.js - Demo</h1> 
+		
+		Client lib : Abstraction layer for url making.
+	
+		
+		<h3>Example [sync use] [page logs]</h3>
+
+		<select id="typeReq_list" autocomplete="on">
+			<option value="info">request : info</option>
+			<option value="save">request : save</option>
+			<option value="load">request : load</option>
+		</select> request type
+		
+		<input id="session_input" type="text" autocomplete="session-name"
+			placeholder="session_name"> session name (char: a-z A-Z 0-9 -_)
+		
+		<input id="index_input" type="text"
+			placeholder="id or index (id alias)"> file index [last|new|free|+nth|-nth|id]
+
+		request body data
+		<textarea id="data_input" cols="30" rows="10">{"example":"data to save"}</textarea>
+		
+		<input id="mime_input" type="text" placeholder="Type/Subtype"
+			value="text/plain"> MIME type
+
+		<input id="host_input" type="text" placeholder="api host ip"
+			value="localhost"> api host ip
+
+		<input id="port_input" type="text" placeholder="port"
+			value="3000"> api port
+	
+			
+		<button id="sendReq_btn">Send</button>
+
+
+		<div id="response_display"
+			style="white-space: pre; display: inline-block; border-top: 1px solid black; padding-top: 12px;"></div>
+	</pre>
+	
+	<script>
+		
+		const reqElems = {
+			host    : document.getElementById('host_input'),
+			port    : document.getElementById('port_input'),
+			type    : document.getElementById('typeReq_list'),
+			session : document.getElementById('session_input'),
+			index   : document.getElementById('index_input'),
+			data    : document.getElementById('data_input'),
+			mime    : document.getElementById('mime_input')
+		};
+
+		const resp_display = document.getElementById('response_display');
+
+		// btn
+		document.getElementById('sendReq_btn').onclick = ()=>{
+			
+			const toVal = Object.values(reqElems).map(e=>e.value);
+			const [host, port, type, session, index, data, mime] = toVal; // respect reqElems's props order
+
+			resp_display.textContent = '';
+
+			(async()=>{
+
+				webmem.config(host, port, mime);
+
+				await webmem.cmd[type](session, index, data)
+				const {result} = webmem;
+				
+				if(result.status === 'success'){
+					const {data} = result;
+					const p = JSON.stringify(JSON.parse(data), null, 4);
+					output_display(p, 'black', data);
+				}else{
+					const {message, data} = result;
+					output_display(message, 'red', data);
+				}
+
+			})();
+		};
+
+		const output_display = (text, color, _console, addmode)=>{
+			let escTxt = text.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+           	.replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+
+			const newText = `<span style="color:${color}">${escTxt}</span><br/>`;
+			if(addmode) resp_display.innerHTML += newText;
+			else resp_display.innerHTML = newText;
+			console.log(_console);
+		};
+		
+	</script>
+	
+	<script>
+		// debug
+		//
+			//reqElems.type.value = '';
+			//reqElems.session.value = '';
+			//reqElems.index.value = '';
+			//reqElems.data.value = '';
+			//reqElems.mime.value = '';
+			//reqElems.host.value = '';
+			//reqElems.port.value = '';
+	</script>
+	
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>webmem req tester</title>
+	<script>
+		/* document.addEventListener("DOMContentLoaded", (e)=>{
+		//	onAnyChange(); // field evaluation on page loading
+			console.log(e);
+		}); */
+	</script>
+</head>
+<body style="background-color: mintcream;">
+	<pre>
+		<style>h1{display: inline;}</style>
+		<h1>Web-Memory API - URL Request Tester</h1>
+		
+	
+		<select id="typeReq_list" autocomplete="on">
+			<option value="info">request : info</option>
+			<option value="save">request : save</option>
+			<option value="load">request : load</option>
+		</select> request type
+		
+		<input id="session_input" type="text" autocomplete="session-name"
+			placeholder="session_name"> session name (char: a-z A-Z 0-9 -_)
+		
+		<input id="index_input" type="text"
+			placeholder="id or index (id alias)"> file index [last|new|free|+nth|-nth|id]
+
+		request body data
+		<textarea id="data_input" cols="30" rows="10">{"example":"data to save"}</textarea>
+		
+		<input id="mime_input" type="text" placeholder="Type/Subtype"
+			value="text/plain"> MIME type
+
+		<input id="baseURL_input" type="text" placeholder="protocol://host:port"
+			value="http://localhost:3000"> base url (protocol://host:port)
+	
+
+		full request (automade and editable before sending)
+		<input id="fullReq_input" type="text" style="width:64em;">
+		
+		<button id="sendReq_btn">Send</button>
+
+		<div id="response_display"
+			style="white-space: pre; display: inline-block; border-top: 1px solid black; padding-top: 12px;"></div>
+	</pre>
+	
+	<script>
+		
+		const reqElems = {
+			base     : document.getElementById('baseURL_input'),
+			type     : document.getElementById('typeReq_list'),
+			session  : document.getElementById('session_input'),
+			index    : document.getElementById('index_input'),
+			_data    : document.getElementById('data_input'),
+			_mime    : document.getElementById('mime_input'),
+			_url     : document.getElementById('fullReq_input'),
+		};
+
+		const resp_display = document.getElementById('response_display');
+	
+		const onAnyChange = ()=>{
+			const toVal = Object.values(reqElems).map(e=>e.value);
+			const [base, type, session, index] = toVal; // respect reqElems's props order
+			let url = '';
+	
+			if(type === 'info')
+			if(base && type && session)
+				url = `${base}/${type}/${session}`;
+	
+			if(type==='save' || type==='load')
+			if(base && type && session && index)
+				url = `${base}/${type}/${session}/${index}`;
+	
+			reqElems._url.value = url;
+		};
+	
+		Object.keys(reqElems).filter(e=>!e.match(/^_/)).forEach(e=>reqElems[e].oninput=onAnyChange);
+	
+		// btn
+		document.getElementById('sendReq_btn').onclick = ()=>{
+			
+			/* const full_request_options = {
+				method: "POST",
+				mode: "cors",
+				cache: "no-cache",
+				credentials: "same-origin",
+				headers: {
+					"Content-Type": "application/json",
+					'Access-Control-Request-Headers': 'Content-Type,API-Key',
+					'Access-Control-Request-Method': 'POST'
+				},
+				redirect: "follow",
+				referrerPolicy: "no-referrer",
+				body: JSON.stringify(jsObject),
+			}; */
+	
+			const data = reqElems._data.value;
+			const headers = {
+				"Content-Type": reqElems._mime.value,
+				'Access-Control-Request-Headers': 'Content-Type,API-Key',
+				'Access-Control-Request-Method': 'POST',
+			};
+			const options = {method:'POST', body:data, headers};
+			const url = reqElems._url.value;
+
+			resp_display.textContent = '';
+
+			(async()=>{
+				try {
+	
+					const response = await fetch(url, options);
+					if(response.ok){
+						const result = await response.json();
+						const p = JSON.stringify(result, null, 4);
+						output_display(p, 'black', result);
+					}else{
+						const msg = `${response.status} : ${response.statusText}`;
+						output_display(msg, 'red', response);
+					}
+			
+				}catch(err){
+					output_display(err.stack, 'crimson', err, true);
+				}
+			})();
+		};
+		
+		const output_display = (text, color, _console, addmode)=>{
+			let escTxt = text.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+           	.replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+
+			const newText = `<span style="color:${color}">${escTxt}</span><br/>`;
+			if(addmode) resp_display.innerHTML += newText;
+			else resp_display.innerHTML = newText;
+			console.log(_console);
+		};
+
+	</script>
+	
+	<script>
+		// debug
+		//
+			//reqElems.type.value = '';
+			//reqElems.session.value = '';
+			//reqElems.index.value = '';
+			//reqElems._data.value = '';
+			//reqElems._mime.value = '';
+			//reqElems.base.value = '';
+			//reqElems._url.value = '';
+
+			//onAnyChange();
+	</script>
+	
+</body>
+</html>

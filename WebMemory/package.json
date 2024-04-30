@@ -1,0 +1,20 @@
+{
+	"name": "web-memory",
+	"version": "0.0.0a",
+	"description": "API for saving/loading files",
+	"docs": "http://github.com/xDRL64/repo/folder/docs",
+	"main": "main.js",
+	"scripts": {
+		"start": "node webmem-server.js",
+		"dev": "nodemon webmem-server.js"
+	},
+	"author": "xDRL64",
+	"license": "ISC",
+	"dependencies": {
+		"body-parser": "^1.20.2",
+		"express": "^4.19.2"
+	},
+	"devDependencies": {
+		"nodemon": "^3.1.0"
+	}
+}
