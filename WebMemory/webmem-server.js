@@ -244,7 +244,7 @@ app.post('/save/:session/:index', (req,res)=>{
 	let session_obj = get_session(session);
 	let path = `${storage.path}/${session}`;
 	if(!session_obj) session_obj = add_session(session);
-	let id = get_id(session_obj, index);
+	const id = get_id(session_obj, index);
 	if(id.status==='okay'){
 		if(id.state==='found'){
 			const oldFile = session_obj[id.value];
@@ -265,13 +265,18 @@ app.post('/load/:session/:index', (req,res)=>{
 
 	const {session, index} = req.params;
 	const session_obj = get_session(session);
-	let id = get_id(session_obj, index);
-	if(id.status==='okay' && id.state==='found'){
-		const path = `${storage.path}/${session}/${session_obj[id.value]}`;
-		const data = readFileSync(path, 'utf-8');
-		res.json({status:'success', msg:id.msg, data});
-	}else
-		res.json({status:'failed', msg:id.msg, data:null});
+	if(session_obj){
+		const id = get_id(session_obj, index);
+		if(id.status==='okay' && id.state==='found'){
+			const path = `${storage.path}/${session}/${session_obj[id.value]}`;
+			const data = readFileSync(path, 'utf-8');
+			res.json({status:'success', msg:id.msg, data});
+		}else
+			res.json({status:'failed', msg:id.msg, data:null});
+	}else{
+		const msg = `Session '${session}' does not exist`;
+		res.json({status:'failed', msg, data:null});
+	}
 });
 
 app.post('/:any/*', (req,res)=>{
