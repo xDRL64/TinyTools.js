@@ -2,7 +2,7 @@
 	"name": "web-memory",
 	"version": "0.0.0a",
 	"description": "API for saving/loading files",
-	"docs": "http://github.com/xDRL64/repo/folder/docs",
+	"docs": "http://github.com/user/repo/folder/docs",
 	"main": "main.js",
 	"scripts": {
 		"start": "node webmem-server.js",

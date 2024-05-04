@@ -10,7 +10,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 
 // api local resources :
-const {client_address, server_mime, server_port, server_storage} = require('./config/_load.js');
+const {	client_address,
+		server_ip, server_port,
+		server_storage, server_mime,
+	    server_caseSntv } = require('./config/_load.js');
+
 const api_info = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 // settings up
@@ -25,7 +29,7 @@ const session_cache = {};
 
 const app = express();
 
-app.use((req, res, next) => {
+app.use((req, res, next)=>{
 	res.setHeader('Access-Control-Allow-Origin', client_address);
 	res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 	res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -38,58 +42,39 @@ app.use(bodyParser.text( {type:server_mime} ));
 //
 //
 
-// Process : Check a route with 2 params.
-//           If getting error in req syntax, then reply to client already.
+// Process : Check params of request.
+//           If getting error in req param syntax, then reply to client already.
 // Return : 'success' | 'failed' to keep or abort parent process running.
-// Using : 1st param :: url (route part) from request object.
+// Using : 1st param :: request object.
 //         2nd param :: response object.
-// Usage : Use it to reslove the route : /info/:session .
-const check_reqSyntax_2p = (url, res)=>{
+// Usage : Use it in routes resolving to check params respect API rules.
+const check_reqParams = (req, res)=>{
 	let error = '';
-	const result = url.match(/^\/(.+)\/(.+)$/);
-	if(result){
-		const [sample, command,session] = result;
+	const {session, index} = req.params;
 
-		if(!session.match(/^[\w\-_]+$/)) error+=`session:${session} `; // motif : word-_
+	if(session){
 
-		if(error){
-			const msg = `Invalid url params : ${error}.`;
+		if( !server_caseSntv && session.match(/[A-Z]/) ){
+			const msg = `API server does not accept case sensitivity :\n`
+					  + `Invalid url params : session:${session} .`;
 			res.json({status:'failed', msg, data:null});
 			return 'failed';
 		}
-		else return 'success';
-	}
-	const msg = `Invalid url syntax for 'info' command : ${url}.`;
-	res.json({status:'failed', msg, data:null});
-	return 'failed';
-};
-
-// Process : Check a route with 3 params.
-//           If getting error in req syntax, then reply to client already.
-// Return : 'success' | 'failed' to keep or abort parent process running.
-// Using : 1st param :: url (route part) from request object.
-//         2nd param :: response object.
-// Usage : Use it to reslove the routes : /save|load/:session/:index .
-const check_reqSyntax_3p = (url, res)=>{
-	let error = '';
-	const result = url.match(/^\/(.+)\/(.+)\/(.+)$/);
-	if(result){
-		const [sample, command,session,index] = result;
 
 		if(!session.match(/^[\w\-_]+$/)) error+=`session:${session} `; // motif : word-_
-		
-		if(!index.match(/^(last|new|free|\+\d+|-\d+|\d+)$/)) error+=`index:${index} `; // motif : +num -num num
-
-		if(error){
-			const msg = `Invalid url params : ${error}.`;
-			res.json({status:'failed', msg, data:null});
-			return 'failed';
-		}
-		else return 'success';
 	}
-	const msg = `Invalid url syntax for 'save'/'load' command : ${url}.`;
-	res.json({status:'failed', msg, data:null});
-	return 'failed';
+
+	if(index){
+		// motif : last | new | free | +num | -num | num
+		if( !index.match(/^(last|new|free|\+\d+|-\d+|\d+)$/) ) error+=`index:${index} `;
+	}
+
+	if(error){
+		const msg = `Invalid url params : ${error}.`;
+		res.json({status:'failed', msg, data:null});
+		return 'failed';
+	}
+	else return 'success';
 };
 
 // Process : Check data of body request object.
@@ -102,11 +87,11 @@ const check_reqBodyData = (req, res)=>{
 	const dataType = typeof req.body;
 	let msg = '';
 	if(dataType !== 'string'){
-		msg += `Error data's request body : expeted type 'string' and received '${dataType}'\n`;
+		msg += `Error data's request body : API body parser failed :\n`;
 		const client_mime = req.headers['content-type'];
 		if(client_mime !== server_mime){
-			msg += 'Error MIME type checking : '
-			    +  `api waiting for '${server_mime}' and received '${client_mime}'`;
+			msg += 'MIME type checking : '
+			    +  `API waiting for '${server_mime}' and received '${client_mime}' .`;
 		}
 		res.json({status:'failed', msg, data:null});
 		return 'failed';
@@ -194,15 +179,15 @@ const get_id = (session_obj, index)=>{
 	let stat = ids.includes(o) ? 'found' : 'free';
 
 	// alias id
-	if(index === 'last'){o=ids.pop()??0;            stat=iLen?'found':'free';}
-	if(index === 'new' ){o=(ids.pop()??-1)+1;       stat='free';}
-	if(index === 'free'){o=i;                       stat='free';}
-	if(index[0] === '+'){o=ids.at(parseInt(index)); stat='found';}
-	if(index[0] === '-'){o=ids.at(parseInt(index)); stat='found';}
+	if(index === 'last'){o=ids.pop()??0;              stat=iLen?'found':'free';}
+	if(index === 'new' ){o=(ids.pop()??-1)+1;         stat='free';}
+	if(index === 'free'){o=i;                         stat='free';}
+	if(index[0] === '+'){o=ids.at(parseInt(index));   stat='found';}
+	if(index[0] === '-'){o=ids.at(parseInt(index)-1); stat='found';}
 
-	if( o === undefined ) return {status:'error', msg:'index (id alias) overflow', value:null};
+	if( o === undefined ) return {status:'error', msg:'index (id alias) [overflow] .', value:null};
 
-	return {status:'okay', state:stat, msg:`index (id alias) [${stat}]`, value:o};
+	return {status:'okay', state:stat, msg:`index (id alias) [${stat}] .`, value:o};
 };
 
 // Process : Create a new name for a file, based on id, date and time.
@@ -224,21 +209,21 @@ const build_name = (id, date)=>{
 //
 
 app.post('/info/:session', (req,res)=>{
-	if( check_reqSyntax_2p(req.url,res)==='failed' ) return;
+	if( check_reqParams(req,res)==='failed' ) return;
 
 	const {session} = req.params;
 	const session_obj = get_session(session);
 	if( session_obj )
 		res.json({status:'success', msg:null, data:session_obj});
 	else{
-		const msg = `Session '${session}' does not exist`;
+		const msg = `Session '${session}' does not exist.`;
 		res.json({status:'failed', msg, data:null});
 	}
 });
 
 app.post('/save/:session/:index', (req,res)=>{
-	if( check_reqSyntax_3p(req.url,res)==='failed' ) return;
-	if( check_reqBodyData(req,res)==='failed' )      return;
+	if( check_reqParams(req,res)==='failed' ) return;
+	if( check_reqBodyData(req,res)==='failed' )  return;
 
 	const {session, index} = req.params;
 	let session_obj = get_session(session);
@@ -261,7 +246,7 @@ app.post('/save/:session/:index', (req,res)=>{
 });
 
 app.post('/load/:session/:index', (req,res)=>{
-	if( check_reqSyntax_3p(req.url,res)==='failed' ) return;
+	if( check_reqParams(req,res)==='failed' ) return;
 
 	const {session, index} = req.params;
 	const session_obj = get_session(session);
@@ -274,15 +259,22 @@ app.post('/load/:session/:index', (req,res)=>{
 		}else
 			res.json({status:'failed', msg:id.msg, data:null});
 	}else{
-		const msg = `Session '${session}' does not exist`;
+		const msg = `Session '${session}' does not exist.`;
 		res.json({status:'failed', msg, data:null});
 	}
 });
 
-app.post('/:any/*', (req,res)=>{
-	const msg = `Error : invalid api route : '${req.url}'`;
+// any other route
+//
+
+const anyOtherRoute = (req,res)=>{
+	const msg = `Error : invalid API route : '${req.url}' .`;
 	res.json({status:'failed', msg, data:null});
-});
+};
+
+app.post('/:any', anyOtherRoute);
+app.post('/:any/*', anyOtherRoute);
+
 
 // falling on api root
 //
@@ -290,7 +282,7 @@ app.post('/:any/*', (req,res)=>{
 const welcomeToTheRoot = (req,res)=>{
 	const info = api_info;
 	const msg = `Web-Memory : Welcome to the API root.\n`
-	          + `${info.version} :: Docs : ${info.docs}`;
+	          + `${info.version} :: Docs : ${info.docs} .`;
 	res.json({status:'failed', msg, data:null});
 };
 
@@ -300,6 +292,17 @@ app.post('/', welcomeToTheRoot);
 // starts api
 //
 
-app.listen(server_port, ()=>console.log('Web-Memory [Listening]'));
+const online = (info=server.address())=>console.log(`Web-Memory [Listening] ${info.address}:${info.port}`);
+
+const server = app.listen(server_port, server_ip, online).on('error', (err) => {
+	if (err.code === 'EADDRINUSE') {
+		console.error(`Port ${server_port} is already used. Retrying with a free random one.`);
+		// waits for one second and defines a rando free port num
+		setTimeout( ()=>server.close(()=>server.listen(0,server_ip)), 1000);
+	} else {
+		console.error(`Error occurred: ${err.message}`);
+		process.exit(1);
+	}
+});
 
 console.log('Web-Memory [Ready]');

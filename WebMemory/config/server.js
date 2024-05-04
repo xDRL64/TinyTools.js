@@ -1,11 +1,16 @@
 const config = {
 
-    port : 3000,
+	ip   : '127.0.0.1',
 
-    storage : './service_storage',
+	port : 3000,
 
-    mime : 'text/plain', // MIME sending, from client to api
-                         // api allows : text/*
+	storage : './service_storage',
+
+	mime : 'text/*', // MIME type to use between client and API.
+	                 // api allows subtype of text type.
+
+	case_sensitivity : false, // Used for session name checking
+	                          // keep 'false' on windows file system
 };
 
 //
