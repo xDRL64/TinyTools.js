@@ -1,15 +1,287 @@
-
+WebMemory API
 
 Description :
 
+    WebMemory is a web API whose initial purpose is to provide a simple file storage system.
+    The API was primarily designed to meet the debugging needs of client apps when debugging 
+    requires replacing manual file transfer via browser inputs and outputs executing client 
+    apps (drag and drop to web browser / download from web browser) with automated transfer through an external API.
+
+    This API works with only one client app at once which are restricted in local network.
 
 Index Table :
+
+    WebMemory Files :
+
+        API server application.
+
+        API client library.
+
+        Examples and Tools.
+
+    Configuration and Settings :
 
     Server/Client Configuration :
     
         ip/hostname settings
 
         port settings
+
+
+
+
+
+
+
+
+WebMemory Files :
+
+    The API project folder provides :
+
+        - The API server application :
+            as node js files.
+
+        - A library to make API using more simple again :
+            as web js file.
+
+        - Examples using the API library like client apps :
+            as html files.
+
+        - An API resquest tester to use like a client app:
+            as html file.
+
+        - A basic web server application to execute client apps :
+            as node js file.
+
+    The API alone is made of 4 files :
+
+        API server :
+
+            webmem-server.js
+
+        Configuration Folder :
+
+            config/_load.js
+            config/client.js
+            config/server.js
+
+    The library is made of one file :
+
+        user-dev/client-lib/webmem-client.js
+
+    Example of library using is a group of 2 files :
+
+        user-dev/client-lib/webmem_client-demo.js
+        user-dev/client-lib/webmem_client-demo(sync+log).js
+        
+    The API resquest tester is one file :
+
+        user-dev/api-test/webmem-urlReqTester.html
+
+    The web server to execute tester and examples is one file :
+
+        user-dev/client-webserver.js
+
+
+
+Configuration and Settings :
+
+    To set API server, edit file the config Object in : config/server.js
+
+        ip : '127.0.0.1'
+
+            IP or hostname of API server.
+            By default it is '127.0.0.1'
+            By setting '127.0.0.1' here, the client app will able to fetch() with 'localhost' and '127.0.0.1'
+
+        port : 3000
+
+            Port number of API server is listening.
+            By default it is 3000, configure it if you need.
+            Precise it in fetch() call from client app.
+
+        storage : './service_storage'
+
+            Session directory, where file saves will be made.
+            By default it will be 'service_storage' at API root folder.
+            It is very important to set it correctly, please read :
+                'Session Directory (Storage Path)' on next section (little below).
+
+        mime : ['text/*']
+        
+            MIME type to use between client and API.
+            API only supports subtypes of 'text' type.
+            And you can restrict it to less 'text' subtype, for example :
+                mime : ['text/plain', 'text/html']
+            By default it is no restrictive, all subtypes of 'text' are accpeted.
+            Is important only while client sends request for file saving.
+            And it does affect data themself, it is just really about accepting or rejecting types.
+
+        case_sensitivity : false
+
+            Keep it 'false' on Window OS, because folder names cannot be differentiated between lower and upper case.
+            Set it 'true' on Mac and Linux if you want to use upper case to name sessions,
+            thus 'Session_Name' is a session different than 'session_name' . 
+
+
+    To set connection to client app, edit file the config Object in : config/client.js
+
+        ip : '127.0.0.1'
+
+            IP or hostname accepted by API server from client resquest.
+            It is very important to use the exact same one in client app's web browser address bar.
+			'localhost' is not equivalent to '127.0.0.1'
+            By default it is '127.0.0.1'
+
+        port : 5500
+
+            Port number of client app server.
+            Also the same one in client app's web browser address bar.
+            By default it is 5500, ready to listen to requests from
+            client app examples and request tester provided with the API.
+            Feel free to configure it by according your needs.
+
+
+    Session Directory (Storage Path) :
+
+        You can define a relative path, it is relative to the api server folder.
+        Or you can define an absolute path. But be sure what you set.
+
+        Observe following rules :
+
+            - The last element in path will be considered as the session directory.
+
+                - Not to need to create manually the last element in path reprensenting session directory before starting API server,
+                    it will be created automatically if it does not exist at saving a first session form client app request.
+
+                - Absolute path case :
+
+                    - Disk root :
+                        on Windows set path : 'c:/' | 'c:\\' | 'c:' | '/' | '\\'
+                        on Mac and Linux    : '/'
+                    
+                    - From disk root :
+                        on Windows set path : 'c:/sav' | 'c:\\sav' | '/sav' | '\\sav'
+                        on Mac and Linux    : '/sav'
+
+                - Relative path case :
+
+                    - It does not matter from where you run the API with the node command.
+                        Relative paths start pointing to API server application folder.
+
+                    - API server application root folder :
+                        on Windows set path : '.' | './' | '.\\' |  '../' | '..\\'
+                        on Mac and Linux    : '.' | './' | '../'
+
+                    - To a folder :
+                        on Windows set path : 'sav' | './sav' | '.\\sav' | '..' | '../' | '..\\' | '../sav' | '..\\sav'
+                        on Mac and Linux    : 'sav' | './sav' | '..' | '../' | '../sav' |  
+
+                    - Bad paths will be considered as a relative path to API serv app root dir too :
+                        path containing spaces only ' '
+                        path containing no character ''
+                
+                
+
+            - Folder names with '.' character will be accepted as folder,
+                even if it is the last element in path,
+                and even if it sounds like a file name. example 'file.ext'
+
+            - On Windows OS, path folder names containing the following characters :
+                : * ? " < > |
+                will be rejected, stopping API server launcher with log message in console
+                displaying the rejected path.
+            
+            - Path separator usages :
+                '\', '/' are accepted on Windows.
+                '/' only is accepted on Mac and Linux, '\' will be considered as character of folder names.
+                Multiple successive separators will be fusioned into only one separator.
+
+            - White spaces in paths :
+                Spaces in forler names are accepted,
+                    for example : 'c:/sav dir' is valid.
+                The API loading will be able to fix a path if it contains some space at its start or end.
+                    For example : ' c:/sav' or './sav ' will be fixed by removing spaces.
+                But spaces in middle of path, sided to separator will rejected the whole path.
+                    For example : 'c:/ sav' or './ sav' will be rejected,
+                    stopping API server launcher with log message in console
+                    displaying the rejected path.
+                    (standard OS behavior, file/folder names cannot have spaces at start or end)
+
+            - To visualize better what you can expect, see the table juste below :
+
+                -- 'config path' field is the value you put in config.storage in config/server.js
+                -- The OS columns show what are the corresponding computed absolute paths,
+                    which will be used as session directory where sessions are saved from client app requests.
+                -- On Windows OS column, '/' and '\' are equivalent to 'c:\\'
+                -- '/SNE' folder at end of computed path means "Session Name Example",
+                    and represents an example of session that have beed created by client app.
+                -- Always be over that 'config path' represents session directory, and so
+                    this directory will contain all new created session from client app.
+
+                config path          on Windows                         on Mac and Linux
+                --------------------------------------------------------------------------------------
+                ' '                  C:\path\to\webmem/SNE              /path/to/webmem/SNE
+                '/t.txt'             \t.txt/SNE                         /t.txt/SNE
+                '/'                  /SNE                               /SNE
+                '\\'                 /SNE                               /path/to/webmem/\/SNE
+                'c:/'                c:/SNE                             /path/to/webmem/c:/SNE
+                'c:\\'               c:/SNE                             /path/to/webmem/c:\/SNE
+                'c:'                 c:/SNE                             /path/to/webmem/c:/SNE
+                '/sav'               \sav/SNE                           /sav/SNE
+                'c:/sav'             c:\sav/SNE                         /path/to/webmem/c:/sav/SNE
+                '/sav/'              \sav/SNE                           /sav/SNE
+                '.'                  C:\path\to\webmem/SNE              /path/to/webmem/SNE
+                ''                   C:\path\to\webmem/SNE              /path/to/webmem/SNE
+                './sav'              C:\path\to\webmem\sav/SNE          /path/to/webmem/sav/SNE
+                'sav'                C:\path\to\webmem\sav/SNE          /path/to/webmem/sav/SNE
+                'c'                  C:\path\to\webmem\c/SNE            /path/to/webmem/c/SNE
+                'c:\\a/b\\c/'        c:\a\b\c/SNE                       /path/to/webmem/c:\a/b\c/SNE
+                ' ab cd '            C:\path\to\webmem\ab cd/SNE        /path/to/webmem/ab cd/SNE
+                ' /ab cd/ '          \ab cd/SNE                         /ab cd/SNE
+                '//',                /SNE                               /SNE
+                '\\\\',              /SNE                               /path/to/webmem/\\/SNE
+
+                To complete, here we have some example of paths containing spaces in their middle
+                and which are sided to path separator :
+
+                config path          on Windows    on Mac and Linux
+                ---------------------------------------------------
+                'xx \\ xx'           rejected      ACCEPTED
+                'xx \\xx'            rejected      ACCEPTED
+                'xx\\ xx'            rejected      ACCEPTED
+                'xx\\ \\xx'          rejected      ACCEPTED
+                'xx \\ \\ xx'        rejected      ACCEPTED
+                'xx\\ \\ \\ \\xx'    rejected      ACCEPTED
+                'xx / xx'            rejected      rejected
+                'xx /xx'             rejected      rejected
+                'xx/ xx'             rejected      rejected
+                'xx/ /xx'            rejected      rejected
+                'xx / / xx'          rejected      rejected
+                'xx/ / / /xx'        rejected      rejected
+                'xx\\ /xx'           rejected      rejected
+                'xx/ \\xx'           rejected      rejected
+                'xx/ \\ / \\xx'      rejected      rejected
+                'xx \\ / \\ / xx'    rejected      rejected
+                'xx \\/\\ \\/xx'     rejected      ACCEPTED
+
+
+
+
+        In all cases, when you run the API, at first it will check the path :
+            config.storage in config/server.js
+        then if there was no major bad path while checking, a prompt will appear in console,
+        displaying the computed absolute session directory Storage Path
+        and asking you to confirme it before really running server.
+
+        It also display an example of session created by client app
+        by showing what it would look like to as absolute too.
+
+        It major bad path case, you will be notifyied in console by a message
+        with a header 'Bad provided path' (in yellow) followed by the concerned bad path (in red)
+
+
+
 
 
 
@@ -206,7 +478,7 @@ Deleting elements (files / folders) :
 
     For security reasons, you have to delete manually files and session folders that you want to remove.
     You keep total control on file access permissions in Windows.
-    You may not allow to delete from Windows explorer, be sure to close API sever before deleting elements.
+    You may not allow to delete from Windows explorer, be sure to close API server before deleting elements.
 
 
 

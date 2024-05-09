@@ -6,8 +6,8 @@ const config = {
 
 	storage : './service_storage',
 
-	mime : 'text/*', // MIME type to use between client and API.
-	                 // api allows subtype of text type.
+	mime : ['text/*'], // MIME type to use between client and API.
+	                   // api allows subtype of text type.
 
 	case_sensitivity : false, // Used for session name checking
 	                          // keep 'false' on windows file system
