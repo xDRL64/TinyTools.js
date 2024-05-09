@@ -1,5 +1,7 @@
 WebMemory API
 
+
+
 Description :
 
     WebMemory is a web API whose initial purpose is to provide a simple file storage system.
@@ -8,6 +10,8 @@ Description :
     apps (drag and drop to web browser / download from web browser) with automated transfer through an external API.
 
     This API works with only one client app at once which are restricted in local network.
+
+
 
 Index Table :
 
@@ -21,16 +25,41 @@ Index Table :
 
     Configuration and Settings :
 
-    Server/Client Configuration :
-    
-        ip/hostname settings
+        API server (ip/port/storage/mime/case)
 
-        port settings
+        Client app connection (ip/port)
 
+        Storage (session directory)
 
+        Server IPs settings
 
+    API Main Working
 
+    File name patern
 
+    API main features
+
+        info Command
+
+        save Command
+
+        load Command
+
+    Deleting elements
+
+    API route parameters
+
+        session name
+
+        index
+
+    API Response Messages
+
+        Response Object Structure
+
+        Error return management
+
+        About Successfull Route 
 
 
 
@@ -81,6 +110,12 @@ WebMemory Files :
     The web server to execute tester and examples is one file :
 
         user-dev/client-webserver.js
+    
+    Note that, on Windows you can launch servers '.js' but running the '.bat' file
+    in the same folder if it is there. Which are in :
+
+        webmem-server.bat
+        user-dev/client-webserver.bat
 
 
 
@@ -120,9 +155,10 @@ Configuration and Settings :
         case_sensitivity : false
 
             Keep it 'false' on Window OS, because folder names cannot be differentiated between lower and upper case.
+                (In this case, we can use upper case for session names in requests, but there will be no distinction,
+                by writing 'Session_Name' it is interpreted exactly like 'session_name' .)
             Set it 'true' on Mac and Linux if you want to use upper case to name sessions,
-            thus 'Session_Name' is a session different than 'session_name' . 
-
+                thus 'Session_Name' is a session different than 'session_name' . 
 
     To set connection to client app, edit file the config Object in : config/client.js
 
@@ -140,7 +176,6 @@ Configuration and Settings :
             By default it is 5500, ready to listen to requests from
             client app examples and request tester provided with the API.
             Feel free to configure it by according your needs.
-
 
     Session Directory (Storage Path) :
 
@@ -181,8 +216,6 @@ Configuration and Settings :
                         path containing spaces only ' '
                         path containing no character ''
                 
-                
-
             - Folder names with '.' character will be accepted as folder,
                 even if it is the last element in path,
                 and even if it sounds like a file name. example 'file.ext'
@@ -208,6 +241,11 @@ Configuration and Settings :
                     displaying the rejected path.
                     (standard OS behavior, file/folder names cannot have spaces at start or end)
 
+            - Double dots '..' behave like expected :
+                It is relative to its parent folder.
+                It makes to get out from current folder back to the parent folder.
+                It stops getting by when reach disk root.
+                
             - To visualize better what you can expect, see the table juste below :
 
                 -- 'config path' field is the value you put in config.storage in config/server.js
@@ -241,6 +279,9 @@ Configuration and Settings :
                 ' /ab cd/ '          \ab cd/SNE                         /ab cd/SNE
                 '//',                /SNE                               /SNE
                 '\\\\',              /SNE                               /path/to/webmem/\\/SNE
+                '../sav'             C:\path\to\sav/SNE                 /path/to/sav/SNE
+                'c:/a/b/../z'        c:\a\z/SNE                         /path/to/webmem/c:/a/z/SNE
+                'c:/a/../..'         c:/SNE                             /path/to/webmem/SNE
 
                 To complete, here we have some example of paths containing spaces in their middle
                 and which are sided to path separator :
@@ -265,147 +306,88 @@ Configuration and Settings :
                 'xx \\ / \\ / xx'    rejected      rejected
                 'xx \\/\\ \\/xx'     rejected      ACCEPTED
 
-
-
-
         In all cases, when you run the API, at first it will check the path :
             config.storage in config/server.js
         then if there was no major bad path while checking, a prompt will appear in console,
         displaying the computed absolute session directory Storage Path
         and asking you to confirme it before really running server.
 
-        It also display an example of session created by client app
-        by showing what it would look like to as absolute too.
+        It also displays an example of session like if created by client app
+        to preview what it would look like to.
 
         It major bad path case, you will be notifyied in console by a message
         with a header 'Bad provided path' (in yellow) followed by the concerned bad path (in red)
 
+    How to set server IPs :
 
+        There are 5 places where you can set IPs :
 
+            1. The API server itself, in file : config/server.js
 
+            2. The provided client app's web server, in file : user-dev/client-webserver.js
+            or your own client app's web server, in server settings of you side
 
+            3. The client app's running, in web browser address bar
 
+            4. The client app's requests, by fetch() calling, in client app's source code
 
+            5. The API server's client request allowing, in file : config/client.js
+            Write the exact same one as the one you plan to use in the web browser address bar
+            while the client app is running.
 
+    How to choose server IPs ? 'localhost' vs '127.0.0.1' :
 
+        By default, it is set with '127.0.0.1' everywhere except
+        in the fetch() calls in the test tool and example files provided in the project.
+        By running them you can see a GUI containing text box to set it in realtime.
 
+        Use it directly, this should work.
 
+        If you want to set some custom settings, read the following part :
 
+            If you use 'localhost', in some cases you may encounter connection problems.
+            If you attempt a full 'localhost' configuration everywhere,
+            it may work, but it may also not work for various reasons.
+            The main reason could be that 'localhost' is too restrictive.
 
+            Differences between 'localhost' and '127.0.0.1' :
 
+                web server 'localhost' = web browser 'localhost' only
+                web server '127.0.0.1' = web browser 'localhost' and '127.0.0.1'
 
+                web browser 'localhost' = API server's client config 'localhost'
+                web browser '127.0.0.1' = API server's client config '127.0.0.1'
 
+                API server's config 'localhost' = client app's fetch() 'localhost' only
+                API server's config '127.0.0.1' = client app's fetch() 'localhost' and '127.0.0.1'
 
+                Conclusion : 'localhost' is more restrictive than '127.0.0.1' .
 
+        For beginners in server and web development :
 
+            If you are not sure how to proceed, or if you are undecided,
+            please use the default settings, and if you have broken something, follow these instructions :
 
+                Do not set any server with 'localhost', always use '127.0.0.1' :
 
+                    - Do not use 'localhost' to set the example of client web server (client-webserver.js),
+                    or to set your client web server.
 
+                    - Do not use 'localhost' to set the API server (config/server.js)
 
-How to set server IPs :
+                    - Access your app on [client web server] by [web browser] from address 'localhost' or '127.0.0.1'
+                    but remember which one you choose
+                    because you need to set the exact same one in the API server's [client configuration] (config/client.js)
 
-    There are 5 places where you can set IPs :
+                    - Finally, from [client app code] on [web server] you can send your requests to both,
+                    either 'localhost' or '127.0.0.1', to connect to the API
 
-        1. The API server itself, in file : config/server.js
+                To summarize, we can keep it very simple by saying :
 
-        2. The provided client app's web server, in file : user-dev/client-webserver.js
-        or your own client app's web server, in server settings of you side
+                    - Always use '127.0.0.1' to set/access everything except when you call fetch()
 
-        3. The client app's running, in web browser address bar
-
-        4. The client app's requests, by fetch() calling, in client app's source code
-
-        5. The API server's client request allowing, in file : config/client.js
-        Write the exact same one as the one you plan to use in the web browser address bar
-        while the client app is running.
-
-How to choose server IPs ? 'localhost' vs '127.0.0.1' :
-
-    By default, it is set with '127.0.0.1' everywhere except
-    in the fetch() calls in the test tool and example files provided in the project.
-    By running them you can see a GUI containing text box to set it in realtime.
-
-    Use it directly, this should work.
-
-    If you want to set some custom settings, read the following part :
-
-        If you use 'localhost', in some cases you may encounter connection problems.
-        If you attempt a full 'localhost' configuration everywhere,
-        it may work, but it may also not work for various reasons.
-        The main reason could be that 'localhost' is too restrictive.
-
-        Differences between 'localhost' and '127.0.0.1' :
-
-            web server 'localhost' = web browser 'localhost' only
-            web server '127.0.0.1' = web browser 'localhost' and '127.0.0.1'
-
-            web browser 'localhost' = API server's client config 'localhost'
-            web browser '127.0.0.1' = API server's client config '127.0.0.1'
-
-            API server's config 'localhost' = client app's fetch() 'localhost' only
-            API server's config '127.0.0.1' = client app's fetch() 'localhost' and '127.0.0.1'
-
-            Conclusion : 'localhost' is more restrictive than '127.0.0.1' .
-
-    For beginners in server and web development :
-
-        If you are not sure how to proceed, or if you are undecided,
-        please use the default settings, and if you have broken something, follow these instructions :
-
-            Do not set any server with 'localhost', always use '127.0.0.1' :
-
-                - Do not use 'localhost' to set the example of client web server (client-webserver.js),
-                or to set your client web server.
-
-                - Do not use 'localhost' to set the API server (config/server.js)
-
-                - Access your app on [client web server] by [web browser] from address 'localhost' or '127.0.0.1'
-                but remember which one you choose
-                because you need to set the exact same one in the API server's [client configuration] (config/client.js)
-
-                - Finally, from [client app code] on [web server] you can send your requests to both,
-                either 'localhost' or '127.0.0.1', to connect to the API
-
-            To summarize, we can keep it very simple by saying :
-
-                - Always use '127.0.0.1' to set/access everything except when you call fetch()
-
-                - Use any one of both ('localhost' or '127.0.0.1') to run fetch(),
-                like this : fetch('http://anyone:port/api_route')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                    - Use any one of both ('localhost' or '127.0.0.1') to run fetch(),
+                    like this : fetch('http://anyone:port/api_route')
 
 
 
@@ -437,6 +419,7 @@ Main Working :
     which is debugging of apps in development. This is why some mesures are took.
 
 
+
 File name patern :
 
     For prevention of file overwriting mistakes, the API saves only files with very unique names and with no file extension type.
@@ -448,6 +431,7 @@ File name patern :
     Max characters : id++ yyyy.mm.dd hh;mm;ss mls
 
     id : must be a positive number. (undefined max characters)
+
 
 
 API main features :
@@ -472,6 +456,7 @@ API main features :
         - Also you can create manually the folder reprensenting a session in the session directory if you prefer.
         (In this case, please do not forget to check allowed characters to name a session correctly,
         see at : "API route parameters / session" in the docs)
+
 
 
 Deleting elements (files / folders) :
@@ -532,7 +517,8 @@ API route parameters :
                           Even if id corresponding to file that does not exist, '1' selects the id '1' .
 
 
-API Response Messages:
+
+API Response Messages :
 
 
     If your resquets reaches the API server, it will always responds be sending an Object as JSON string.
